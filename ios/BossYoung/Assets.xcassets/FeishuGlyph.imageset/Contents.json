@@ -1,16 +1,23 @@
 {
   "images" : [
     {
-      "filename" : "feishu.svg",
-      "idiom" : "universal"
+      "filename" : "feishu-mark.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "feishu-mark@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "feishu-mark@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {
     "author" : "xcode",
     "version" : 1
-  },
-  "properties" : {
-    "preserves-vector-representation" : true,
-    "template-rendering-intent" : "template"
   }
 }

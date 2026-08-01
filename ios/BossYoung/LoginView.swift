@@ -21,7 +21,6 @@ struct LoginView: View {
   private enum Field: Hashable { case name, email, password }
   private enum Method { case feishu, email }
 
-  private let feishuBlue = Color(red: 0x33 / 255, green: 0x70 / 255, blue: 0xFF / 255)
   private let formMaxWidth: CGFloat = 340
 
   private var isRegister: Bool { mode == .register }
@@ -112,21 +111,23 @@ struct LoginView: View {
     VStack(spacing: 7) {
       Button(action: startFeishuLogin) {
         ZStack {
+          // The official mark is a three-tone swallow on transparent, drawn for a
+          // light backdrop — its navy wing disappears on a dark plate. So the
+          // plate stays white in both appearances, the usual treatment for a
+          // third-party mark; tinting the artwork would misrepresent it.
           Circle()
-            .fill(feishuBlue)
+            .fill(.white)
             .frame(width: 50, height: 50)
-            .shadow(color: feishuBlue.opacity(0.26), radius: 9, y: 4)
+            .overlay(Circle().stroke(Brand.line, lineWidth: 1))
+            .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
 
           if activeMethod == .feishu && session.isLoggingIn {
-            ProgressView().tint(.white)
+            ProgressView().tint(Brand.muted)
           } else {
-            // Placeholder, NOT the Feishu mark. The `FeishuGlyph` asset that used
-            // to sit here (copied from the web's feishu-sign-in.tsx) draws a paper
-            // plane, not Feishu's swallow — a wrong trademark is worse than none.
-            // Swap in the official artwork from 飞书开放平台 品牌资源 when we have it.
-            Text("飞")
-              .font(.system(size: 22, weight: .medium))
-              .foregroundStyle(.white)
+            Image("FeishuGlyph")
+              .resizable()
+              .scaledToFit()
+              .frame(width: 26, height: 26)
           }
         }
       }
