@@ -1,0 +1,299 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* BossYoung2App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* BossYoung2App.swift */; };
+		A10000000000000000000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* RootView.swift */; };
+		A10000000000000000000003 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AppConfig.swift */; };
+		A10000000000000000000004 /* CapkaWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* CapkaWebView.swift */; };
+		A10000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Assets.xcassets */; };
+		A10000000000000000000008 /* CapkaNativePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* CapkaNativePreview.swift */; };
+		A10000000000000000000009 /* FeishuNativeSSO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* FeishuNativeSSO.swift */; };
+		A1000000000000000000000A /* CapkaFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* CapkaFeedback.swift */; };
+		A1000000000000000000000B /* LarkSSOSDK.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* LarkSSOSDK.xcframework */; };
+		A1000000000000000000000C /* LarkSSOSDK.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* LarkSSOSDK.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A1000000000000000000000D /* LarkSSO.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* LarkSSO.bundle */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A50000000000000000000004 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				A1000000000000000000000C /* LarkSSOSDK.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* BossYoung2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BossYoung2App.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* CapkaWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapkaWebView.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A20000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000007 /* BossYoung2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BossYoung2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000008 /* CapkaNativePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapkaNativePreview.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* FeishuNativeSSO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeishuNativeSSO.swift; sourceTree = "<group>"; };
+		A2000000000000000000000A /* CapkaFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapkaFeedback.swift; sourceTree = "<group>"; };
+		A2000000000000000000000B /* LarkSSOSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = LarkSSOSDK.xcframework; path = Vendor/LarkSSOSDK.xcframework; sourceTree = "<group>"; };
+		A2000000000000000000000D /* LarkSSO.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = LarkSSO.bundle; path = Vendor/LarkSSO.bundle; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000B /* LarkSSOSDK.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000000000000000000002 /* BossYoung2 */,
+				A2000000000000000000000B /* LarkSSOSDK.xcframework */,
+				A2000000000000000000000D /* LarkSSO.bundle */,
+				A40000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* BossYoung2 */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* BossYoung2App.swift */,
+				A20000000000000000000002 /* RootView.swift */,
+				A20000000000000000000003 /* AppConfig.swift */,
+				A20000000000000000000004 /* CapkaWebView.swift */,
+				A20000000000000000000008 /* CapkaNativePreview.swift */,
+				A20000000000000000000009 /* FeishuNativeSSO.swift */,
+				A2000000000000000000000A /* CapkaFeedback.swift */,
+				A20000000000000000000005 /* Assets.xcassets */,
+				A20000000000000000000006 /* Info.plist */,
+			);
+			path = BossYoung2;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000007 /* BossYoung2.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* BossYoung2 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000000003 /* Build configuration list for PBXNativeTarget "BossYoung2" */;
+			buildPhases = (
+				A50000000000000000000002 /* Sources */,
+				A30000000000000000000001 /* Frameworks */,
+				A50000000000000000000003 /* Resources */,
+				A50000000000000000000004 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BossYoung2;
+			productName = BossYoung2;
+			productReference = A20000000000000000000007 /* BossYoung2.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A60000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = A70000000000000000000001 /* Build configuration list for PBXProject "BossYoung2" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = A40000000000000000000001;
+			productRefGroup = A40000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* BossYoung2 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A50000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000005 /* Assets.xcassets in Resources */,
+				A1000000000000000000000D /* LarkSSO.bundle in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A50000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* BossYoung2App.swift in Sources */,
+				A10000000000000000000002 /* RootView.swift in Sources */,
+				A10000000000000000000003 /* AppConfig.swift in Sources */,
+				A10000000000000000000004 /* CapkaWebView.swift in Sources */,
+				A10000000000000000000008 /* CapkaNativePreview.swift in Sources */,
+				A10000000000000000000009 /* FeishuNativeSSO.swift in Sources */,
+				A1000000000000000000000A /* CapkaFeedback.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A80000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				CODE_SIGN_ENTITLEMENTS = BossYoung2/BossYoung2.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoung2/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "邦信阳";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A80000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				CODE_SIGN_ENTITLEMENTS = BossYoung2/BossYoung2.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoung2/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "邦信阳";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A70000000000000000000001 /* Build configuration list for PBXProject "BossYoung2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000001 /* Debug */,
+				A80000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000000003 /* Build configuration list for PBXNativeTarget "BossYoung2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000003 /* Debug */,
+				A80000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A60000000000000000000001 /* Project object */;
+}

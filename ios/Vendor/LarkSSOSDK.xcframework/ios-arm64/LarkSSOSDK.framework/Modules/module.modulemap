@@ -1,0 +1,11 @@
+framework module LarkSSOSDK {
+  umbrella header "LarkSSOSDK.h"
+
+  export *
+  module * { export * }
+}
+
+module LarkSSOSDK.Swift {
+  header "LarkSSOSDK-Swift.h"
+  requires objc
+}

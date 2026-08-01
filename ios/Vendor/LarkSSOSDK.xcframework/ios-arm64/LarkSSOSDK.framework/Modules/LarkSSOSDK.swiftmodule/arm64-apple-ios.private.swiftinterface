@@ -1,0 +1,98 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)
+// swift-module-flags: -target arm64-apple-ios11.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name LarkSSOSDK
+// swift-module-flags-ignorable: -enable-bare-slash-regex
+import CommonCrypto
+import Foundation
+@_exported import LarkSSOSDK
+import Swift
+import UIKit
+import WebKit
+import _Concurrency
+import _StringProcessing
+@objc public protocol LarkSSODelegate {
+  @objc func lkSSODidReceive(response: LarkSSOSDK.SSOResponse)
+}
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc public class LarkSSO : ObjectiveC.NSObject {
+  @objc deinit
+}
+extension LarkSSOSDK.LarkSSO {
+  @objc public static func register(apps: [LarkSSOSDK.App])
+  @objc public static func setupLog() -> Swift.String
+  @discardableResult
+  @objc public static func setupLog(did: Swift.String?) -> Swift.String
+  @objc public static func send(request: LarkSSOSDK.SSORequest, viewController: UIKit.UIViewController?, delegate: LarkSSOSDK.LarkSSODelegate)
+  @objc public static func handleURL(_ url: Foundation.URL) -> Swift.Bool
+  @objc public static func setupLang(_ lang: Swift.String)
+  @objc public static func sdkVersion() -> Swift.String
+}
+@objc(LKSSOApp) public class App : ObjectiveC.NSObject {
+  @objc final public let server: LarkSSOSDK.Server
+  @objc final public let appId: Swift.String
+  @objc final public let scheme: Swift.String
+  @objc public init(server: LarkSSOSDK.Server, appId: Swift.String, scheme: Swift.String)
+  @objc override dynamic public var description: Swift.String {
+    @objc get
+  }
+  @objc deinit
+}
+@objc(LKSSORequest) public class SSORequest : ObjectiveC.NSObject {
+  @objc final public let server: LarkSSOSDK.Server
+  @objc public var useChallengeCode: Swift.Bool
+  @objc public var scope: [Swift.String]
+  @objc convenience public init(server: LarkSSOSDK.Server, scope: [Swift.String])
+  @objc public init(server: LarkSSOSDK.Server, scope: [Swift.String], useChallengeCode: Swift.Bool)
+  @objc public static var feishu: LarkSSOSDK.SSORequest {
+    @objc get
+  }
+  @objc public static var lark: LarkSSOSDK.SSORequest {
+    @objc get
+  }
+  @objc override dynamic public var description: Swift.String {
+    @objc get
+  }
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers @objc(LKSSOResponse) public class SSOResponse : ObjectiveC.NSObject {
+  @objc final public let code: Swift.String?
+  @objc final public let codeVerifier: Swift.String?
+  @objc final public let error: LarkSSOSDK.SSOError?
+  @objc public var isSuccess: Swift.Bool {
+    @objc get
+  }
+  @objc public func safeHandleResult(success: (Swift.String) -> Swift.Void, failure: (LarkSSOSDK.SSOError) -> Swift.Void)
+  @objc public func safeHandleResultWithCodeVerifier(success: (_ code: Swift.String, _ codeVerifier: Swift.String) -> Swift.Void, failure: (LarkSSOSDK.SSOError) -> Swift.Void)
+  @objc deinit
+}
+@objc(LKSSOErrorType) public enum SSOErrorType : Swift.Int {
+  case badState = -1
+  case noValidCode = -2
+  case cancelled = -3
+  case canNotJumpToLark = -4
+  case authFailed = -5
+  case badParameters = -6
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@_hasMissingDesignatedInitializers @objc(LKSSOError) public class SSOError : Foundation.NSError {
+  @objc final public let type: LarkSSOSDK.SSOErrorType
+  @objc deinit
+}
+@objc(LKSSOServer) public enum Server : Swift.Int {
+  case feishu
+  case lark
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+extension LarkSSOSDK.SSOErrorType : Swift.Equatable {}
+extension LarkSSOSDK.SSOErrorType : Swift.Hashable {}
+extension LarkSSOSDK.SSOErrorType : Swift.RawRepresentable {}
+extension LarkSSOSDK.Server : Swift.Equatable {}
+extension LarkSSOSDK.Server : Swift.Hashable {}
+extension LarkSSOSDK.Server : Swift.RawRepresentable {}

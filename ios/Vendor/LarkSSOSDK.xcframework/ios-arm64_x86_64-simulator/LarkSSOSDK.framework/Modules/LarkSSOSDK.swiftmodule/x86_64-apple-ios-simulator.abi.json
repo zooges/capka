@@ -1,0 +1,3550 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "TopLevel",
+    "printedName": "TopLevel",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK"
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LarkSSODelegate",
+        "printedName": "LarkSSODelegate",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "lkSSODidReceive",
+            "printedName": "lkSSODidReceive(response:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "SSOResponse",
+                "printedName": "LarkSSOSDK.SSOResponse",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@LarkSSOSDK@objc(pl)LarkSSODelegate(im)lkSSODidReceiveWithResponse:",
+            "mangledName": "$s10LarkSSOSDK0A11SSODelegateP15lkSSODidReceive8responseyAA11SSOResponseC_tF",
+            "moduleName": "LarkSSOSDK",
+            "genericSig": "<τ_0_0 where τ_0_0 : LarkSSOSDK.LarkSSODelegate>",
+            "sugared_genericSig": "<Self where Self : LarkSSOSDK.LarkSSODelegate>",
+            "protocolReq": true,
+            "declAttributes": [
+              "ObjC"
+            ],
+            "reqNewWitnessTableEntry": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Protocol",
+        "usr": "c:@M@LarkSSOSDK@objc(pl)LarkSSODelegate",
+        "mangledName": "$s10LarkSSOSDK0A11SSODelegateP",
+        "moduleName": "LarkSSOSDK",
+        "genericSig": "<τ_0_0 : AnyObject>",
+        "sugared_genericSig": "<Self : AnyObject>",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "LarkSSO",
+        "printedName": "LarkSSO",
+        "children": [
+          {
+            "kind": "Function",
+            "name": "register",
+            "printedName": "register(apps:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[LarkSSOSDK.App]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "App",
+                    "printedName": "LarkSSOSDK.App",
+                    "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)registerWithApps:",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC8register4appsySayAA3AppCG_tFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "objc_name": "registerWithApps:",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setupLog",
+            "printedName": "setupLog()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)setupLog",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC8setupLogSSyFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setupLog",
+            "printedName": "setupLog(did:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)setupLogWithDid:",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC8setupLog3didS2SSg_tFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "objc_name": "setupLogWithDid:",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "DiscardableResult",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "send",
+            "printedName": "send(request:viewController:delegate:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "SSORequest",
+                "printedName": "LarkSSOSDK.SSORequest",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "UIKit.UIViewController?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "UIViewController",
+                    "printedName": "UIKit.UIViewController",
+                    "usr": "c:objc(cs)UIViewController"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "LarkSSODelegate",
+                "printedName": "LarkSSOSDK.LarkSSODelegate",
+                "usr": "c:@M@LarkSSOSDK@objc(pl)LarkSSODelegate"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)sendWithRequest:viewController:delegate:",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC4send7request14viewController8delegateyAA10SSORequestC_So06UIViewG0CSgAA0A11SSODelegate_ptFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "objc_name": "sendWithRequest:viewController:delegate:",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "handleURL",
+            "printedName": "handleURL(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "URL",
+                "printedName": "Foundation.URL",
+                "usr": "s:10Foundation3URLV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)handleURL:",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC9handleURLySb10Foundation0E0VFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setupLang",
+            "printedName": "setupLang(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)setupLang:",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC9setupLangyySSFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "sdkVersion",
+            "printedName": "sdkVersion()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@CM@LarkSSOSDK@objc(cs)LarkSSO(cm)sdkVersion",
+            "mangledName": "$s10LarkSSOSDK0A3SSOC10sdkVersionSSyFZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@LarkSSOSDK@objc(cs)LarkSSO",
+        "mangledName": "$s10LarkSSOSDK0A3SSOC",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "superclassUsr": "c:objc(cs)NSObject",
+        "hasMissingDesignatedInitializers": true,
+        "inheritsConvenienceInitializers": true,
+        "superclassNames": [
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "CommonCrypto",
+        "printedName": "CommonCrypto",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "CommonCrypto",
+        "printedName": "CommonCrypto",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "WebKit",
+        "printedName": "WebKit",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK"
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "LarkSSOSDK",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "App",
+        "printedName": "App",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "server",
+            "printedName": "server",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Server",
+                "printedName": "LarkSSOSDK.Server",
+                "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(py)server",
+            "mangledName": "$s10LarkSSOSDK3AppC6serverAA6ServerOvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Server",
+                    "printedName": "LarkSSOSDK.Server",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(im)server",
+                "mangledName": "$s10LarkSSOSDK3AppC6serverAA6ServerOvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "appId",
+            "printedName": "appId",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(py)appId",
+            "mangledName": "$s10LarkSSOSDK3AppC5appIdSSvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(im)appId",
+                "mangledName": "$s10LarkSSOSDK3AppC5appIdSSvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "scheme",
+            "printedName": "scheme",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(py)scheme",
+            "mangledName": "$s10LarkSSOSDK3AppC6schemeSSvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(im)scheme",
+                "mangledName": "$s10LarkSSOSDK3AppC6schemeSSvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(server:appId:scheme:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "App",
+                "printedName": "LarkSSOSDK.App",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Server",
+                "printedName": "LarkSSOSDK.Server",
+                "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(im)initWithServer:appId:scheme:",
+            "mangledName": "$s10LarkSSOSDK3AppC6server5appId6schemeAcA6ServerO_S2Stcfc",
+            "moduleName": "LarkSSOSDK",
+            "objc_name": "initWithServer:appId:scheme:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "description",
+            "printedName": "description",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(py)description",
+            "mangledName": "$s10LarkSSOSDK3AppC11descriptionSSvp",
+            "moduleName": "LarkSSOSDK",
+            "overriding": true,
+            "objc_name": "description",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(im)description",
+                "mangledName": "$s10LarkSSOSDK3AppC11descriptionSSvg",
+                "moduleName": "LarkSSOSDK",
+                "overriding": true,
+                "objc_name": "description",
+                "declAttributes": [
+                  "Dynamic",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "App",
+                "printedName": "LarkSSOSDK.App",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp(im)init",
+            "mangledName": "$s10LarkSSOSDK3AppCACycfc",
+            "moduleName": "LarkSSOSDK",
+            "overriding": true,
+            "implicit": true,
+            "objc_name": "init",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override"
+            ],
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOApp",
+        "mangledName": "$s10LarkSSOSDK3AppC",
+        "moduleName": "LarkSSOSDK",
+        "objc_name": "LKSSOApp",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "superclassUsr": "c:objc(cs)NSObject",
+        "superclassNames": [
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "SSORequest",
+        "printedName": "SSORequest",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "server",
+            "printedName": "server",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Server",
+                "printedName": "LarkSSOSDK.Server",
+                "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(py)server",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC6serverAA6ServerOvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Server",
+                    "printedName": "LarkSSOSDK.Server",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)server",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC6serverAA6ServerOvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "useChallengeCode",
+            "printedName": "useChallengeCode",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(py)useChallengeCode",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC16useChallengeCodeSbvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)useChallengeCode",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC16useChallengeCodeSbvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)setUseChallengeCode:",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC16useChallengeCodeSbvs",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:10LarkSSOSDK10SSORequestC16useChallengeCodeSbvM",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC16useChallengeCodeSbvM",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "scope",
+            "printedName": "scope",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(py)scope",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC5scopeSaySSGvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)scope",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC5scopeSaySSGvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)setScope:",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC5scopeSaySSGvs",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:10LarkSSOSDK10SSORequestC5scopeSaySSGvM",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC5scopeSaySSGvM",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(server:scope:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSORequest",
+                "printedName": "LarkSSOSDK.SSORequest",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Server",
+                "printedName": "LarkSSOSDK.Server",
+                "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sa"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)initWithServer:scope:",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC6server5scopeAcA6ServerO_SaySSGtcfc",
+            "moduleName": "LarkSSOSDK",
+            "objc_name": "initWithServer:scope:",
+            "declAttributes": [
+              "Convenience",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "init_kind": "Convenience"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(server:scope:useChallengeCode:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSORequest",
+                "printedName": "LarkSSOSDK.SSORequest",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Server",
+                "printedName": "LarkSSOSDK.Server",
+                "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Array",
+                "printedName": "[Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sa"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)initWithServer:scope:useChallengeCode:",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC6server5scope16useChallengeCodeAcA6ServerO_SaySSGSbtcfc",
+            "moduleName": "LarkSSOSDK",
+            "objc_name": "initWithServer:scope:useChallengeCode:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "feishu",
+            "printedName": "feishu",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSORequest",
+                "printedName": "LarkSSOSDK.SSORequest",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(cpy)feishu",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC6feishuACvpZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSORequest",
+                    "printedName": "LarkSSOSDK.SSORequest",
+                    "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(cm)feishu",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC6feishuACvgZ",
+                "moduleName": "LarkSSOSDK",
+                "static": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "lark",
+            "printedName": "lark",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSORequest",
+                "printedName": "LarkSSOSDK.SSORequest",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(cpy)lark",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC4larkACvpZ",
+            "moduleName": "LarkSSOSDK",
+            "static": true,
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSORequest",
+                    "printedName": "LarkSSOSDK.SSORequest",
+                    "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(cm)lark",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC4larkACvgZ",
+                "moduleName": "LarkSSOSDK",
+                "static": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "description",
+            "printedName": "description",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(py)description",
+            "mangledName": "$s10LarkSSOSDK10SSORequestC11descriptionSSvp",
+            "moduleName": "LarkSSOSDK",
+            "overriding": true,
+            "objc_name": "description",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override",
+              "AccessControl"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)description",
+                "mangledName": "$s10LarkSSOSDK10SSORequestC11descriptionSSvg",
+                "moduleName": "LarkSSOSDK",
+                "overriding": true,
+                "objc_name": "description",
+                "declAttributes": [
+                  "Dynamic",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSORequest",
+                "printedName": "LarkSSOSDK.SSORequest",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest(im)init",
+            "mangledName": "$s10LarkSSOSDK10SSORequestCACycfc",
+            "moduleName": "LarkSSOSDK",
+            "overriding": true,
+            "implicit": true,
+            "objc_name": "init",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override"
+            ],
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSORequest",
+        "mangledName": "$s10LarkSSOSDK10SSORequestC",
+        "moduleName": "LarkSSOSDK",
+        "objc_name": "LKSSORequest",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "superclassUsr": "c:objc(cs)NSObject",
+        "superclassNames": [
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "SSOResponse",
+        "printedName": "SSOResponse",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "code",
+            "printedName": "code",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(py)code",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseC4codeSSSgvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)code",
+                "mangledName": "$s10LarkSSOSDK11SSOResponseC4codeSSSgvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "codeVerifier",
+            "printedName": "codeVerifier",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(py)codeVerifier",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseC12codeVerifierSSSgvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)codeVerifier",
+                "mangledName": "$s10LarkSSOSDK11SSOResponseC12codeVerifierSSSgvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "error",
+            "printedName": "error",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "LarkSSOSDK.SSOError?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOError",
+                    "printedName": "LarkSSOSDK.SSOError",
+                    "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(py)error",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseC5errorAA8SSOErrorCSgvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "LarkSSOSDK.SSOError?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOError",
+                        "printedName": "LarkSSOSDK.SSOError",
+                        "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)error",
+                "mangledName": "$s10LarkSSOSDK11SSOResponseC5errorAA8SSOErrorCSgvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "isSuccess",
+            "printedName": "isSuccess",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(py)isSuccess",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseC9isSuccessSbvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Bool",
+                    "printedName": "Swift.Bool",
+                    "usr": "s:Sb"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)isSuccess",
+                "mangledName": "$s10LarkSSOSDK11SSOResponseC9isSuccessSbvg",
+                "moduleName": "LarkSSOSDK",
+                "declAttributes": [
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "safeHandleResult",
+            "printedName": "safeHandleResult(success:failure:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(Swift.String) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "typeAttributes": [
+                  "noescape"
+                ]
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOError) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOError",
+                    "printedName": "LarkSSOSDK.SSOError",
+                    "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError"
+                  }
+                ],
+                "typeAttributes": [
+                  "noescape"
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)safeHandleResultWithSuccess:failure:",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseC16safeHandleResult7success7failureyySSXE_yAA8SSOErrorCXEtF",
+            "moduleName": "LarkSSOSDK",
+            "objc_name": "safeHandleResultWithSuccess:failure:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "safeHandleResultWithCodeVerifier",
+            "printedName": "safeHandleResultWithCodeVerifier(success:failure:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(Swift.String, Swift.String) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Tuple",
+                    "printedName": "(Swift.String, Swift.String)",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "typeAttributes": [
+                  "noescape"
+                ]
+              },
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOError) -> ()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOError",
+                    "printedName": "LarkSSOSDK.SSOError",
+                    "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError"
+                  }
+                ],
+                "typeAttributes": [
+                  "noescape"
+                ]
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)safeHandleResultWithCodeVerifierWithSuccess:failure:",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseC32safeHandleResultWithCodeVerifier7success7failureyySS_SStXE_yAA8SSOErrorCXEtF",
+            "moduleName": "LarkSSOSDK",
+            "objc_name": "safeHandleResultWithCodeVerifierWithSuccess:failure:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC",
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSOResponse",
+                "printedName": "LarkSSOSDK.SSOResponse",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse(im)init",
+            "mangledName": "$s10LarkSSOSDK11SSOResponseCACycfc",
+            "moduleName": "LarkSSOSDK",
+            "overriding": true,
+            "implicit": true,
+            "objc_name": "init",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override"
+            ],
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOResponse",
+        "mangledName": "$s10LarkSSOSDK11SSOResponseC",
+        "moduleName": "LarkSSOSDK",
+        "objc_name": "LKSSOResponse",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "superclassUsr": "c:objc(cs)NSObject",
+        "hasMissingDesignatedInitializers": true,
+        "superclassNames": [
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "SSOErrorType",
+        "printedName": "SSOErrorType",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "badState",
+            "printedName": "badState",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOErrorType.Type) -> LarkSSOSDK.SSOErrorType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.SSOErrorType.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOErrorType",
+                        "printedName": "LarkSSOSDK.SSOErrorType",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType@LKSSOErrorTypeBadState",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO8badStateyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 0
+          },
+          {
+            "kind": "Var",
+            "name": "noValidCode",
+            "printedName": "noValidCode",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOErrorType.Type) -> LarkSSOSDK.SSOErrorType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.SSOErrorType.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOErrorType",
+                        "printedName": "LarkSSOSDK.SSOErrorType",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType@LKSSOErrorTypeNoValidCode",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO11noValidCodeyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 1
+          },
+          {
+            "kind": "Var",
+            "name": "cancelled",
+            "printedName": "cancelled",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOErrorType.Type) -> LarkSSOSDK.SSOErrorType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.SSOErrorType.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOErrorType",
+                        "printedName": "LarkSSOSDK.SSOErrorType",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType@LKSSOErrorTypeCancelled",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO9cancelledyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 2
+          },
+          {
+            "kind": "Var",
+            "name": "canNotJumpToLark",
+            "printedName": "canNotJumpToLark",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOErrorType.Type) -> LarkSSOSDK.SSOErrorType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.SSOErrorType.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOErrorType",
+                        "printedName": "LarkSSOSDK.SSOErrorType",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType@LKSSOErrorTypeCanNotJumpToLark",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO012canNotJumpToA0yA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 3
+          },
+          {
+            "kind": "Var",
+            "name": "authFailed",
+            "printedName": "authFailed",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOErrorType.Type) -> LarkSSOSDK.SSOErrorType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.SSOErrorType.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOErrorType",
+                        "printedName": "LarkSSOSDK.SSOErrorType",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType@LKSSOErrorTypeAuthFailed",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO10authFailedyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 4
+          },
+          {
+            "kind": "Var",
+            "name": "badParameters",
+            "printedName": "badParameters",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.SSOErrorType.Type) -> LarkSSOSDK.SSOErrorType",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.SSOErrorType.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SSOErrorType",
+                        "printedName": "LarkSSOSDK.SSOErrorType",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType@LKSSOErrorTypeBadParameters",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO13badParametersyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 5
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(rawValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "LarkSSOSDK.SSOErrorType?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:10LarkSSOSDK12SSOErrorTypeO8rawValueACSgSi_tcfc",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO8rawValueACSgSi_tcfc",
+            "moduleName": "LarkSSOSDK",
+            "implicit": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "rawValue",
+            "printedName": "rawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:10LarkSSOSDK12SSOErrorTypeO8rawValueSivp",
+            "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO8rawValueSivp",
+            "moduleName": "LarkSSOSDK",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:10LarkSSOSDK12SSOErrorTypeO8rawValueSivg",
+                "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO8rawValueSivg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType",
+        "mangledName": "$s10LarkSSOSDK12SSOErrorTypeO",
+        "moduleName": "LarkSSOSDK",
+        "objc_name": "LKSSOErrorType",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "enumRawTypeName": "Int",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "RawRepresentable",
+            "printedName": "RawRepresentable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "RawValue",
+                "printedName": "RawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:SY",
+            "mangledName": "$sSY"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "SSOError",
+        "printedName": "SSOError",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "type",
+            "printedName": "type",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSOErrorType",
+                "printedName": "LarkSSOSDK.SSOErrorType",
+                "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError(py)type",
+            "mangledName": "$s10LarkSSOSDK8SSOErrorC4typeAA0C4TypeOvp",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "SSOErrorType",
+                    "printedName": "LarkSSOSDK.SSOErrorType",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOErrorType"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError(im)type",
+                "mangledName": "$s10LarkSSOSDK8SSOErrorC4typeAA0C4TypeOvg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(domain:code:userInfo:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "SSOError",
+                "printedName": "LarkSSOSDK.SSOError",
+                "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "[Swift.String : Any]?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : Any]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ProtocolComposition",
+                        "printedName": "Any"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError(im)initWithDomain:code:userInfo:",
+            "mangledName": "$s10LarkSSOSDK8SSOErrorC6domain4code8userInfoACSS_SiSDySSypGSgtcfc",
+            "moduleName": "LarkSSOSDK",
+            "overriding": true,
+            "implicit": true,
+            "objc_name": "initWithDomain:code:userInfo:",
+            "declAttributes": [
+              "Dynamic",
+              "ObjC",
+              "Override"
+            ],
+            "init_kind": "Designated"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@LarkSSOSDK@objc(cs)LKSSOError",
+        "mangledName": "$s10LarkSSOSDK8SSOErrorC",
+        "moduleName": "LarkSSOSDK",
+        "objc_name": "LKSSOError",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "superclassUsr": "c:objc(cs)NSError",
+        "hasMissingDesignatedInitializers": true,
+        "superclassNames": [
+          "Foundation.NSError",
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Error",
+            "printedName": "Error",
+            "usr": "s:s5ErrorP",
+            "mangledName": "$ss5ErrorP"
+          }
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "Server",
+        "printedName": "Server",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "feishu",
+            "printedName": "feishu",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.Server.Type) -> LarkSSOSDK.Server",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Server",
+                    "printedName": "LarkSSOSDK.Server",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.Server.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Server",
+                        "printedName": "LarkSSOSDK.Server",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOServer@LKSSOServerFeishu",
+            "mangledName": "$s10LarkSSOSDK6ServerO6feishuyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 0
+          },
+          {
+            "kind": "Var",
+            "name": "lark",
+            "printedName": "lark",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(LarkSSOSDK.Server.Type) -> LarkSSOSDK.Server",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Server",
+                    "printedName": "LarkSSOSDK.Server",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "LarkSSOSDK.Server.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Server",
+                        "printedName": "LarkSSOSDK.Server",
+                        "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "c:@M@LarkSSOSDK@E@LKSSOServer@LKSSOServerLark",
+            "mangledName": "$s10LarkSSOSDK6ServerO4larkyA2CmF",
+            "moduleName": "LarkSSOSDK",
+            "declAttributes": [
+              "RawDocComment",
+              "ObjC"
+            ],
+            "fixedbinaryorder": 1
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(rawValue:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "LarkSSOSDK.Server?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Server",
+                    "printedName": "LarkSSOSDK.Server",
+                    "usr": "c:@M@LarkSSOSDK@E@LKSSOServer"
+                  }
+                ],
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:10LarkSSOSDK6ServerO8rawValueACSgSi_tcfc",
+            "mangledName": "$s10LarkSSOSDK6ServerO8rawValueACSgSi_tcfc",
+            "moduleName": "LarkSSOSDK",
+            "implicit": true,
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Var",
+            "name": "rawValue",
+            "printedName": "rawValue",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:10LarkSSOSDK6ServerO8rawValueSivp",
+            "mangledName": "$s10LarkSSOSDK6ServerO8rawValueSivp",
+            "moduleName": "LarkSSOSDK",
+            "implicit": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:10LarkSSOSDK6ServerO8rawValueSivg",
+                "mangledName": "$s10LarkSSOSDK6ServerO8rawValueSivg",
+                "moduleName": "LarkSSOSDK",
+                "implicit": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "c:@M@LarkSSOSDK@E@LKSSOServer",
+        "mangledName": "$s10LarkSSOSDK6ServerO",
+        "moduleName": "LarkSSOSDK",
+        "objc_name": "LKSSOServer",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "RawDocComment"
+        ],
+        "enumRawTypeName": "Int",
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "RawRepresentable",
+            "printedName": "RawRepresentable",
+            "children": [
+              {
+                "kind": "TypeWitness",
+                "name": "RawValue",
+                "printedName": "RawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Int",
+                    "printedName": "Swift.Int",
+                    "usr": "s:Si"
+                  }
+                ]
+              }
+            ],
+            "usr": "s:SY",
+            "mangledName": "$sSY"
+          }
+        ]
+      }
+    ],
+    "json_format_version": 8
+  },
+  "ConstValues": [
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/LogHTTPTool.swift",
+      "kind": "BooleanLiteral",
+      "offset": 548,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleResources.swift",
+      "kind": "StringLiteral",
+      "offset": 899,
+      "length": 23,
+      "value": "\"navigation_back_light\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleResources.swift",
+      "kind": "StringLiteral",
+      "offset": 997,
+      "length": 24,
+      "value": "\"navigation_close_light\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/LarkSSO.swift",
+      "kind": "StringLiteral",
+      "offset": 304,
+      "length": 9,
+      "value": "\"LarkSSO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/LarkSSO.swift",
+      "kind": "Dictionary",
+      "offset": 346,
+      "length": 3,
+      "value": "[]"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/SSOLoggerFactory.swift",
+      "kind": "StringLiteral",
+      "offset": 149,
+      "length": 24,
+      "value": "\"internal-api.feishu.cn\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/SSOLoggerFactory.swift",
+      "kind": "StringLiteral",
+      "offset": 200,
+      "length": 28,
+      "value": "\"internal-api.larksuite.com\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/SSOLoggerFactory.swift",
+      "kind": "StringLiteral",
+      "offset": 452,
+      "length": 22,
+      "value": "\"LarkSSO.logTaskQueue\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 141,
+      "length": 7,
+      "value": "\"ERROR\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 165,
+      "length": 6,
+      "value": "\"WARN\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 188,
+      "length": 6,
+      "value": "\"INFO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 212,
+      "length": 7,
+      "value": "\"DEBUG\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 141,
+      "length": 7,
+      "value": "\"ERROR\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 165,
+      "length": 6,
+      "value": "\"WARN\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 188,
+      "length": 6,
+      "value": "\"INFO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 212,
+      "length": 7,
+      "value": "\"DEBUG\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 760,
+      "length": 21,
+      "value": "\"default_tenant_code\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 818,
+      "length": 12,
+      "value": "\"tenantCode\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 865,
+      "length": 10,
+      "value": "\"tenantId\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogInterface.swift",
+      "kind": "StringLiteral",
+      "offset": 905,
+      "length": 5,
+      "value": "\"url\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 136,
+      "length": 20,
+      "value": "\"passport.feishu.cn\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 179,
+      "length": 24,
+      "value": "\"passport.larksuite.com\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 235,
+      "length": 24,
+      "value": "\"passport.feishu-boe.cn\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 289,
+      "length": 28,
+      "value": "\"passport.larksuite-boe.com\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 373,
+      "length": 7,
+      "value": "\"oauth\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 409,
+      "length": 9,
+      "value": "\"\/cancel\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 448,
+      "length": 10,
+      "value": "\"\/failure\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 487,
+      "length": 27,
+      "value": "\"\/suite\/passport\/sdk\/oauth\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 561,
+      "length": 7,
+      "value": "\"state\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 592,
+      "length": 11,
+      "value": "\"client_id\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 626,
+      "length": 6,
+      "value": "\"code\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 660,
+      "length": 12,
+      "value": "\"package_id\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 695,
+      "length": 6,
+      "value": "\"lang\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 730,
+      "length": 13,
+      "value": "\"sdk_version\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 768,
+      "length": 9,
+      "value": "\"sso_sdk\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 807,
+      "length": 14,
+      "value": "\"sdk_platform\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 852,
+      "length": 15,
+      "value": "\"response_type\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 892,
+      "length": 8,
+      "value": "\"source\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 930,
+      "length": 14,
+      "value": "\"redirect_uri\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 968,
+      "length": 7,
+      "value": "\"scope\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1007,
+      "length": 16,
+      "value": "\"code_challenge\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1061,
+      "length": 23,
+      "value": "\"code_challenge_method\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1127,
+      "length": 6,
+      "value": "\"S256\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1183,
+      "length": 10,
+      "value": "\"err_code\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1239,
+      "length": 10,
+      "value": "\"https:\/\/\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1278,
+      "length": 19,
+      "value": "\"lark:\/\/client\/web\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Const.swift",
+      "kind": "StringLiteral",
+      "offset": 1326,
+      "length": 7,
+      "value": "\"1.1.0\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 146,
+      "length": 4,
+      "value": "\"EE\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "IntegerLiteral",
+      "offset": 832,
+      "length": 1,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "IntegerLiteral",
+      "offset": 872,
+      "length": 2,
+      "value": "50"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "BooleanLiteral",
+      "offset": 1208,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "IntegerLiteral",
+      "offset": 1512,
+      "length": 1,
+      "value": "0"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 1627,
+      "length": 21,
+      "value": "\"CFBundleDisplayName\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 1665,
+      "length": 2,
+      "value": "\"\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "Array",
+      "offset": 1717,
+      "length": 2,
+      "value": "[]"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "BooleanLiteral",
+      "offset": 1759,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 1858,
+      "length": 25,
+      "value": "\"SuiteLogin.Upload.Queue\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 2031,
+      "length": 15,
+      "value": "\"UploadManager\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 2103,
+      "length": 23,
+      "value": "\"com.bytedance.larkSSO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogManager.swift",
+      "kind": "StringLiteral",
+      "offset": 2167,
+      "length": 21,
+      "value": "\"SuiteLoginInstallId\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleConfig.swift",
+      "kind": "StringLiteral",
+      "offset": 567,
+      "length": 20,
+      "value": "\"Frameworks\/LarkSSO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleConfig.swift",
+      "kind": "StringLiteral",
+      "offset": 604,
+      "length": 11,
+      "value": "\"framework\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleConfig.swift",
+      "kind": "StringLiteral",
+      "offset": 953,
+      "length": 9,
+      "value": "\"LarkSSO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleConfig.swift",
+      "kind": "StringLiteral",
+      "offset": 979,
+      "length": 8,
+      "value": "\"bundle\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleConfig.swift",
+      "kind": "StringLiteral",
+      "offset": 1064,
+      "length": 13,
+      "value": "\"LarkSSOAuto\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/configurations\/BundleConfig.swift",
+      "kind": "StringLiteral",
+      "offset": 1094,
+      "length": 8,
+      "value": "\"bundle\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Utils.swift",
+      "kind": "StringLiteral",
+      "offset": 206,
+      "length": 12,
+      "value": "\"LarkSSOSDK\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Utils.swift",
+      "kind": "BooleanLiteral",
+      "offset": 2115,
+      "length": 4,
+      "value": "true"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 1222,
+      "length": 7,
+      "value": "\"3.3.3\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 2816,
+      "length": 14,
+      "value": "\"rust_sdk_log\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 3841,
+      "length": 12,
+      "value": "\"SuiteLogin\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 4094,
+      "length": 12,
+      "value": "\"SuiteLogin\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 4162,
+      "length": 16,
+      "value": "\"lark_login_log\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "IntegerLiteral",
+      "offset": 4215,
+      "length": 1,
+      "value": "0"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "BooleanLiteral",
+      "offset": 5850,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 6190,
+      "length": 3,
+      "value": "\" \""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Log\/UploadLog\/UploadLogRequestBody.swift",
+      "kind": "StringLiteral",
+      "offset": 6257,
+      "length": 3,
+      "value": "\"=\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Web\/SSOWebViewController.swift",
+      "kind": "StringLiteral",
+      "offset": 243,
+      "length": 9,
+      "value": "\"LarkSSO\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Web\/SSOWebViewController.swift",
+      "kind": "StringLiteral",
+      "offset": 129,
+      "length": 20,
+      "value": "\"LarkSSOSDK.SSOWebViewController\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 140,
+      "length": 3,
+      "value": "\"LarkSSOSDK.App\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 1899,
+      "length": 3,
+      "value": "\"-\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 1910,
+      "length": 2,
+      "value": "\"\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 2021,
+      "length": 27,
+      "value": "\"generate uuid data failed\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 1492,
+      "length": 10,
+      "value": "\"LarkSSOSDK.SSORequest\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 6398,
+      "length": 11,
+      "value": "\"LarkSSOSDK.SSOResponse\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9334,
+      "length": 2,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9403,
+      "length": 2,
+      "value": "2"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9463,
+      "length": 2,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9538,
+      "length": 2,
+      "value": "4"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9597,
+      "length": 2,
+      "value": "5"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9657,
+      "length": 2,
+      "value": "6"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9334,
+      "length": 1,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9403,
+      "length": 1,
+      "value": "2"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9463,
+      "length": 1,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9538,
+      "length": 1,
+      "value": "4"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9597,
+      "length": 1,
+      "value": "5"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 9657,
+      "length": 1,
+      "value": "6"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 9709,
+      "length": 8,
+      "value": "\"LarkSSOSDK.SSOError\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 10774,
+      "length": 4,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 10774,
+      "length": 4,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "StringLiteral",
+      "offset": 11195,
+      "length": 2,
+      "value": "\"\""
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11795,
+      "length": 1,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11813,
+      "length": 1,
+      "value": "2"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11831,
+      "length": 1,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11850,
+      "length": 1,
+      "value": "4"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11795,
+      "length": 1,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11813,
+      "length": 1,
+      "value": "2"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11831,
+      "length": 1,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11850,
+      "length": 1,
+      "value": "4"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11795,
+      "length": 1,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11813,
+      "length": 1,
+      "value": "2"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11831,
+      "length": 1,
+      "value": "3"
+    },
+    {
+      "filePath": "\/Users\/bytedance\/Code\/Framework\/LarkSSOSDK\/LarkSSOSDK\/src\/Models.swift",
+      "kind": "IntegerLiteral",
+      "offset": 11850,
+      "length": 1,
+      "value": "4"
+    }
+  ]
+}
