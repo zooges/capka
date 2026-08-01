@@ -43,6 +43,7 @@ struct MainShellView: View {
   @State private var showImporter = false
   @State private var importerTypes: [UTType] = [.item]
   @State private var showCamera = false
+  @State private var showScanner = false
   @State private var showPhotoPicker = false
   @State private var photoPicks: [PhotosPickerItem] = []
   @State private var preview = FilePreviewLoader()
@@ -201,6 +202,17 @@ struct MainShellView: View {
           await chat.attach(photoData: data, type: pick.supportedContentTypes.first)
         }
       }
+    }
+    .fullScreenCover(isPresented: $showScanner) {
+      DocumentScanner { url in
+        showScanner = false
+        guard let url else { return }
+        Task {
+          await chat.attach(fileURL: url)
+          try? FileManager.default.removeItem(at: url)
+        }
+      }
+      .ignoresSafeArea()
     }
     .fullScreenCover(isPresented: $showCamera) {
       CameraPicker { image in
@@ -715,6 +727,13 @@ struct MainShellView: View {
             showPhotoPicker = true
           } label: {
             Label("照片", systemImage: "photo.on.rectangle")
+          }
+          if DocumentScanner.isAvailable {
+            Button {
+              showScanner = true
+            } label: {
+              Label("扫描文档", systemImage: "doc.viewfinder")
+            }
           }
           if CameraPicker.isAvailable {
             Button {

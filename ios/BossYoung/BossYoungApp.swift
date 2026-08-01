@@ -6,11 +6,22 @@ struct BossYoungApp: SwiftUI.App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @Environment(\.scenePhase) private var scenePhase
   @State private var session = SessionStore()
+  @State private var appLock = AppLock()
 
   var body: some Scene {
     WindowGroup {
-      RootView()
-        .environment(session)
+      ZStack {
+        RootView()
+          .environment(session)
+          .environment(appLock)
+        if appLock.isLocked {
+          AppLockView(lock: appLock)
+            .transition(.opacity)
+            .zIndex(10)
+        }
+      }
+        .animation(Motion.easeOut(0.2), value: appLock.isLocked)
+        .task { appLock.lockIfEnabled() }
         .onOpenURL { url in
           if FeishuNativeSSO.handleOpenURL(url) {
             return
@@ -31,8 +42,10 @@ struct BossYoungApp: SwiftUI.App {
           switch phase {
           case .background:
             CapkaFeedback.applicationDidEnterBackground()
+            appLock.noteBackgrounded()
           case .active:
             CapkaFeedback.applicationWillEnterForeground()
+            appLock.noteForegrounded()
             if session.isAuthenticated {
               CapkaFeedback.requestNotificationPermissionIfNeeded()
             }

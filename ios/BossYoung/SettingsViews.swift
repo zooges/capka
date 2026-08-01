@@ -155,6 +155,8 @@ private struct SettingsDetailView: View {
 
   @Environment(SessionStore.self) private var session
   @AppStorage(ThemePreference.storageKey) private var themeRaw = ThemePreference.system.rawValue
+  @Environment(AppLock.self) private var appLock
+  @State private var lockEnabled = UserDefaults.standard.bool(forKey: AppLock.enabledKey)
 
   @State private var showAddProvider = false
   @State private var editProvider: ProviderConfig?
@@ -302,6 +304,19 @@ private struct SettingsDetailView: View {
             }
           }
           Spacer(minLength: 0)
+        }
+      }
+
+      if AppLock.isAvailable {
+        sectionCard(title: "应用锁", subtitle: "离开一分钟以上后，回到 App 需要验证身份") {
+          switchRow(
+            title: "使用\(AppLock.biometryLabel)解锁",
+            hint: "对话与文件属于客户资料；开启后未验证前不显示内容。",
+            isOn: lockEnabled
+          ) { on in
+            appLock.setEnabled(on)
+            lockEnabled = on
+          }
         }
       }
 
