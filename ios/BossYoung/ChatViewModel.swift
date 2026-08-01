@@ -168,6 +168,65 @@ final class ChatViewModel {
     isSending = false
   }
 
+  /// Rewrite a user turn and re-run from there. The original stays reachable as
+  /// a sibling, so the ‹ i/N › switcher can go back to it.
+  func edit(messageId: String, newText: String) async {
+    let text = newText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty, let chatId, !isSending, !isBusy else { return }
+    guard let index = messages.firstIndex(where: { $0.id == messageId }) else { return }
+
+    let history = Array(messages.prefix(index))
+    let editedId = UUID().uuidString
+    // Editing keeps whatever was attached to the original turn.
+    let attachments = messages[index].attachments
+
+    messages = history
+    messages.append(ChatUIMessage(id: editedId, role: "user", text: text, isStreaming: false, attachments: attachments))
+    let placeholderId = "pending-\(editedId)"
+    messages.append(ChatUIMessage(id: placeholderId, role: "assistant", text: "", isStreaming: true))
+    streamingMessageId = placeholderId
+    isSending = true
+    error = nil
+
+    do {
+      let res = try await api.editMessage(
+        chatId: chatId,
+        newText: text,
+        editedMessageId: editedId,
+        model: selectedModelId,
+        history: history,
+        attachedFiles: attachments.isEmpty
+          ? nil
+          : attachments.map { ["name": $0.name, "type": $0.type] }
+      )
+      self.chatId = res.chatId
+      activeTaskId = res.taskId
+      CapkaFeedback.replyStarted(chatId: self.chatId)
+      startPolling()
+    } catch CapkaAPIError.unauthorized {
+      await session?.noteUnauthorized()
+      removePlaceholder(placeholderId)
+    } catch {
+      self.error = error.localizedDescription
+      removePlaceholder(placeholderId)
+      // A failed edit must not leave the transcript truncated.
+      await load()
+    }
+    isSending = false
+  }
+
+  /// Flip to the previous/next version of a message. The server decides which
+  /// branch is visible, so the transcript is reloaded rather than patched.
+  func switchBranch(messageId: String, direction: String) async {
+    guard let chatId, !isBusy else { return }
+    do {
+      try await api.switchBranch(chatId: chatId, messageId: messageId, direction: direction)
+      await load()
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
   func send() async {
     let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty || !pendingAttachments.isEmpty else { return }

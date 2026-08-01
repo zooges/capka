@@ -565,7 +565,9 @@ struct MainShellView: View {
                   name: (rel as NSString).lastPathComponent
                 )
               },
-              chatId: chat.chatId
+              chatId: chat.chatId,
+              onEdit: editHandler(chat: chat, message: msg),
+              onSwitchBranch: branchHandler(chat: chat, message: msg)
             )
             .id(msg.id)
             .capkaEntrance(.message)
@@ -584,6 +586,20 @@ struct MainShellView: View {
         guard let id = chat.messages.last?.id else { return }
         proxy.scrollTo(id, anchor: .bottom)
       }
+    }
+  }
+
+  /// Only user turns are editable, and only messages with alternatives get the
+  /// version arrows — nil keeps the affordance off the row entirely.
+  private func editHandler(chat: ChatViewModel, message: ChatUIMessage) -> ((String) -> Void)? {
+    guard message.role == "user" else { return nil }
+    return { text in Task { await chat.edit(messageId: message.id, newText: text) } }
+  }
+
+  private func branchHandler(chat: ChatViewModel, message: ChatUIMessage) -> ((String) -> Void)? {
+    guard message.siblingCount > 1 else { return nil }
+    return { direction in
+      Task { await chat.switchBranch(messageId: message.id, direction: direction) }
     }
   }
 

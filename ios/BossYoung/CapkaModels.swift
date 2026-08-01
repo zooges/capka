@@ -309,6 +309,10 @@ struct ChatUIMessage: Identifiable, Equatable {
   var tools: [String]
   var steps: [MessageStep]
   var attachments: [MessageAttachment]
+  /// Position among alternative versions of this message (edits/regenerations),
+  /// and how many there are — drives the ‹ i/N › switcher.
+  var siblingIndex: Int = 0
+  var siblingCount: Int = 1
   var details: MessageDetails
   var isCompaction: Bool
   /// What the model now sees in place of the collapsed turns, revealed when the
@@ -324,6 +328,8 @@ struct ChatUIMessage: Identifiable, Equatable {
     tools: [String] = [],
     steps: [MessageStep] = [],
     attachments: [MessageAttachment] = [],
+    siblingIndex: Int = 0,
+    siblingCount: Int = 1,
     details: MessageDetails = MessageDetails(),
     isCompaction: Bool = false,
     compactionSummary: String? = nil
@@ -336,6 +342,8 @@ struct ChatUIMessage: Identifiable, Equatable {
     self.tools = tools
     self.steps = steps
     self.attachments = attachments
+    self.siblingIndex = siblingIndex
+    self.siblingCount = siblingCount
     self.details = details
     self.isCompaction = isCompaction
     self.compactionSummary = compactionSummary

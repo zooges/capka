@@ -16,10 +16,16 @@ struct CapkaMessageRow: View {
   var onOpenWorkspacePath: ((String) -> Void)?
   /// Which chat's workspace the reply's files live in.
   var chatId: String?
+  /// Rewrite this user turn and re-run from it.
+  var onEdit: ((String) -> Void)?
+  /// Flip to the previous/next version of this message ("prev" / "next").
+  var onSwitchBranch: ((String) -> Void)?
 
   @State private var showDetails = false
   @State private var copied = false
   @State private var showCompaction = false
+  @State private var editing = false
+  @State private var draft = ""
 
   private var isUser: Bool { message.role == "user" }
 
@@ -59,7 +65,9 @@ struct CapkaMessageRow: View {
             }
           }
         }
-        if !message.text.isEmpty {
+        if editing {
+          userEditor
+        } else if !message.text.isEmpty {
           Text(message.text)
             .font(.system(size: 15))
             .foregroundStyle(Brand.ink)
@@ -68,6 +76,9 @@ struct CapkaMessageRow: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 12)
             .capkaCard(radius: Brand.Radius.xxl)
+        }
+        if !editing, message.siblingCount > 1 {
+          versionSwitcher
         }
       }
       .frame(maxWidth: 300, alignment: .trailing)
@@ -80,7 +91,68 @@ struct CapkaMessageRow: View {
       } label: {
         Label("复制", systemImage: "doc.on.doc")
       }
+      if onEdit != nil, !message.text.isEmpty {
+        Button {
+          draft = message.text
+          editing = true
+        } label: {
+          Label("编辑", systemImage: "pencil")
+        }
+      }
     }
+  }
+
+  /// Inline editor on the bubble itself — the web does the same rather than
+  /// hoisting the text back into the composer, so the turn stays in place.
+  private var userEditor: some View {
+    VStack(alignment: .trailing, spacing: 8) {
+      TextField("修改这条消息", text: $draft, axis: .vertical)
+        .font(.system(size: 15))
+        .lineLimit(1...10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .capkaCard(radius: Brand.Radius.xxl)
+
+      HStack(spacing: 8) {
+        Button("取消") { editing = false }
+          .font(.system(size: 13))
+          .foregroundStyle(Brand.muted)
+        Button("保存并重发") {
+          let text = draft
+          editing = false
+          onEdit?(text)
+        }
+        .font(.system(size: 13, weight: .medium))
+        .foregroundStyle(Brand.onPrimary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(Brand.primary)
+        .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+      }
+    }
+  }
+
+  /// ‹ i/N › across the alternative versions an edit or regenerate produced.
+  private var versionSwitcher: some View {
+    HStack(spacing: 2) {
+      Button { onSwitchBranch?("prev") } label: {
+        Image(systemName: "chevron.left").font(.system(size: 10, weight: .semibold))
+      }
+      .disabled(message.siblingIndex <= 0)
+      .opacity(message.siblingIndex <= 0 ? 0.3 : 1)
+
+      Text("\(message.siblingIndex + 1)/\(message.siblingCount)")
+        .font(.system(size: 11).monospacedDigit())
+
+      Button { onSwitchBranch?("next") } label: {
+        Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold))
+      }
+      .disabled(message.siblingIndex >= message.siblingCount - 1)
+      .opacity(message.siblingIndex >= message.siblingCount - 1 ? 0.3 : 1)
+    }
+    .foregroundStyle(Brand.muted)
+    .buttonStyle(.plain)
   }
 
   // MARK: - Assistant
@@ -205,6 +277,10 @@ struct CapkaMessageRow: View {
             .presentationCompactAdaptation(.popover)
         }
         .accessibilityLabel("详情")
+      }
+
+      if message.siblingCount > 1 {
+        versionSwitcher.padding(.leading, 6)
       }
 
       Spacer()

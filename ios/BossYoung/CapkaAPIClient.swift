@@ -361,7 +361,9 @@ final class CapkaAPIClient: @unchecked Sendable {
     model: String?,
     userMessageId: String?,
     attachedFiles: [[String: String]]?,
-    history: [[String: Any]]? = nil
+    history: [[String: Any]]? = nil,
+    /// `.some(nil)` roots the new version; omit entirely to append to the leaf.
+    parentId: String?? = nil
   ) async throws -> SendChatResponse {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/chat"))
     req.httpMethod = "POST"
@@ -373,6 +375,7 @@ final class CapkaAPIClient: @unchecked Sendable {
     if let userMessageId { body["userMessageId"] = userMessageId }
     if let attachedFiles { body["attachedFiles"] = attachedFiles }
     if let history { body["messages"] = history }
+    if let parentId { body["parentId"] = parentId as Any? ?? NSNull() }
     req.httpBody = try JSONSerialization.data(withJSONObject: body)
     let (data, response) = try await send(req)
     let http = try requireHTTP(response)
@@ -405,6 +408,51 @@ final class CapkaAPIClient: @unchecked Sendable {
       userMessageId: nil,
       attachedFiles: nil,
       history: payload
+    )
+  }
+
+  /// Re-run the turn with the user's message rewritten. The edited message is a
+  /// *sibling* of the original, so `parentId` is whatever preceded it — passing
+  /// it explicitly is what makes the server branch rather than append, keeping
+  /// the previous version reachable through the ‹ i/N › switcher.
+  func editMessage(
+    chatId: String,
+    newText: String,
+    editedMessageId: String,
+    model: String?,
+    history: [ChatUIMessage],
+    attachedFiles: [[String: String]]?
+  ) async throws -> SendChatResponse {
+    var payload: [[String: Any]] = history.map { msg in
+      [
+        "id": msg.id,
+        "role": msg.role,
+        "parts": [["type": "text", "text": msg.text]],
+      ]
+    }
+    payload.append([
+      "id": editedMessageId,
+      "role": "user",
+      "parts": [["type": "text", "text": newText]],
+    ])
+    return try await sendMessage(
+      chatId: chatId,
+      text: newText,
+      model: model,
+      userMessageId: editedMessageId,
+      attachedFiles: attachedFiles,
+      history: payload,
+      parentId: .some(history.last?.id)
+    )
+  }
+
+  /// Point the chat at another sibling's branch. The caller reloads afterwards;
+  /// the server then serves that branch as the visible conversation.
+  func switchBranch(chatId: String, messageId: String, direction: String) async throws {
+    try await mutate(
+      path: "api/chat",
+      method: "PATCH",
+      json: ["chatId": chatId, "messageId": messageId, "direction": direction]
     )
   }
 
@@ -1708,6 +1756,8 @@ final class CapkaAPIClient: @unchecked Sendable {
       tools: tools,
       steps: steps,
       attachments: attachments,
+      siblingIndex: intOf(raw["siblingIndex"]) ?? 0,
+      siblingCount: intOf(raw["siblingCount"]) ?? 1,
       details: details,
       isCompaction: meta?["compaction"] != nil && !(meta?["compaction"] is NSNull),
       compactionSummary: (meta?["compaction"] as? [String: Any])?["summary"] as? String
