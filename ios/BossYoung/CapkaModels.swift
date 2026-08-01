@@ -461,6 +461,40 @@ struct ProviderConfig: Identifiable, Equatable {
   }
 }
 
+/// What the add-connection form needs to know about each provider. Mirrors the
+/// fields of `PROVIDER_META` in `src/lib/providers/registry.ts` that the form
+/// actually reads — same order, same defaults, so the two forms agree.
+struct ProviderOption: Identifiable, Equatable {
+  var id: String
+  var label: String
+  var requiresKey: Bool
+  var requiresBaseUrl: Bool
+  /// Base URL is offered but may be left empty (provider has its own default).
+  var optionalBaseUrl: Bool = false
+  var defaultBaseUrl: String?
+
+  var showsBaseUrl: Bool { requiresBaseUrl || optionalBaseUrl || defaultBaseUrl != nil }
+
+  static let all: [ProviderOption] = [
+    ProviderOption(id: "litellm", label: "OpenAI 兼容端点", requiresKey: true, requiresBaseUrl: true),
+    ProviderOption(id: "openrouter", label: "OpenRouter", requiresKey: true, requiresBaseUrl: false),
+    ProviderOption(id: "openai", label: "OpenAI", requiresKey: true, requiresBaseUrl: false),
+    ProviderOption(id: "azure", label: "Azure OpenAI", requiresKey: true, requiresBaseUrl: true),
+    ProviderOption(id: "anthropic", label: "Anthropic", requiresKey: true, requiresBaseUrl: false, optionalBaseUrl: true),
+    ProviderOption(id: "google", label: "Google Gemini", requiresKey: true, requiresBaseUrl: false),
+    ProviderOption(id: "vertex", label: "Google Vertex AI", requiresKey: true, requiresBaseUrl: false, optionalBaseUrl: true),
+    ProviderOption(id: "bedrock", label: "Amazon Bedrock", requiresKey: true, requiresBaseUrl: true, defaultBaseUrl: "us-east-1"),
+    ProviderOption(id: "deepseek", label: "DeepSeek", requiresKey: true, requiresBaseUrl: false, defaultBaseUrl: "https://api.deepseek.com/v1"),
+    ProviderOption(id: "mistral", label: "Mistral", requiresKey: true, requiresBaseUrl: false, defaultBaseUrl: "https://api.mistral.ai/v1"),
+    ProviderOption(id: "xai", label: "xAI (Grok)", requiresKey: true, requiresBaseUrl: false, defaultBaseUrl: "https://api.x.ai/v1"),
+    ProviderOption(id: "groq", label: "Groq", requiresKey: true, requiresBaseUrl: false, defaultBaseUrl: "https://api.groq.com/openai/v1"),
+    ProviderOption(id: "zhipu", label: "Z.AI (GLM)", requiresKey: true, requiresBaseUrl: false, defaultBaseUrl: "https://api.z.ai/api/paas/v4"),
+    ProviderOption(id: "ollama", label: "Ollama（本地）", requiresKey: false, requiresBaseUrl: true, defaultBaseUrl: "http://localhost:11434/api"),
+  ]
+
+  static func of(_ id: String) -> ProviderOption? { all.first { $0.id == id } }
+}
+
 struct AdminUserRow: Identifiable, Equatable {
   var id: String
   var name: String

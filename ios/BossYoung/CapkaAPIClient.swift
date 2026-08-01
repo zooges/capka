@@ -988,6 +988,63 @@ final class CapkaAPIClient: @unchecked Sendable {
     }
   }
 
+  /// Add a provider connection. Mirrors `POST /api/settings/providers`; the key
+  /// is encrypted server-side with the instance master key, never stored here.
+  func createProvider(
+    provider: String,
+    apiKey: String?,
+    baseUrl: String?,
+    defaultModel: String?,
+    label: String?,
+    shared: Bool,
+    apiStyle: String?
+  ) async throws {
+    var body: [String: Any] = ["provider": provider, "shared": shared]
+    if let apiKey, !apiKey.isEmpty { body["apiKey"] = apiKey }
+    if let baseUrl, !baseUrl.isEmpty { body["baseUrl"] = baseUrl }
+    if let defaultModel, !defaultModel.isEmpty { body["defaultModel"] = defaultModel }
+    if let label, !label.isEmpty { body["label"] = label }
+    if let apiStyle, !apiStyle.isEmpty { body["apiStyle"] = apiStyle }
+    try await mutate(path: "api/settings/providers", method: "POST", json: body)
+  }
+
+  func updateProvider(
+    id: String,
+    defaultModel: String? = nil,
+    label: String? = nil,
+    shared: Bool? = nil,
+    apiStyle: String? = nil
+  ) async throws {
+    var body: [String: Any] = ["id": id]
+    if let defaultModel { body["defaultModel"] = defaultModel }
+    if let label { body["label"] = label }
+    if let shared { body["shared"] = shared }
+    if let apiStyle { body["apiStyle"] = apiStyle }
+    try await mutate(path: "api/settings/providers", method: "PUT", json: body)
+  }
+
+  /// One live call against the provider before saving. Returns the sample reply
+  /// so the admin sees proof it worked, not just a green tick.
+  func testProvider(
+    provider: String,
+    apiKey: String?,
+    modelId: String,
+    baseUrl: String?,
+    apiStyle: String?
+  ) async throws -> String {
+    var body: [String: Any] = ["provider": provider, "modelId": modelId]
+    if let apiKey, !apiKey.isEmpty { body["apiKey"] = apiKey }
+    if let baseUrl, !baseUrl.isEmpty { body["baseUrl"] = baseUrl }
+    if let apiStyle, !apiStyle.isEmpty { body["apiStyle"] = apiStyle }
+    let root = try await mutateJSON(path: "api/settings/providers/test", method: "POST", json: body)
+    return (root["text"] as? String) ?? "连接成功"
+  }
+
+  /// Re-reads every enabled provider's model list into the catalog.
+  func resyncModels() async throws {
+    try await mutate(path: "api/admin/models/resync", method: "POST", json: [:])
+  }
+
   func setProviderEnabled(id: String, enabled: Bool) async throws {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/settings/providers"))
     req.httpMethod = "PUT"
@@ -1199,6 +1256,103 @@ final class CapkaAPIClient: @unchecked Sendable {
 
   /// Generic key/value settings write. The server enforces its own allow-list
   /// (`src/app/api/settings/keys.ts`), so an unknown key comes back 403.
+  // MARK: - Skills / connectors / plugins (writes)
+
+  /// Skills arrive as an Anthropic-compatible zip; the server unpacks and
+  /// validates it (`ingestSkillZip`), so the client just posts the file.
+  func uploadSkillZip(fileURL: URL) async throws {
+    let boundary = "Boundary-\(UUID().uuidString)"
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/skills"))
+    req.httpMethod = "POST"
+    req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+    req.setValue("application/json", forHTTPHeaderField: "Accept")
+
+    var body = Data()
+    func append(_ s: String) { body.append(Data(s.utf8)) }
+    append("--\(boundary)\r\n")
+    append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileURL.lastPathComponent)\"\r\n")
+    append("Content-Type: application/zip\r\n\r\n")
+    body.append(try Data(contentsOf: fileURL))
+    append("\r\n--\(boundary)--\r\n")
+    req.httpBody = body
+
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+  }
+
+  func deleteSkill(id: String) async throws {
+    try await mutate(path: "api/skills", method: "DELETE", query: [URLQueryItem(name: "id", value: id)])
+  }
+
+  func createConnector(
+    name: String,
+    url: String,
+    authKind: String,
+    token: String?,
+    oauthClientId: String?,
+    oauthClientSecret: String?,
+    transport: String?
+  ) async throws {
+    var body: [String: Any] = ["name": name, "url": url, "authKind": authKind]
+    // The server takes bearer auth as a header map, matching the web form.
+    if let token, !token.isEmpty { body["headers"] = ["Authorization": "Bearer \(token)"] }
+    if let oauthClientId, !oauthClientId.isEmpty { body["oauthClientId"] = oauthClientId }
+    if let oauthClientSecret, !oauthClientSecret.isEmpty { body["oauthClientSecret"] = oauthClientSecret }
+    if let transport, !transport.isEmpty { body["transport"] = transport }
+    try await mutate(path: "api/mcp", method: "POST", json: body)
+  }
+
+  func updateConnectorToken(id: String, token: String) async throws {
+    try await mutate(
+      path: "api/mcp",
+      method: "PATCH",
+      json: ["id": id, "headers": ["Authorization": "Bearer \(token)"]]
+    )
+  }
+
+  func deleteConnector(id: String) async throws {
+    try await mutate(path: "api/mcp", method: "DELETE", query: [URLQueryItem(name: "id", value: id)])
+  }
+
+  /// Probe a connector URL before saving. Returns the server's status string
+  /// (`ok`, `needs_login`, `error`, …) plus whatever detail it sent.
+  func testConnector(url: String, token: String?, transport: String?) async throws -> (status: String, detail: String?) {
+    var body: [String: Any] = ["url": url]
+    if let token, !token.isEmpty { body["headers"] = ["Authorization": "Bearer \(token)"] }
+    if let transport, !transport.isEmpty { body["transport"] = transport }
+    let root = try await mutateJSON(path: "api/mcp/test", method: "POST", json: body)
+    let status = (root["status"] as? String) ?? "unknown"
+    let detail = (root["error"] as? String) ?? (root["serverName"] as? String)
+    return (status, detail)
+  }
+
+  func setPluginEnabled(id: String, enabled: Bool) async throws {
+    try await mutate(path: "api/extensions", method: "PATCH", json: ["id": id, "enabled": enabled])
+  }
+
+  func uninstallPlugin(id: String) async throws {
+    try await mutate(path: "api/extensions", method: "DELETE", query: [URLQueryItem(name: "id", value: id)])
+  }
+
+  // MARK: - Admin writes
+
+  func deleteAdminUser(userId: String) async throws {
+    try await mutate(
+      path: "api/admin/users",
+      method: "DELETE",
+      query: [URLQueryItem(name: "userId", value: userId)]
+    )
+  }
+
+  /// `POST /api/admin/auth-config` takes a partial patch; only send what changed.
+  func updateAuthConfig(_ patch: [String: Any]) async throws {
+    try await mutate(path: "api/admin/auth-config", method: "POST", json: patch)
+  }
+
   func putSetting(key: String, value: String) async throws {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/settings"))
     req.httpMethod = "PUT"
@@ -1330,6 +1484,44 @@ final class CapkaAPIClient: @unchecked Sendable {
   var urlSession: URLSession { session }
 
   // MARK: - Helpers
+
+  /// A JSON write that only needs to succeed. `query` goes on the URL (the
+  /// DELETE endpoints here take their id there), `json` in the body.
+  @discardableResult
+  private func mutate(
+    path: String,
+    method: String,
+    json: [String: Any]? = nil,
+    query: [URLQueryItem]? = nil
+  ) async throws -> Data {
+    var comps = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
+    if let query, !query.isEmpty { comps.queryItems = query }
+    var req = URLRequest(url: comps.url!)
+    req.httpMethod = method
+    req.setValue("application/json", forHTTPHeaderField: "Accept")
+    if let json, !json.isEmpty {
+      req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      req.httpBody = try JSONSerialization.data(withJSONObject: json)
+    }
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+    return data
+  }
+
+  /// Same, for the writes whose response body carries something we show.
+  private func mutateJSON(
+    path: String,
+    method: String,
+    json: [String: Any]? = nil,
+    query: [URLQueryItem]? = nil
+  ) async throws -> [String: Any] {
+    let data = try await mutate(path: path, method: method, json: json, query: query)
+    return ((try? JSONSerialization.jsonObject(with: data)) as? [String: Any]) ?? [:]
+  }
 
   /// Single egress point, so every transport failure reaches the UI as one of
   /// our plain-language sentences instead of a raw `NSURLErrorDomain` string.

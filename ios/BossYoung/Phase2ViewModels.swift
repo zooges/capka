@@ -279,6 +279,13 @@ final class WorkspaceViewModel {
 
 // MARK: - Settings
 
+/// Result of a "try it before you save" probe (provider key, connector URL).
+/// Both carry a sentence worth showing, so this is not a plain Bool.
+enum ProbeOutcome {
+  case ok(String)
+  case failed(String)
+}
+
 @MainActor
 @Observable
 final class SettingsViewModel {
@@ -385,6 +392,7 @@ final class SettingsViewModel {
   var pcFolderAccess = "off"
   var agentAutonomy = "supervised"
   var blockPrivateProviderURLs = false
+  var membersCanInstallPlugins = false
   var agentProfile: AgentProfile?
   var policies: [PolicyRow] = []
   var isLoading = false
@@ -468,6 +476,7 @@ final class SettingsViewModel {
       async let pcFoldersTask = api.fetchSetting(key: "pc_folder_access")
       async let autonomyTask = api.fetchSetting(key: "agent_autonomy")
       async let blockPrivateTask = api.fetchSetting(key: "block_private_provider_urls")
+      async let memberInstallTask = api.fetchSetting(key: "members_can_install_plugins")
       async let profileTask = api.fetchAgentProfile()
       async let policiesTask = api.listPolicies()
       adminUsers = (try? await usersTask) ?? []
@@ -485,8 +494,163 @@ final class SettingsViewModel {
       pcFolderAccess = (try? await pcFoldersTask) ?? "off"
       agentAutonomy = (try? await autonomyTask) ?? "supervised"
       blockPrivateProviderURLs = (try? await blockPrivateTask) == "true"
+      membersCanInstallPlugins = (try? await memberInstallTask) == "true"
       agentProfile = try? await profileTask
       policies = (try? await policiesTask) ?? []
+    }
+  }
+
+  // MARK: - Skills / connectors / plugins
+
+  func uploadSkill(fileURL: URL) async {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      let accessing = fileURL.startAccessingSecurityScopedResource()
+      defer { if accessing { fileURL.stopAccessingSecurityScopedResource() } }
+      try await api.uploadSkillZip(fileURL: fileURL)
+      skills = (try? await api.listSkills()) ?? skills
+      savedBanner = "技能已导入"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func deleteSkill(_ skill: SkillInfo) async {
+    do {
+      try await api.deleteSkill(id: skill.id)
+      skills.removeAll { $0.id == skill.id }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func createConnector(
+    name: String,
+    url: String,
+    authKind: String,
+    token: String,
+    oauthClientId: String,
+    oauthClientSecret: String,
+    transport: String?
+  ) async -> Bool {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.createConnector(
+        name: name,
+        url: url,
+        authKind: authKind,
+        token: token,
+        oauthClientId: oauthClientId,
+        oauthClientSecret: oauthClientSecret,
+        transport: transport
+      )
+      connectors = (try? await api.listConnectors()) ?? connectors
+      savedBanner = "连接器已添加"
+      return true
+    } catch {
+      self.error = error.localizedDescription
+      return false
+    }
+  }
+
+  func updateConnectorToken(_ c: ConnectorInfo, token: String) async -> Bool {
+    do {
+      try await api.updateConnectorToken(id: c.id, token: token)
+      savedBanner = "令牌已更新"
+      return true
+    } catch {
+      self.error = error.localizedDescription
+      return false
+    }
+  }
+
+  func deleteConnector(_ c: ConnectorInfo) async {
+    do {
+      try await api.deleteConnector(id: c.id)
+      connectors.removeAll { $0.id == c.id }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func testConnector(url: String, token: String, transport: String?) async -> ProbeOutcome {
+    do {
+      let (status, detail) = try await api.testConnector(url: url, token: token, transport: transport)
+      switch status {
+      case "ok":
+        return .ok(detail.map { "连接成功 · \($0)" } ?? "连接成功")
+      case "needs_login":
+        return .ok("需要在网页完成 OAuth 授权后才能使用")
+      default:
+        return .failed(detail ?? "无法连接（\(status)）")
+      }
+    } catch {
+      return .failed(error.localizedDescription)
+    }
+  }
+
+  func togglePlugin(_ p: PluginInfo) async {
+    do {
+      try await api.setPluginEnabled(id: p.id, enabled: !p.enabled)
+      if let idx = plugins.firstIndex(where: { $0.id == p.id }) {
+        plugins[idx].enabled = !p.enabled
+      }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func uninstallPlugin(_ p: PluginInfo) async {
+    do {
+      try await api.uninstallPlugin(id: p.id)
+      plugins.removeAll { $0.id == p.id }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  /// Write-only: the server encrypts it and never reads it back, so there is
+  /// nothing to prefill the field with.
+  func saveTelegramBotToken(_ token: String) async {
+    let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return }
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.putSetting(key: "telegram_bot_token", value: trimmed)
+      savedBanner = "Bot token 已保存"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func setMembersCanInstallPlugins(_ enabled: Bool) async {
+    membersCanInstallPlugins = enabled
+    await writeSetting(key: "members_can_install_plugins", value: enabled ? "true" : "false") {
+      self.membersCanInstallPlugins = !enabled
+    }
+  }
+
+  func deleteUser(_ user: AdminUserRow) async {
+    do {
+      try await api.deleteAdminUser(userId: user.id)
+      adminUsers.removeAll { $0.id == user.id }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func updateAuthConfig(_ patch: [String: Any]) async {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.updateAuthConfig(patch)
+      authConfig = try? await api.fetchAuthConfig()
+      savedBanner = "认证设置已更新"
+    } catch {
+      self.error = error.localizedDescription
     }
   }
 
@@ -603,6 +767,98 @@ final class SettingsViewModel {
       if let idx = providers.firstIndex(where: { $0.id == p.id }) {
         providers[idx].isActive = !p.isActive
       }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  // MARK: - Provider connections
+
+  func createProvider(
+    provider: String,
+    apiKey: String,
+    baseUrl: String,
+    defaultModel: String,
+    label: String,
+    shared: Bool,
+    apiStyle: String?
+  ) async -> Bool {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.createProvider(
+        provider: provider,
+        apiKey: apiKey,
+        baseUrl: baseUrl,
+        defaultModel: defaultModel,
+        label: label,
+        shared: shared,
+        apiStyle: apiStyle
+      )
+      providers = (try? await api.listProviders()) ?? providers
+      savedBanner = "连接已添加"
+      return true
+    } catch {
+      self.error = error.localizedDescription
+      return false
+    }
+  }
+
+  func updateProvider(
+    _ p: ProviderConfig,
+    defaultModel: String?,
+    label: String?,
+    shared: Bool?,
+    apiStyle: String?
+  ) async -> Bool {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.updateProvider(
+        id: p.id,
+        defaultModel: defaultModel,
+        label: label,
+        shared: shared,
+        apiStyle: apiStyle
+      )
+      providers = (try? await api.listProviders()) ?? providers
+      savedBanner = "连接已更新"
+      return true
+    } catch {
+      self.error = error.localizedDescription
+      return false
+    }
+  }
+
+  /// One live round-trip against the provider. The reply text is handed back so
+  /// the form can show proof rather than a bare tick.
+  func testProvider(
+    provider: String,
+    apiKey: String,
+    modelId: String,
+    baseUrl: String,
+    apiStyle: String?
+  ) async -> ProbeOutcome {
+    do {
+      let text = try await api.testProvider(
+        provider: provider,
+        apiKey: apiKey,
+        modelId: modelId,
+        baseUrl: baseUrl,
+        apiStyle: apiStyle
+      )
+      return .ok(text)
+    } catch {
+      return .failed(error.localizedDescription)
+    }
+  }
+
+  func resyncModels() async {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.resyncModels()
+      savedBanner = "模型列表已重新同步"
     } catch {
       self.error = error.localizedDescription
     }

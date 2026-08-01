@@ -156,6 +156,14 @@ private struct SettingsDetailView: View {
   @Environment(SessionStore.self) private var session
   @AppStorage(ThemePreference.storageKey) private var themeRaw = ThemePreference.system.rawValue
 
+  @State private var showAddProvider = false
+  @State private var editProvider: ProviderConfig?
+  @State private var showAddConnector = false
+  @State private var tokenConnector: ConnectorInfo?
+  @State private var showSkillImporter = false
+  @State private var confirmDeleteUser: AdminUserRow?
+  @State private var telegramBotToken = ""
+
   var body: some View {
     ZStack {
       Brand.cream.ignoresSafeArea()
@@ -186,6 +194,50 @@ private struct SettingsDetailView: View {
     .navigationTitle(tab.title)
     .navigationBarTitleDisplayMode(.inline)
     .toolbarBackground(Brand.cream, for: .navigationBar)
+    .sheet(isPresented: $showAddProvider) {
+      AddProviderSheet(model: model) { showAddProvider = false }
+    }
+    .sheet(item: $editProvider) { p in
+      EditProviderSheet(model: model, provider: p) { editProvider = nil }
+    }
+    .sheet(isPresented: $showAddConnector) {
+      AddConnectorSheet(model: model) { showAddConnector = false }
+    }
+    .sheet(item: $tokenConnector) { c in
+      ConnectorTokenSheet(model: model, connector: c) { tokenConnector = nil }
+    }
+    .fileImporter(
+      isPresented: $showSkillImporter,
+      allowedContentTypes: [.zip],
+      allowsMultipleSelection: false
+    ) { result in
+      guard case .success(let urls) = result, let url = urls.first else { return }
+      Task { await model.uploadSkill(fileURL: url) }
+    }
+    .alert("删除用户", isPresented: Binding(
+      get: { confirmDeleteUser != nil },
+      set: { if !$0 { confirmDeleteUser = nil } }
+    )) {
+      Button("删除", role: .destructive) {
+        if let user = confirmDeleteUser {
+          Task { await model.deleteUser(user) }
+        }
+        confirmDeleteUser = nil
+      }
+      Button("取消", role: .cancel) { confirmDeleteUser = nil }
+    } message: {
+      Text("将永久删除「\(confirmDeleteUser?.name ?? "")」及其聊天记录，此操作无法撤销。")
+    }
+  }
+
+  /// Right-aligned action row under a section's heading.
+  private func actionButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Label(title, systemImage: systemImage)
+        .font(.system(size: 13, weight: .medium))
+        .foregroundStyle(Brand.primary)
+    }
+    .buttonStyle(CapkaPressStyle())
   }
 
   // MARK: - General
@@ -344,53 +396,83 @@ private struct SettingsDetailView: View {
   // MARK: - Connections (providers)
 
   private var connectionsSection: some View {
-    sectionCard(title: "模型连接", subtitle: "提供商 API 密钥与默认模型。新增密钥请在网页完成。") {
-      if model.isLoading && model.providers.isEmpty {
-        ProgressView().tint(Brand.primary).frame(maxWidth: .infinity).padding(.vertical, 12)
-      } else if model.providers.isEmpty {
-        emptyLine("尚未配置提供商")
-      } else {
+    VStack(alignment: .leading, spacing: 18) {
+      sectionCard(title: "模型连接", subtitle: "提供商密钥与默认模型。点一行可修改。") {
         VStack(spacing: 0) {
-          ForEach(Array(model.providers.enumerated()), id: \.element.id) { index, p in
-            Toggle(isOn: Binding(
-              get: { p.isActive },
-              set: { _ in Task { await model.toggleProvider(p) } }
-            )) {
-              VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                  Text(p.displayName)
-                    .font(.system(size: 14))
-                    .foregroundStyle(Brand.ink)
-                  if p.shared {
-                    Text("共享")
-                      .font(.system(size: 10, weight: .medium))
-                      .foregroundStyle(Brand.muted)
-                      .padding(.horizontal, 6)
-                      .padding(.vertical, 2)
-                      .background(Brand.accent)
-                      .clipShape(Capsule())
-                  }
-                }
-                if let modelId = p.defaultModel, !modelId.isEmpty {
-                  Text(modelId)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Brand.muted)
-                    .lineLimit(1)
-                }
-              }
+          if model.isLoading && model.providers.isEmpty {
+            ProgressView().tint(Brand.primary).frame(maxWidth: .infinity).padding(.vertical, 12)
+          } else if model.providers.isEmpty {
+            emptyLine("尚未配置提供商")
+          } else {
+            ForEach(Array(model.providers.enumerated()), id: \.element.id) { index, p in
+              providerRow(p)
+              if index < model.providers.count - 1 { Divider().overlay(Brand.line) }
             }
-            .tint(Brand.primary)
-            .padding(.vertical, 9)
-            .contextMenu {
-              Button(role: .destructive) {
-                Task { await model.deleteProvider(p) }
-              } label: {
-                Label("删除", systemImage: "trash")
-              }
-            }
-            if index < model.providers.count - 1 { Divider().overlay(Brand.line) }
           }
+
+          Divider().overlay(Brand.line)
+
+          HStack(spacing: 16) {
+            actionButton("添加连接", systemImage: "plus") { showAddProvider = true }
+            if model.isAdmin {
+              actionButton("重新同步模型", systemImage: "arrow.triangle.2.circlepath") {
+                Task { await model.resyncModels() }
+              }
+            }
+            Spacer(minLength: 0)
+          }
+          .padding(.vertical, 12)
         }
+      }
+
+      savedBannerLine
+    }
+  }
+
+  private func providerRow(_ p: ProviderConfig) -> some View {
+    HStack(spacing: 10) {
+      Button {
+        editProvider = p
+      } label: {
+        VStack(alignment: .leading, spacing: 2) {
+          HStack(spacing: 6) {
+            Text(p.displayName)
+              .font(.system(size: 14))
+              .foregroundStyle(Brand.ink)
+            if p.shared {
+              Text("共享")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(Brand.muted)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Brand.accent)
+                .clipShape(Capsule())
+            }
+          }
+          Text(p.defaultModel?.isEmpty == false ? p.defaultModel! : "未设默认模型")
+            .font(.system(size: 11))
+            .foregroundStyle(Brand.muted)
+            .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(CapkaPressStyle())
+
+      Toggle("", isOn: Binding(
+        get: { p.isActive },
+        set: { _ in Task { await model.toggleProvider(p) } }
+      ))
+      .labelsHidden()
+      .tint(Brand.primary)
+    }
+    .padding(.vertical, 9)
+    .contextMenu {
+      Button { editProvider = p } label: { Label("修改", systemImage: "pencil") }
+      Button(role: .destructive) {
+        Task { await model.deleteProvider(p) }
+      } label: {
+        Label("删除", systemImage: "trash")
       }
     }
   }
@@ -431,9 +513,24 @@ private struct SettingsDetailView: View {
               }
               .tint(Brand.primary)
               .padding(.vertical, 9)
+              .contextMenu {
+                if skill.mine == true {
+                  Button(role: .destructive) {
+                    Task { await model.deleteSkill(skill) }
+                  } label: {
+                    Label("删除", systemImage: "trash")
+                  }
+                }
+              }
               if index < model.skills.count - 1 { Divider().overlay(Brand.line) }
             }
           }
+          Divider().overlay(Brand.line)
+          HStack {
+            actionButton("导入技能（.zip）", systemImage: "plus") { showSkillImporter = true }
+            Spacer(minLength: 0)
+          }
+          .padding(.vertical, 12)
         }
       case .connectors:
         sectionCard(title: "连接器", subtitle: "已配置的外部服务（MCP）") {
@@ -456,9 +553,23 @@ private struct SettingsDetailView: View {
               }
               .tint(Brand.primary)
               .padding(.vertical, 9)
+              .contextMenu {
+                Button { tokenConnector = c } label: { Label("更新令牌", systemImage: "key") }
+                Button(role: .destructive) {
+                  Task { await model.deleteConnector(c) }
+                } label: {
+                  Label("删除", systemImage: "trash")
+                }
+              }
               if index < model.connectors.count - 1 { Divider().overlay(Brand.line) }
             }
           }
+          Divider().overlay(Brand.line)
+          HStack {
+            actionButton("添加连接器", systemImage: "plus") { showAddConnector = true }
+            Spacer(minLength: 0)
+          }
+          .padding(.vertical, 12)
         }
       case .plugins:
         sectionCard(title: "插件", subtitle: "已安装的扩展包") {
@@ -467,19 +578,26 @@ private struct SettingsDetailView: View {
           } else {
             VStack(spacing: 0) {
               ForEach(Array(model.plugins.enumerated()), id: \.element.id) { index, p in
-                HStack {
+                Toggle(isOn: Binding(
+                  get: { p.enabled },
+                  set: { _ in Task { await model.togglePlugin(p) } }
+                )) {
                   VStack(alignment: .leading, spacing: 2) {
                     Text(p.name).font(.system(size: 14)).foregroundStyle(Brand.ink)
                     if let d = p.description, !d.isEmpty {
                       Text(d).font(.system(size: 11)).foregroundStyle(Brand.muted).lineLimit(2)
                     }
                   }
-                  Spacer()
-                  Text(p.enabled ? "已启用" : "已停用")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Brand.muted)
                 }
+                .tint(Brand.primary)
                 .padding(.vertical, 10)
+                .contextMenu {
+                  Button(role: .destructive) {
+                    Task { await model.uninstallPlugin(p) }
+                  } label: {
+                    Label("卸载", systemImage: "trash")
+                  }
+                }
                 if index < model.plugins.count - 1 { Divider().overlay(Brand.line) }
               }
             }
@@ -732,6 +850,49 @@ private struct SettingsDetailView: View {
   }
 
   private var integrationsSection: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      sectionCard(title: "Telegram 机器人", subtitle: "成员用来在 Telegram 里收发任务的 bot") {
+        VStack(alignment: .leading, spacing: 10) {
+          Text("Bot Token")
+            .font(.system(size: 12.5, weight: .medium))
+            .foregroundStyle(Brand.muted)
+          SecureField("粘贴 BotFather 给的 token", text: $telegramBotToken)
+            .font(.system(size: 15))
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .padding(.horizontal, 12)
+            .frame(height: 44)
+            .background(Brand.accent.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+          Text("保存后由服务端加密存储，不可再读取。留空则不改动。")
+            .font(.system(size: 11))
+            .foregroundStyle(Brand.muted)
+          primaryButton(model.isSaving ? "保存中…" : "保存") {
+            let token = telegramBotToken
+            telegramBotToken = ""
+            Task { await model.saveTelegramBotToken(token) }
+          }
+          .disabled(telegramBotToken.isEmpty || model.isSaving)
+        }
+      }
+
+      sectionCard(title: "插件安装权限", subtitle: "谁可以从市场安装插件") {
+        switchRow(
+          title: "允许成员自行安装",
+          hint: "关闭后只有管理员能安装插件。",
+          isOn: model.membersCanInstallPlugins
+        ) { on in
+          Task { await model.setMembersCanInstallPlugins(on) }
+        }
+      }
+
+      savedBannerLine
+
+      connectorsMirrorCard
+    }
+  }
+
+  private var connectorsMirrorCard: some View {
     sectionCard(title: "集成", subtitle: "组织级连接器（与扩展页相同数据源）") {
       toggleList(
         empty: "暂无连接器",
@@ -754,18 +915,71 @@ private struct SettingsDetailView: View {
   }
 
   private var authenticationSection: some View {
-    sectionCard(title: "认证", subtitle: "登录方式与注册策略") {
+    VStack(alignment: .leading, spacing: 18) {
       if let auth = model.authConfig {
-        kvRow("注册模式", auth.registrationMode ?? "—")
-        kvRow("邮箱注册", auth.emailSignupEnabled ? "已开启" : "已关闭")
-        kvRow("飞书", auth.feishuReady ? (auth.feishuEnabled ? "已就绪 · 开启" : "已就绪 · 关闭") : "未配置")
-        kvRow("Telegram", auth.telegramReady ? (auth.telegramEnabled ? "已就绪 · 开启" : "已就绪 · 关闭") : "未配置")
-        Text("Client ID / Secret 等敏感项请在网页管理端修改。")
+        sectionCard(title: "注册", subtitle: "谁可以创建账号") {
+          VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+              Text("注册模式").font(.system(size: 14)).foregroundStyle(Brand.ink)
+              Text("开放：任何人可直接注册；审批：注册后需管理员批准；关闭：不接受新注册。")
+                .font(.system(size: 11)).foregroundStyle(Brand.muted)
+                .fixedSize(horizontal: false, vertical: true)
+              HStack(spacing: 8) {
+                ForEach([("open", "开放"), ("approval", "审批"), ("closed", "关闭")], id: \.0) { value, label in
+                  pill(label: label, icon: nil, selected: auth.registrationMode == value) {
+                    Task { await model.updateAuthConfig(["registrationMode": value]) }
+                  }
+                }
+                Spacer(minLength: 0)
+              }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 11)
+
+            Divider().overlay(Brand.line)
+
+            switchRow(
+              title: "邮箱注册",
+              hint: "关闭后只能用飞书 / Telegram 登录。",
+              isOn: auth.emailSignupEnabled
+            ) { on in
+              Task { await model.updateAuthConfig(["emailSignupEnabled": on]) }
+            }
+          }
+        }
+
+        sectionCard(title: "飞书登录", subtitle: auth.feishuReady ? "已配置 App ID 与 Secret" : "尚未配置 App ID / Secret") {
+          switchRow(
+            title: "启用飞书登录",
+            hint: auth.feishuReady ? "登录页显示飞书入口。" : "需要先填写 App ID 与 Secret 才能开启。",
+            isOn: auth.feishuEnabled,
+            disabled: !auth.feishuReady
+          ) { on in
+            Task { await model.updateAuthConfig(["feishuEnabled": on]) }
+          }
+        }
+
+        sectionCard(title: "Telegram 登录", subtitle: auth.telegramReady ? "已配置 Client ID 与 Secret" : "尚未配置 Client ID / Secret") {
+          switchRow(
+            title: "启用 Telegram 登录",
+            hint: auth.telegramReady ? "登录页显示 Telegram 入口。" : "需要先填写 Client ID 与 Secret 才能开启。",
+            isOn: auth.telegramEnabled,
+            disabled: !auth.telegramReady
+          ) { on in
+            Task { await model.updateAuthConfig(["enabled": on]) }
+          }
+        }
+
+        Text("App ID / Client Secret 属于一次性写入的敏感项，请在网页管理端填写。")
           .font(.system(size: 12))
           .foregroundStyle(Brand.muted)
-          .padding(.top, 6)
+          .fixedSize(horizontal: false, vertical: true)
+
+        savedBannerLine
       } else {
-        emptyLine("无法加载认证配置（需要管理员权限）")
+        sectionCard(title: "认证", subtitle: "登录方式与注册策略") {
+          emptyLine("无法加载认证配置（需要管理员权限）")
+        }
       }
     }
   }
@@ -968,6 +1182,22 @@ private struct SettingsDetailView: View {
                   }
                   .font(.system(size: 12, weight: .medium))
                   .foregroundStyle(Brand.link)
+                }
+                Menu {
+                  Button(user.status == "suspended" ? "恢复访问" : "暂停访问") {
+                    Task {
+                      await model.setUserStatus(user, status: user.status == "suspended" ? "active" : "suspended")
+                    }
+                  }
+                  Button(role: .destructive) { confirmDeleteUser = user } label: {
+                    Label("删除用户", systemImage: "trash")
+                  }
+                } label: {
+                  Image(systemName: "ellipsis")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Brand.muted)
+                    .frame(width: 26, height: 22)
+                    .contentShape(Rectangle())
                 }
                 Spacer()
                 if let cost = user.cost30d {
