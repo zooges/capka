@@ -433,6 +433,8 @@ struct ChatUIMessage: Identifiable, Equatable {
   /// and how many there are — drives the ‹ i/N › switcher.
   var siblingIndex: Int = 0
   var siblingCount: Int = 1
+  /// Written offline and waiting for a connection — shown as pending, not sent.
+  var isQueued: Bool = false
   var details: MessageDetails
   var isCompaction: Bool
   /// What the model now sees in place of the collapsed turns, revealed when the
@@ -451,6 +453,7 @@ struct ChatUIMessage: Identifiable, Equatable {
     groups: [MessageGroup] = [],
     siblingIndex: Int = 0,
     siblingCount: Int = 1,
+    isQueued: Bool = false,
     details: MessageDetails = MessageDetails(),
     isCompaction: Bool = false,
     compactionSummary: String? = nil
@@ -466,6 +469,7 @@ struct ChatUIMessage: Identifiable, Equatable {
     self.groups = groups
     self.siblingIndex = siblingIndex
     self.siblingCount = siblingCount
+    self.isQueued = isQueued
     self.details = details
     self.isCompaction = isCompaction
     self.compactionSummary = compactionSummary

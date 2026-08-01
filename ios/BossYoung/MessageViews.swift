@@ -84,8 +84,17 @@ struct CapkaMessageRow: View {
         if !editing, message.siblingCount > 1 {
           versionSwitcher
         }
+        if message.isQueued {
+          HStack(spacing: 4) {
+            Image(systemName: "clock").font(.system(size: 9))
+            Text("待发送 · 恢复网络后自动发出")
+              .font(.system(size: 11))
+          }
+          .foregroundStyle(Brand.muted)
+        }
       }
       .frame(maxWidth: 300, alignment: .trailing)
+      .opacity(message.isQueued ? 0.7 : 1)
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 8)

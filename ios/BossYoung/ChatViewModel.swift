@@ -27,6 +27,8 @@ final class ChatViewModel {
   /// When the current turn was queued — the "no task row yet" grace is measured
   /// from here.
   private var turnStartedAt = Date.distantPast
+  /// Drafts written offline, flushed when the connection returns.
+  let outbox = OutboxStore()
   /// How long after queuing a missing task row still means "starting", not "done".
   private static let taskRowGrace: TimeInterval = 25
 
@@ -59,6 +61,44 @@ final class ChatViewModel {
 
   func bind(session: SessionStore) {
     self.session = session
+    outbox.onReconnect = { [weak self] in
+      Task { await self?.flushOutbox() }
+    }
+  }
+
+  /// Send everything queued while offline, oldest first, stopping at the first
+  /// failure so ordering is preserved and a still-flaky link doesn't burn the
+  /// whole queue.
+  func flushOutbox() async {
+    let pending = outbox.beginFlush()
+    defer { outbox.endFlush() }
+    guard !pending.isEmpty else { return }
+
+    for item in pending.sorted(by: { $0.queuedAt < $1.queuedAt }) {
+      do {
+        let res = try await api.sendMessage(
+          chatId: item.chatId ?? chatId,
+          text: item.text,
+          model: item.modelId ?? selectedModelId,
+          userMessageId: item.id,
+          attachedFiles: item.attachments.isEmpty
+            ? nil
+            : item.attachments.map { ["name": $0.name, "type": $0.type] }
+        )
+        outbox.remove(id: item.id)
+        if let index = messages.firstIndex(where: { $0.id == item.id }) {
+          messages[index].isQueued = false
+        }
+        if item.chatId == nil || item.chatId == chatId {
+          chatId = res.chatId
+          activeTaskId = res.taskId
+          CapkaFeedback.replyStarted(chatId: chatId)
+          startPolling()
+        }
+      } catch {
+        break
+      }
+    }
   }
 
   func openChat(_ id: String?) async {
@@ -280,6 +320,31 @@ final class ChatViewModel {
     guard !isSending else { return }
 
     let userId = UUID().uuidString
+
+    // No connection: keep the work rather than throwing an error at a composer
+    // we just cleared. The same id is reused on flush, so the turn cannot be
+    // created twice.
+    guard outbox.isOnline else {
+      outbox.enqueue(OutboxStore.Draft(
+        id: userId,
+        chatId: chatId,
+        text: text,
+        attachments: pendingAttachments.map { .init(name: $0.name, type: $0.type) },
+        modelId: selectedModelId,
+        queuedAt: Date()
+      ))
+      messages.append(ChatUIMessage(
+        id: userId,
+        role: "user",
+        text: text.isEmpty ? "（附件）" : text,
+        isStreaming: false,
+        isQueued: true
+      ))
+      draft = ""
+      pendingAttachments = []
+      return
+    }
+
     let display = text.isEmpty ? "（附件）" : text
     messages.append(ChatUIMessage(id: userId, role: "user", text: display, isStreaming: false))
     let placeholderId = "pending-\(userId)"

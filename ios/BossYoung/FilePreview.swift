@@ -16,6 +16,11 @@ final class FilePreviewLoader {
   var ready: Target?
   var isLoading = false
   var error: String?
+  /// Set when the user chooses 批注 on the previewed file.
+  var markupTarget: Target?
+  /// Where an annotated copy is uploaded back to.
+  var uploadChatId: String?
+  var uploadProjectId: String?
 
   private var task: Task<Void, Never>?
   /// Guards against a superseded download clearing the spinner the newer one
@@ -37,12 +42,36 @@ final class FilePreviewLoader {
           path: path,
           filename: name
         )
+        self?.uploadChatId = chatId
+        self?.uploadProjectId = projectId
         guard self?.generation == token else { return }
         self?.ready = Target(url: url)
       } catch {
         guard self?.generation == token, !Task.isCancelled else { return }
         self?.error = error.localizedDescription
       }
+    }
+  }
+}
+
+extension FilePreviewLoader {
+  /// Only a page-shaped file can be annotated; a spreadsheet has no canvas.
+  static func canMarkUp(_ url: URL) -> Bool {
+    ["pdf", "png", "jpg", "jpeg", "heic"].contains(url.pathExtension.lowercased())
+  }
+
+  /// Upload the annotated copy beside the original. It is a new file, never an
+  /// overwrite — a markup pass is an opinion about a draft, not a correction.
+  func uploadMarkup(_ url: URL) async {
+    do {
+      _ = try await CapkaAPIClient.shared.uploadFile(
+        chatId: uploadChatId,
+        projectId: uploadProjectId,
+        fileURL: url
+      )
+      try? FileManager.default.removeItem(at: url)
+    } catch {
+      self.error = error.localizedDescription
     }
   }
 }
@@ -78,8 +107,24 @@ private struct FilePreviewModifier: ViewModifier {
       }
       .animation(Motion.easeOut(0.2), value: loader.isLoading)
       .sheet(item: $loader.ready) { target in
-        QuickLookSheet(url: target.url) { loader.ready = nil }
-          .ignoresSafeArea()
+        QuickLookSheet(
+          url: target.url,
+          onDone: { loader.ready = nil },
+          onMarkUp: FilePreviewLoader.canMarkUp(target.url)
+            ? {
+              loader.ready = nil
+              loader.markupTarget = target
+            }
+            : nil
+        )
+        .ignoresSafeArea()
+      }
+      .sheet(item: $loader.markupTarget) { target in
+        MarkupView(fileURL: target.url) { annotated in
+          loader.markupTarget = nil
+          guard let annotated else { return }
+          Task { await loader.uploadMarkup(annotated) }
+        }
       }
       .alert("无法预览", isPresented: Binding(
         get: { loader.error != nil },
@@ -98,6 +143,7 @@ private struct FilePreviewModifier: ViewModifier {
 private struct QuickLookSheet: UIViewControllerRepresentable {
   let url: URL
   let onDone: () -> Void
+  var onMarkUp: (() -> Void)?
 
   func makeUIViewController(context: Context) -> UINavigationController {
     let preview = QLPreviewController()
@@ -108,23 +154,35 @@ private struct QuickLookSheet: UIViewControllerRepresentable {
       target: context.coordinator,
       action: #selector(Coordinator.done)
     )
+    if onMarkUp != nil {
+      preview.navigationItem.rightBarButtonItem = UIBarButtonItem(
+        title: "批注",
+        style: .plain,
+        target: context.coordinator,
+        action: #selector(Coordinator.markUp)
+      )
+    }
     return UINavigationController(rootViewController: preview)
   }
 
   func updateUIViewController(_ controller: UINavigationController, context: Context) {}
 
   func makeCoordinator() -> Coordinator {
-    Coordinator(url: url, onDone: onDone)
+    Coordinator(url: url, onDone: onDone, onMarkUp: onMarkUp)
   }
 
   final class Coordinator: NSObject, QLPreviewControllerDataSource {
     private let item: PreviewItem
     private let onDone: () -> Void
+    private let onMarkUp: (() -> Void)?
 
-    init(url: URL, onDone: @escaping () -> Void) {
+    init(url: URL, onDone: @escaping () -> Void, onMarkUp: (() -> Void)?) {
       item = PreviewItem(url: url)
       self.onDone = onDone
+      self.onMarkUp = onMarkUp
     }
+
+    @objc func markUp() { onMarkUp?() }
 
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
 

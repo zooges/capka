@@ -738,6 +738,18 @@ struct MainShellView: View {
       .padding(.top, 12)
       .padding(.bottom, 6)
 
+      if !chat.outbox.isOnline {
+        HStack(spacing: 6) {
+          Image(systemName: "wifi.slash").font(.system(size: 11))
+          Text(chat.outbox.hasPending ? "离线 · 有待发送的消息" : "离线 · 消息会在恢复网络后发出")
+            .font(.system(size: 11))
+          Spacer(minLength: 0)
+        }
+        .foregroundStyle(Brand.muted)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 2)
+      }
+
       HStack(spacing: 6) {
         // On a phone the common case is a photo of a paper document, not a file
         // sitting in the Files app — so 照片 / 拍照 come before 文件.
