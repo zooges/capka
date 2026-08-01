@@ -172,6 +172,51 @@ struct PluginInfo: Identifiable, Equatable {
   var author: String?
 }
 
+/// A plugin source (a git repo of packaged extensions) the instance trusts.
+struct MarketplaceInfo: Identifiable, Equatable {
+  var id: String
+  var url: String
+  var name: String?
+  var owner: String?
+  var pluginCount: Int
+  var refreshedAt: String?
+
+  var displayName: String {
+    if let name, !name.isEmpty { return name }
+    return url
+  }
+}
+
+/// One entry in a marketplace's catalog. `installable` is false for sources the
+/// server can't install from yet, so the row shows but the action doesn't.
+struct CatalogItem: Identifiable, Equatable {
+  var id: String { name }
+  var name: String
+  var description: String?
+  var author: String?
+  var category: String?
+  var kind: String?
+  var installable: Bool
+  var installed: Bool
+}
+
+/// The default tier's spend caps plus the instance-wide monthly budget. Empty
+/// means unlimited/unset, which is why these are strings rather than numbers.
+struct TierLimits: Equatable {
+  var limit5h = ""
+  var limitWeek = ""
+  var limitMonth = ""
+  var budgetMonthly = ""
+}
+
+struct MasterKeyStatus: Equatable {
+  /// `env` / `db` / `missing` — where the encryption key is coming from.
+  var source: String?
+  var dbKeyPresent: Bool
+  /// Only returned while the key still needs to be written down.
+  var key: String?
+}
+
 struct BillingWindow: Identifiable, Equatable {
   var id: String { window }
   var window: String

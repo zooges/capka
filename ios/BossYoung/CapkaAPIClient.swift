@@ -1386,6 +1386,132 @@ final class CapkaAPIClient: @unchecked Sendable {
     try await mutate(path: "api/extensions", method: "DELETE", query: [URLQueryItem(name: "id", value: id)])
   }
 
+  // MARK: - Plugin marketplace
+
+  func listMarketplaces() async throws -> [MarketplaceInfo] {
+    let root = try await mutateJSON(path: "api/admin/marketplaces", method: "GET")
+    let rows = root["marketplaces"] as? [[String: Any]] ?? []
+    return rows.compactMap { o in
+      guard let id = o["id"] as? String, let url = o["url"] as? String else { return nil }
+      return MarketplaceInfo(
+        id: id,
+        url: url,
+        name: o["name"] as? String,
+        owner: o["owner"] as? String,
+        pluginCount: (o["pluginCount"] as? Int) ?? 0,
+        refreshedAt: o["refreshedAt"] as? String
+      )
+    }
+  }
+
+  func addMarketplace(url: String) async throws {
+    try await mutate(path: "api/admin/marketplaces", method: "POST", json: ["url": url])
+  }
+
+  func removeMarketplace(id: String) async throws {
+    try await mutate(
+      path: "api/admin/marketplaces",
+      method: "DELETE",
+      query: [URLQueryItem(name: "id", value: id)]
+    )
+  }
+
+  /// Re-fetch a source's catalog from its repo.
+  func refreshMarketplace(id: String) async throws {
+    try await mutate(path: "api/admin/marketplaces/refresh", method: "POST", json: ["id": id])
+  }
+
+  func marketplaceCatalog(id: String) async throws -> [CatalogItem] {
+    let root = try await mutateJSON(
+      path: "api/admin/marketplaces/catalog",
+      method: "GET",
+      query: [URLQueryItem(name: "id", value: id)]
+    )
+    let items = root["items"] as? [[String: Any]] ?? []
+    return items.compactMap { o in
+      guard let name = o["name"] as? String else { return nil }
+      return CatalogItem(
+        name: name,
+        description: o["description"] as? String,
+        author: o["author"] as? String,
+        category: o["category"] as? String,
+        kind: o["kind"] as? String,
+        installable: (boolValue(o["installable"]) ?? true),
+        installed: (boolValue(o["installed"]) ?? false)
+      )
+    }
+  }
+
+  func installPlugin(marketplaceId: String, pluginName: String) async throws {
+    try await mutate(
+      path: "api/admin/marketplaces/install",
+      method: "POST",
+      json: ["marketplaceId": marketplaceId, "pluginName": pluginName]
+    )
+  }
+
+  func uninstallMarketplacePlugin(marketplaceId: String, pluginName: String) async throws {
+    try await mutate(
+      path: "api/admin/marketplaces/install",
+      method: "DELETE",
+      query: [
+        URLQueryItem(name: "marketplaceId", value: marketplaceId),
+        URLQueryItem(name: "pluginName", value: pluginName),
+      ]
+    )
+  }
+
+  /// Only whether one is configured — the token itself is never read back.
+  func githubTokenConfigured() async throws -> Bool {
+    let root = try await mutateJSON(path: "api/admin/marketplaces/token", method: "GET")
+    return (boolValue(root["configured"]) ?? false)
+  }
+
+  func setGithubToken(_ token: String) async throws {
+    try await mutate(path: "api/admin/marketplaces/token", method: "POST", json: ["token": token])
+  }
+
+  func clearGithubToken() async throws {
+    try await mutate(path: "api/admin/marketplaces/token", method: "DELETE")
+  }
+
+  // MARK: - Billing limits + master key
+
+  /// Sets the default tier's three caps and the instance monthly budget in one
+  /// write, as the web's single save button does. Empty string clears a cap.
+  func setTierLimits(_ limits: TierLimits) async throws {
+    try await mutate(path: "api/admin/billing", method: "PUT", json: [
+      "action": "setLimits",
+      "limit5h": limits.limit5h,
+      "limitWeek": limits.limitWeek,
+      "limitMonth": limits.limitMonth,
+      "budgetMonthly": limits.budgetMonthly,
+    ])
+  }
+
+  /// `nil` clears the override so the user falls back to the default tier.
+  func assignTier(userId: String, tierId: String?) async throws {
+    try await mutate(path: "api/admin/billing", method: "PUT", json: [
+      "action": "assignTier",
+      "userId": userId,
+      "tierId": tierId as Any? ?? NSNull(),
+    ])
+  }
+
+  func fetchMasterKeyStatus() async throws -> MasterKeyStatus {
+    let root = try await mutateJSON(path: "api/admin/security", method: "GET")
+    return MasterKeyStatus(
+      source: root["source"] as? String,
+      dbKeyPresent: (boolValue(root["dbKeyPresent"]) ?? false),
+      key: root["key"] as? String
+    )
+  }
+
+  /// Forgets the database-held key once it has been moved into the environment.
+  func clearDatabaseMasterKey() async throws {
+    try await mutate(path: "api/admin/security", method: "DELETE")
+  }
+
   // MARK: - Admin writes
 
   func deleteAdminUser(userId: String) async throws {

@@ -163,6 +163,9 @@ private struct SettingsDetailView: View {
   @State private var showSkillImporter = false
   @State private var confirmDeleteUser: AdminUserRow?
   @State private var telegramBotToken = ""
+  @State private var githubToken = ""
+  @State private var showAddMarketplace = false
+  @State private var marketplaceURL = ""
 
   var body: some View {
     ZStack {
@@ -213,6 +216,19 @@ private struct SettingsDetailView: View {
     ) { result in
       guard case .success(let urls) = result, let url = urls.first else { return }
       Task { await model.uploadSkill(fileURL: url) }
+    }
+    .alert("添加市场源", isPresented: $showAddMarketplace) {
+      TextField("https://github.com/owner/repo", text: $marketplaceURL)
+        .textInputAutocapitalization(.never)
+        .autocorrectionDisabled()
+      Button("添加") {
+        let url = marketplaceURL
+        marketplaceURL = ""
+        Task { await model.addMarketplace(url: url) }
+      }
+      Button("取消", role: .cancel) { marketplaceURL = "" }
+    } message: {
+      Text("填写打包了扩展的 git 仓库地址。")
     }
     .alert("删除用户", isPresented: Binding(
       get: { confirmDeleteUser != nil },
@@ -571,6 +587,8 @@ private struct SettingsDetailView: View {
           }
           .padding(.vertical, 12)
         }
+      case .marketplace:
+        marketplaceSection
       case .plugins:
         sectionCard(title: "插件", subtitle: "已安装的扩展包") {
           if model.plugins.isEmpty {
@@ -785,8 +803,214 @@ private struct SettingsDetailView: View {
         }
       }
 
+      masterKeyCard
+
       savedBannerLine
     }
+  }
+
+  /// Where the key that encrypts stored provider secrets comes from. A key held
+  /// in the database is a convenience for first boot, not a resting place — the
+  /// point of this card is to get it into the environment and then forget it.
+  @ViewBuilder
+  private var masterKeyCard: some View {
+    sectionCard(title: "加密密钥", subtitle: "用于加密已保存的提供商密钥与令牌") {
+      if let key = model.masterKey {
+        kvRow("来源", masterKeySourceLabel(key.source))
+        kvRow("数据库副本", key.dbKeyPresent ? "存在" : "无")
+        if let secret = key.key, !secret.isEmpty {
+          Text("请把下面这串写入部署环境的 CAPKA_MASTER_KEY，然后删除数据库副本：")
+            .font(.system(size: 11))
+            .foregroundStyle(Brand.warningText)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, 4)
+          HStack {
+            Text(secret)
+              .font(.system(size: 12, design: .monospaced))
+              .foregroundStyle(Brand.ink)
+              .lineLimit(2)
+              .textSelection(.enabled)
+            Spacer(minLength: 8)
+            Button("复制") { UIPasteboard.general.string = secret }
+              .font(.system(size: 12, weight: .medium))
+          }
+          .padding(10)
+          .background(Brand.warningSurface)
+          .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+        }
+        if key.dbKeyPresent {
+          Button(role: .destructive) {
+            Task { await model.clearDatabaseMasterKey() }
+          } label: {
+            Text("删除数据库中的副本")
+              .font(.system(size: 13, weight: .medium))
+              .foregroundStyle(Brand.dangerText)
+          }
+          .padding(.top, 6)
+        }
+      } else {
+        emptyLine("无法读取密钥状态")
+      }
+    }
+  }
+
+  private func masterKeySourceLabel(_ source: String?) -> String {
+    switch source {
+    case "env": return "环境变量（推荐）"
+    case "db": return "数据库"
+    case "missing": return "未设置"
+    case .some(let s): return s
+    case nil: return "—"
+    }
+  }
+
+  private func limitField(_ label: String, text: Binding<String>) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text(label)
+        .font(.system(size: 12.5, weight: .medium))
+        .foregroundStyle(Brand.muted)
+      TextField("不限", text: text)
+        .keyboardType(.decimalPad)
+        .font(.system(size: 15))
+        .padding(.horizontal, 12)
+        .frame(height: 44)
+        .background(Brand.accent.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+    }
+  }
+
+  // MARK: - Marketplace
+
+  private var marketplaceSection: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      sectionCard(title: "市场源", subtitle: "可安装扩展的 git 仓库") {
+        VStack(spacing: 0) {
+          if model.marketplaces.isEmpty {
+            emptyLine("还没有市场源")
+          } else {
+            ForEach(Array(model.marketplaces.enumerated()), id: \.element.id) { index, market in
+              Button {
+                Task { await model.openMarketplace(market) }
+              } label: {
+                HStack(spacing: 10) {
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(market.displayName)
+                      .font(.system(size: 14))
+                      .foregroundStyle(Brand.ink)
+                      .lineLimit(1)
+                    Text("\(market.pluginCount) 个扩展")
+                      .font(.system(size: 11))
+                      .foregroundStyle(Brand.muted)
+                  }
+                  Spacer(minLength: 8)
+                  if model.openMarketplaceId == market.id {
+                    Image(systemName: "checkmark")
+                      .font(.system(size: 12, weight: .semibold))
+                      .foregroundStyle(Brand.primary)
+                  }
+                }
+                .padding(.vertical, 11)
+                .contentShape(Rectangle())
+              }
+              .buttonStyle(CapkaPressStyle())
+              .contextMenu {
+                Button { Task { await model.refreshMarketplace(market) } } label: {
+                  Label("刷新目录", systemImage: "arrow.clockwise")
+                }
+                Button(role: .destructive) {
+                  Task { await model.removeMarketplace(market) }
+                } label: {
+                  Label("移除市场源", systemImage: "trash")
+                }
+              }
+              if index < model.marketplaces.count - 1 { Divider().overlay(Brand.line) }
+            }
+          }
+          Divider().overlay(Brand.line)
+          HStack {
+            actionButton("添加市场源", systemImage: "plus") { showAddMarketplace = true }
+            Spacer(minLength: 0)
+          }
+          .padding(.vertical, 12)
+        }
+      }
+
+      if model.openMarketplaceId != nil {
+        sectionCard(title: "可安装的扩展", subtitle: "安装后会出现在插件列表里") {
+          if model.isLoading && model.catalog.isEmpty {
+            ProgressView().tint(Brand.primary).frame(maxWidth: .infinity).padding(.vertical, 12)
+          } else if model.catalog.isEmpty {
+            emptyLine("这个源里没有扩展")
+          } else {
+            VStack(spacing: 0) {
+              ForEach(Array(model.catalog.enumerated()), id: \.element.id) { index, item in
+                catalogRow(item)
+                if index < model.catalog.count - 1 { Divider().overlay(Brand.line) }
+              }
+            }
+          }
+        }
+      }
+
+      sectionCard(title: "GitHub Token", subtitle: "访问私有仓库或提高速率限制时才需要") {
+        VStack(alignment: .leading, spacing: 10) {
+          kvRow("状态", model.githubTokenConfigured ? "已配置" : "未配置")
+          SecureField("粘贴 token", text: $githubToken)
+            .font(.system(size: 15))
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .padding(.horizontal, 12)
+            .frame(height: 44)
+            .background(Brand.accent.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+          HStack(spacing: 12) {
+            primaryButton(model.isSaving ? "保存中…" : "保存") {
+              let token = githubToken
+              githubToken = ""
+              Task { await model.saveGithubToken(token) }
+            }
+            .disabled(githubToken.isEmpty || model.isSaving)
+            if model.githubTokenConfigured {
+              Button("清除") { Task { await model.clearGithubToken() } }
+                .font(.system(size: 13))
+                .foregroundStyle(Brand.dangerText)
+            }
+          }
+        }
+      }
+
+      savedBannerLine
+    }
+  }
+
+  private func catalogRow(_ item: CatalogItem) -> some View {
+    HStack(spacing: 10) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(item.name).font(.system(size: 14)).foregroundStyle(Brand.ink)
+        if let d = item.description, !d.isEmpty {
+          Text(d).font(.system(size: 11)).foregroundStyle(Brand.muted).lineLimit(2)
+        }
+        if let author = item.author, !author.isEmpty {
+          Text(author).font(.system(size: 10)).foregroundStyle(Brand.muted.opacity(0.8))
+        }
+      }
+      Spacer(minLength: 8)
+      if item.installed {
+        Button("卸载") { Task { await model.uninstallFromMarketplace(item) } }
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.dangerText)
+      } else if item.installable {
+        Button("安装") { Task { await model.installFromMarketplace(item) } }
+          .font(.system(size: 12, weight: .medium))
+          .foregroundStyle(Brand.link)
+          .disabled(model.isSaving)
+      } else {
+        Text("不可安装")
+          .font(.system(size: 11))
+          .foregroundStyle(Brand.muted)
+      }
+    }
+    .padding(.vertical, 10)
   }
 
   /// The instance-wide agent ceiling. It only ever restricts: a project asking
@@ -1074,7 +1298,8 @@ private struct SettingsDetailView: View {
   // MARK: - Billing
 
   private var billingAdminSection: some View {
-    VStack(alignment: .leading, spacing: 18) {
+    @Bindable var model = model
+    return VStack(alignment: .leading, spacing: 18) {
       sectionCard(title: "密钥模式", subtitle: "成员用共享密钥、自带密钥，还是两者皆可") {
         VStack(spacing: 0) {
           let modes = [
@@ -1108,12 +1333,44 @@ private struct SettingsDetailView: View {
         }
       }
 
-      sectionCard(title: "预算", subtitle: "实例的月度上限") {
-        kvRow("月度预算", model.adminMonthlyBudget.map { String(format: "%.2f", $0) } ?? "未设置")
-        Text("层级额度与逐人分配请在网页完成。")
-          .font(.system(size: 12))
-          .foregroundStyle(Brand.muted)
-          .padding(.top, 4)
+      sectionCard(title: "默认层级额度", subtitle: "留空表示不限；单位与用量页一致") {
+        VStack(alignment: .leading, spacing: 12) {
+          limitField("5 小时上限", text: $model.tierLimits.limit5h)
+          limitField("每周上限", text: $model.tierLimits.limitWeek)
+          limitField("每月上限", text: $model.tierLimits.limitMonth)
+          limitField("实例月度预算", text: $model.tierLimits.budgetMonthly)
+          primaryButton(model.isSaving ? "保存中…" : "保存额度") {
+            Task { await model.saveTierLimits() }
+          }
+          .disabled(model.isSaving)
+        }
+      }
+
+      sectionCard(title: "逐人层级", subtitle: "为个别成员指定层级；清除则回落到默认层级") {
+        if model.adminUsers.isEmpty {
+          emptyLine("还没有用户")
+        } else {
+          VStack(spacing: 0) {
+            ForEach(Array(model.adminUsers.enumerated()), id: \.element.id) { index, user in
+              HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(user.name).font(.system(size: 14)).foregroundStyle(Brand.ink)
+                  if let email = user.email {
+                    Text(email).font(.system(size: 11)).foregroundStyle(Brand.muted).lineLimit(1)
+                  }
+                }
+                Spacer(minLength: 8)
+                Button("回落到默认") {
+                  Task { await model.assignDefaultTier(user) }
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(Brand.link)
+              }
+              .padding(.vertical, 10)
+              if index < model.adminUsers.count - 1 { Divider().overlay(Brand.line) }
+            }
+          }
+        }
       }
 
       savedBannerLine

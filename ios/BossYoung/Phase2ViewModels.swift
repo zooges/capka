@@ -358,6 +358,7 @@ final class SettingsViewModel {
     case skills = "技能"
     case connectors = "连接器"
     case plugins = "插件"
+    case marketplace = "市场"
     var id: String { rawValue }
   }
 
@@ -395,6 +396,13 @@ final class SettingsViewModel {
   var membersCanInstallPlugins = false
   var agentProfile: AgentProfile?
   var policies: [PolicyRow] = []
+  var marketplaces: [MarketplaceInfo] = []
+  /// Catalog of the source currently open, keyed by its id.
+  var catalog: [CatalogItem] = []
+  var openMarketplaceId: String?
+  var githubTokenConfigured = false
+  var tierLimits = TierLimits()
+  var masterKey: MasterKeyStatus?
   var isLoading = false
   var isSaving = false
   var error: String?
@@ -497,6 +505,151 @@ final class SettingsViewModel {
       membersCanInstallPlugins = (try? await memberInstallTask) == "true"
       agentProfile = try? await profileTask
       policies = (try? await policiesTask) ?? []
+
+      async let marketsTask = api.listMarketplaces()
+      async let tokenTask = api.githubTokenConfigured()
+      async let keyTask = api.fetchMasterKeyStatus()
+      marketplaces = (try? await marketsTask) ?? []
+      githubTokenConfigured = (try? await tokenTask) ?? false
+      masterKey = try? await keyTask
+      if let b = try? await api.fetchAdminBilling() {
+        adminMonthlyBudget = b.monthlyBudget
+        tierLimits.budgetMonthly = b.monthlyBudget.map { String(format: "%g", $0) } ?? ""
+      }
+    }
+  }
+
+  // MARK: - Marketplace
+
+  func openMarketplace(_ market: MarketplaceInfo) async {
+    openMarketplaceId = market.id
+    catalog = []
+    isLoading = true
+    defer { isLoading = false }
+    catalog = (try? await api.marketplaceCatalog(id: market.id)) ?? []
+  }
+
+  func addMarketplace(url: String) async -> Bool {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.addMarketplace(url: url.trimmingCharacters(in: .whitespacesAndNewlines))
+      marketplaces = (try? await api.listMarketplaces()) ?? marketplaces
+      savedBanner = "市场源已添加"
+      return true
+    } catch {
+      self.error = error.localizedDescription
+      return false
+    }
+  }
+
+  func refreshMarketplace(_ market: MarketplaceInfo) async {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.refreshMarketplace(id: market.id)
+      marketplaces = (try? await api.listMarketplaces()) ?? marketplaces
+      if openMarketplaceId == market.id {
+        catalog = (try? await api.marketplaceCatalog(id: market.id)) ?? catalog
+      }
+      savedBanner = "已刷新"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func removeMarketplace(_ market: MarketplaceInfo) async {
+    do {
+      try await api.removeMarketplace(id: market.id)
+      marketplaces.removeAll { $0.id == market.id }
+      if openMarketplaceId == market.id {
+        openMarketplaceId = nil
+        catalog = []
+      }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func installFromMarketplace(_ item: CatalogItem) async {
+    guard let marketplaceId = openMarketplaceId else { return }
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.installPlugin(marketplaceId: marketplaceId, pluginName: item.name)
+      catalog = (try? await api.marketplaceCatalog(id: marketplaceId)) ?? catalog
+      plugins = (try? await api.listPlugins()) ?? plugins
+      savedBanner = "已安装「\(item.name)」"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func uninstallFromMarketplace(_ item: CatalogItem) async {
+    guard let marketplaceId = openMarketplaceId else { return }
+    do {
+      try await api.uninstallMarketplacePlugin(marketplaceId: marketplaceId, pluginName: item.name)
+      catalog = (try? await api.marketplaceCatalog(id: marketplaceId)) ?? catalog
+      plugins = (try? await api.listPlugins()) ?? plugins
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func saveGithubToken(_ token: String) async {
+    let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return }
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.setGithubToken(trimmed)
+      githubTokenConfigured = true
+      savedBanner = "GitHub token 已保存"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func clearGithubToken() async {
+    do {
+      try await api.clearGithubToken()
+      githubTokenConfigured = false
+      savedBanner = "GitHub token 已清除"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  // MARK: - Billing limits + master key
+
+  func saveTierLimits() async {
+    isSaving = true
+    defer { isSaving = false }
+    do {
+      try await api.setTierLimits(tierLimits)
+      savedBanner = "额度已保存"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  /// Clears a hand-assigned tier so the member falls back to the default one.
+  func assignDefaultTier(_ user: AdminUserRow) async {
+    do {
+      try await api.assignTier(userId: user.id, tierId: nil)
+      savedBanner = "「\(user.name)」已回落到默认层级"
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func clearDatabaseMasterKey() async {
+    do {
+      try await api.clearDatabaseMasterKey()
+      masterKey = try? await api.fetchMasterKeyStatus()
+      savedBanner = "数据库中的密钥副本已删除"
+    } catch {
+      self.error = error.localizedDescription
     }
   }
 
