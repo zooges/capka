@@ -12,6 +12,8 @@ struct CapkaMessageRow: View {
   var regenerateDisabled: Bool = false
   /// Opens an attached file in Quick Look; the screen owns the loader.
   var onOpenAttachment: ((MessageAttachment) -> Void)?
+  /// Opens a `/workspace/…` path the reply named. Same loader as attachments.
+  var onOpenWorkspacePath: ((String) -> Void)?
 
   @State private var showDetails = false
   @State private var copied = false
@@ -20,13 +22,22 @@ struct CapkaMessageRow: View {
   private var isUser: Bool { message.role == "user" }
 
   var body: some View {
-    if message.isCompaction {
-      compactionDivider
-    } else if isUser {
-      userBubble
-    } else {
-      assistantBody
+    Group {
+      if message.isCompaction {
+        compactionDivider
+      } else if isUser {
+        userBubble
+      } else {
+        assistantBody
+      }
     }
+    // Text links go out through openURL; intercept the workspace ones so a file
+    // the reply names opens in Quick Look rather than bouncing to Safari.
+    .environment(\.openURL, OpenURLAction { url in
+      guard let rel = WorkspaceLinks.path(from: url) else { return .systemAction }
+      onOpenWorkspacePath?(rel)
+      return .handled
+    })
   }
 
   // MARK: - User
@@ -116,7 +127,7 @@ struct CapkaMessageRow: View {
   }
 
   private var footer: some View {
-    HStack(spacing: 14) {
+    HStack(spacing: 0) {
       Button {
         UIPasteboard.general.string = message.text
         copied = true
@@ -128,7 +139,7 @@ struct CapkaMessageRow: View {
         Image(systemName: copied ? "checkmark" : "doc.on.doc")
           .font(.system(size: 13))
           .foregroundStyle(Brand.muted)
-          .frame(width: 28, height: 28)
+          .frame(width: 30, height: 30)
           .contentShape(Rectangle())
       }
       .accessibilityLabel("复制")
@@ -140,7 +151,7 @@ struct CapkaMessageRow: View {
           Image(systemName: "arrow.clockwise")
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Brand.muted)
-            .frame(width: 28, height: 28)
+            .frame(width: 30, height: 30)
             .contentShape(Rectangle())
         }
         .disabled(regenerateDisabled)
@@ -153,7 +164,7 @@ struct CapkaMessageRow: View {
           Image(systemName: "info.circle")
             .font(.system(size: 13))
             .foregroundStyle(Brand.muted)
-            .frame(width: 28, height: 28)
+            .frame(width: 30, height: 30)
             .contentShape(Rectangle())
         }
         .popover(isPresented: $showDetails) {
@@ -798,12 +809,88 @@ struct MarkdownBody: View {
   }
 }
 
+/// The `/workspace/…` paths an assistant writes are files it just produced, so
+/// they must read as files, not as raw paths. Mirrors `remarkWorkspacePaths` +
+/// `artifacts.ts` on the web: same pattern, same traversal rejection, same
+/// "caption it with the file name" result.
+enum WorkspaceLinks {
+  static let scheme = "capka-workspace"
+
+  /// Same expression as `WORKSPACE_PATH_RE`, including the Unicode classes that
+  /// let zh-CN file names become links too.
+  private static let pattern = #"/workspace/((?:(?!/workspace/)[\p{L}\p{N}\p{M}/._\- ()\[\]（）【】])+\.\w+)"#
+
+  private static let regex = try? NSRegularExpression(pattern: pattern)
+
+  /// A captured path is only safe if it stays inside the workspace. A prompt-
+  /// injected reply could otherwise produce a tappable `/workspace/../../etc/…`.
+  static func isSafe(_ rel: String) -> Bool {
+    guard !rel.hasPrefix("/") else { return false }
+    return rel.split(separator: "/", omittingEmptySubsequences: false)
+      .allSatisfy { $0 != ".." && $0 != "." }
+  }
+
+  static func url(for rel: String) -> URL? {
+    guard let encoded = rel.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { return nil }
+    return URL(string: "\(scheme)://open?path=\(encoded)")
+  }
+
+  static func path(from url: URL) -> String? {
+    guard url.scheme == scheme else { return nil }
+    guard let raw = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+      .queryItems?.first(where: { $0.name == "path" })?.value
+    else { return nil }
+    let rel = raw.removingPercentEncoding ?? raw
+    return isSafe(rel) ? rel : nil
+  }
+
+  /// Rewrite bare paths — and paths the model wrapped in inline code — into
+  /// markdown links captioned with the file name, before the string reaches the
+  /// markdown parser.
+  static func linkify(_ raw: String) -> String {
+    guard let regex else { return raw }
+    let source = raw as NSString
+    let matches = regex.matches(in: raw, range: NSRange(location: 0, length: source.length))
+    guard !matches.isEmpty else { return raw }
+
+    var out = ""
+    var cursor = 0
+    for match in matches {
+      guard match.numberOfRanges > 1 else { continue }
+      let rel = source.substring(with: match.range(at: 1))
+      guard isSafe(rel), let url = url(for: rel) else { continue }
+
+      // Swallow the backticks when the whole path sits in inline code, so the
+      // result is one link rather than a link inside a code chip.
+      var start = match.range.location
+      var end = match.range.location + match.range.length
+      if start > 0, end < source.length,
+         source.substring(with: NSRange(location: start - 1, length: 1)) == "`",
+         source.substring(with: NSRange(location: end, length: 1)) == "`" {
+        start -= 1
+        end += 1
+      }
+      guard start >= cursor else { continue }
+
+      out += source.substring(with: NSRange(location: cursor, length: start - cursor))
+      let name = (rel as NSString).lastPathComponent
+        .replacingOccurrences(of: "[", with: "\\[")
+        .replacingOccurrences(of: "]", with: "\\]")
+      out += "[\(name)](\(url.absoluteString))"
+      cursor = end
+    }
+    guard cursor > 0 else { return raw }
+    out += source.substring(from: cursor)
+    return out
+  }
+}
+
 /// Inline markdown → `AttributedString`, with the chip treatment `.chat-prose`
 /// gives inline code and the palette's one accent hue for links.
 enum MarkdownInline {
   static func attributed(_ raw: String, size: CGFloat, color: Color) -> AttributedString {
     var string = (try? AttributedString(
-      markdown: raw,
+      markdown: WorkspaceLinks.linkify(raw),
       options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
     )) ?? AttributedString(raw)
 
@@ -813,9 +900,16 @@ enum MarkdownInline {
         string[run.range].backgroundColor = Brand.accent
         string[run.range].foregroundColor = color
       }
-      if run.link != nil {
+      if let link = run.link {
+        // A workspace file reads as a file, not as a web link: same accent, but
+        // medium weight and underlined so it looks like something to open.
+        if link.scheme == WorkspaceLinks.scheme {
+          string[run.range].font = .system(size: size, weight: .medium)
+          string[run.range].underlineStyle = .single
+        } else {
+          string[run.range].underlineStyle = nil
+        }
         string[run.range].foregroundColor = Brand.link
-        string[run.range].underlineStyle = nil
       }
     }
     return string

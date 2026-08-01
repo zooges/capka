@@ -24,6 +24,11 @@ final class ChatViewModel {
   private weak var session: SessionStore?
   private var streamingMessageId: String?
   private var pollTask: Task<Void, Never>?
+  /// When the current turn was queued — the "no task row yet" grace is measured
+  /// from here.
+  private var turnStartedAt = Date.distantPast
+  /// How long after queuing a missing task row still means "starting", not "done".
+  private static let taskRowGrace: TimeInterval = 25
 
   init(chatId: String? = nil) {
     self.chatId = chatId
@@ -329,20 +334,33 @@ final class ChatViewModel {
 
   // MARK: - Polling fallback (when SSE misses finish)
 
+  /// Safety net only — a turn ends because the server says so, never because a
+  /// client timer ran out. A cold sandbox plus a few tool calls routinely runs
+  /// for minutes, and the old fixed 40-tick budget cut the transcript off at
+  /// 100s while the run was still going.
+  private static let pollDeadline: TimeInterval = 30 * 60
+
   private func startPolling() {
     stopPolling()
     guard chatId != nil else { return }
+    turnStartedAt = Date()
     pollTask = Task { [weak self] in
-      for _ in 0..<40 {
-        try? await Task.sleep(nanoseconds: 2_500_000_000)
+      let deadline = Date().addingTimeInterval(Self.pollDeadline)
+      // Tight at first (most turns finish quickly), easing off so a long run
+      // isn't hammering the endpoint for minutes.
+      var interval: UInt64 = 2_000_000_000
+      while Date() < deadline {
+        try? await Task.sleep(nanoseconds: interval)
         guard let self, !Task.isCancelled else { return }
         await self.pollOnce()
         if self.activeTaskId == nil && !self.messages.contains(where: { $0.isStreaming }) {
           return
         }
+        interval = min(interval + 1_000_000_000, 10_000_000_000)
       }
-      // Last resort: reload and clear spinner.
-      await self?.reloadAfterFinish()
+      // Past the safety cap we still don't claim it finished: reload once so a
+      // completed run lands, and leave anything still running alone.
+      await self?.pollOnce()
     }
   }
 
@@ -369,8 +387,10 @@ final class ChatViewModel {
         }
         return
       }
-      // No task row — still try a history reload if we think we're streaming.
-      if isBusy {
+      // No task row yet. Right after send the worker may not have claimed one,
+      // so treating that as "finished" would kill the turn before it starts —
+      // stay put until the grace window has passed.
+      if isBusy, Date().timeIntervalSince(turnStartedAt) > Self.taskRowGrace {
         await reloadAfterFinish()
       }
     } catch CapkaAPIError.unauthorized {

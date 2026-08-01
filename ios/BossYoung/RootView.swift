@@ -557,6 +557,13 @@ struct MainShellView: View {
               // Uploads land at the workspace root, so the name is the path.
               onOpenAttachment: { file in
                 preview.open(chatId: chat.chatId, path: file.name, name: file.name)
+              },
+              onOpenWorkspacePath: { rel in
+                preview.open(
+                  chatId: chat.chatId,
+                  path: rel,
+                  name: (rel as NSString).lastPathComponent
+                )
               }
             )
             .id(msg.id)
