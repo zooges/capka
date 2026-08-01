@@ -456,6 +456,30 @@ final class CapkaAPIClient: @unchecked Sendable {
     )
   }
 
+  /// Answer a suspended `ask` (or an MCP elicitation). Resolving it resumes the
+  /// SAME turn server-side — there is no new message to send.
+  func answerAsk(
+    messageId: String,
+    toolCallId: String?,
+    action: String,
+    values: [String: [String]],
+    kind: String
+  ) async throws {
+    // Single-value fields go back as scalars, matching `askAnswerSchema`.
+    var payload: [String: Any] = [:]
+    for (key, value) in values where !value.isEmpty {
+      payload[key] = value.count == 1 ? value[0] : value
+    }
+    var body: [String: Any] = [
+      "messageId": messageId,
+      "action": action,
+      "values": action == "submit" ? payload : [:],
+      "kind": kind,
+    ]
+    if let toolCallId { body["toolCallId"] = toolCallId }
+    try await mutate(path: "api/ask/answer", method: "POST", json: body)
+  }
+
   func cancelTask(taskId: String) async throws {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/tasks/\(taskId)/cancel"))
     req.httpMethod = "POST"
@@ -1757,6 +1781,46 @@ final class CapkaAPIClient: @unchecked Sendable {
     }
   }
 
+  /// Reads an `ask` tool part into the question card. Mirrors `askFormSchema`
+  /// plus the state the web's `AskCard` keys off.
+  private static func parseAskCard(part: [String: Any], form: [String: Any]) -> AskCardData {
+    let fields: [AskField] = (form["fields"] as? [[String: Any]] ?? []).compactMap { f in
+      guard let id = f["id"] as? String, let label = f["label"] as? String else { return nil }
+      let options = (f["options"] as? [[String: Any]] ?? []).compactMap { o -> (value: String, label: String)? in
+        guard let v = o["value"] as? String else { return nil }
+        return (v, (o["label"] as? String) ?? v)
+      }
+      return AskField(
+        id: id,
+        label: label,
+        kind: (f["kind"] as? String) ?? "text",
+        options: options,
+        multi: (f["multi"] as? Bool) ?? false,
+        optional: (f["optional"] as? Bool) ?? false
+      )
+    }
+    // A stored answer arrives as the tool output; normalise both the single and
+    // multi shapes to arrays so the settled view has one thing to read.
+    var answered: [String: [String]]?
+    if let output = part["output"] as? [String: Any],
+       let values = output["values"] as? [String: Any] {
+      var map: [String: [String]] = [:]
+      for (key, value) in values {
+        if let one = value as? String { map[key] = [one] }
+        else if let many = value as? [String] { map[key] = many }
+      }
+      answered = map
+    }
+    return AskCardData(
+      toolCallId: part["toolCallId"] as? String,
+      title: form["title"] as? String,
+      fields: fields,
+      state: (part["state"] as? String) ?? "",
+      kind: (part["askKind"] as? String) ?? "ask",
+      answered: answered
+    )
+  }
+
   static func mapUIMessage(_ raw: [String: Any]) -> ChatUIMessage {
     let id = raw["id"] as? String ?? UUID().uuidString
     let role = raw["role"] as? String ?? "assistant"
@@ -1767,6 +1831,18 @@ final class CapkaAPIClient: @unchecked Sendable {
     var textChunks: [String] = []
     var tools: [String] = []
     var steps: [MessageStep] = []
+    // Emission order. Consecutive reasoning + tool parts merge into one activity
+    // rail; answer text and a suspended `ask` break the run — the same grouping
+    // the web does, so prose and actions interleave instead of being sorted into
+    // "all steps, then all text".
+    var groups: [MessageGroup] = []
+    var pendingActivity: [MessageStep] = []
+
+    func flushActivity() {
+      guard !pendingActivity.isEmpty else { return }
+      groups.append(.activity(pendingActivity))
+      pendingActivity = []
+    }
 
     if let parts = raw["parts"] as? [Any] {
       for (index, part) in parts.enumerated() {
@@ -1774,6 +1850,10 @@ final class CapkaAPIClient: @unchecked Sendable {
         let type = (p["type"] as? String ?? "").lowercased()
 
         if type == "text" || type.hasSuffix("-text") || type == "output_text" {
+          if let chunk = p["text"] as? String, !chunk.isEmpty {
+            flushActivity()
+            groups.append(.text(chunk))
+          }
           if let t = p["text"] as? String, !t.isEmpty {
             textChunks.append(t)
           } else if let t = p["content"] as? String, !t.isEmpty {
@@ -1786,21 +1866,26 @@ final class CapkaAPIClient: @unchecked Sendable {
           guard let t = (p["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
                 !t.isEmpty
           else { continue }
-          steps.append(
-            MessageStep(
-              id: "\(id)-reason-\(index)",
-              kind: .reasoning,
-              state: streaming ? .running : .done,
-              label: "推理",
-              icon: "lightbulb",
-              detail: t
-            )
+          let reasoningStep = MessageStep(
+            id: "\(id)-reason-\(index)",
+            kind: .reasoning,
+            state: streaming ? .running : .done,
+            label: "推理",
+            icon: "lightbulb",
+            detail: t
           )
+          steps.append(reasoningStep)
+          pendingActivity.append(reasoningStep)
           continue
         }
 
         if type.contains("tool") {
           let name = (p["toolName"] as? String) ?? (p["name"] as? String) ?? ""
+          if name == "ask", let form = p["askForm"] as? [String: Any] {
+            flushActivity()
+            groups.append(.ask(parseAskCard(part: p, form: form)))
+            continue
+          }
           if !name.isEmpty { tools.append(name) }
           let state = (p["state"] as? String ?? "").lowercased()
           let stepState: MessageStep.State
@@ -1826,17 +1911,17 @@ final class CapkaAPIClient: @unchecked Sendable {
              let pages = output["pages"] as? [[String: Any]] {
             imagePaths = pages.compactMap { $0["path"] as? String }.prefix(4).map { $0 }
           }
-          steps.append(
-            MessageStep(
-              id: (p["toolCallId"] as? String) ?? "\(id)-tool-\(index)",
-              kind: .tool,
-              state: stepState,
-              label: described.label,
-              icon: described.icon,
-              detail: detail,
-              imagePaths: imagePaths
-            )
+          let toolStep = MessageStep(
+            id: (p["toolCallId"] as? String) ?? "\(id)-tool-\(index)",
+            kind: .tool,
+            state: stepState,
+            label: described.label,
+            icon: described.icon,
+            detail: detail,
+            imagePaths: imagePaths
           )
+          steps.append(toolStep)
+          pendingActivity.append(toolStep)
         }
       }
     }
@@ -1845,6 +1930,7 @@ final class CapkaAPIClient: @unchecked Sendable {
     if text.isEmpty, let content = raw["content"] as? String, !content.isEmpty {
       text = content
     }
+    flushActivity()
 
     let error = (meta?["error"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -1882,6 +1968,7 @@ final class CapkaAPIClient: @unchecked Sendable {
       tools: tools,
       steps: steps,
       attachments: attachments,
+      groups: groups,
       siblingIndex: intOf(raw["siblingIndex"]) ?? 0,
       siblingCount: intOf(raw["siblingCount"]) ?? 1,
       details: details,

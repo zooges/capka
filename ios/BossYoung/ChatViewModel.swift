@@ -215,6 +215,36 @@ final class ChatViewModel {
     isSending = false
   }
 
+  /// True while the agent is waiting on an answer — the composer stands down so
+  /// the question card is the one next action, as on the web.
+  var awaitingInput: Bool {
+    messages.contains { msg in
+      msg.groups.contains { group in
+        if case .ask(let card) = group { return card.isAwaiting }
+        return false
+      }
+    }
+  }
+
+  /// Answer a suspended question. This resumes the same turn server-side, so
+  /// there is nothing to append locally — the reload settles the card.
+  func answerAsk(_ card: AskCardData, messageId: String, action: String, values: [String: [String]]) async {
+    do {
+      try await api.answerAsk(
+        messageId: messageId,
+        toolCallId: card.toolCallId,
+        action: action,
+        values: values,
+        kind: card.kind
+      )
+      CapkaFeedback.replyStarted(chatId: chatId)
+      startPolling()
+    } catch {
+      self.error = error.localizedDescription
+      await load()
+    }
+  }
+
   /// Flip to the previous/next version of a message. The server decides which
   /// branch is visible, so the transcript is reloaded rather than patched.
   func switchBranch(messageId: String, direction: String) async {
@@ -362,21 +392,125 @@ final class ChatViewModel {
     case "task:text-delta":
       guard let messageId = event["messageId"] as? String,
             let delta = event["delta"] as? String else { return }
-      promotePlaceholder(to: messageId, keepText: false)
+      promotePlaceholder(to: messageId, keepText: true)
       upsertAssistant(messageId: messageId) { msg in
         msg.text += delta
         msg.isStreaming = true
       }
 
     case "task:reasoning-delta":
-      // Keep thinking indicator until first text delta / finish.
-      break
+      guard let messageId = event["messageId"] as? String,
+            let delta = event["delta"] as? String, !delta.isEmpty else { return }
+      promotePlaceholder(to: messageId, keepText: true)
+      upsertAssistant(messageId: messageId) { msg in
+        if let i = msg.steps.lastIndex(where: { $0.kind == .reasoning }) {
+          msg.steps[i].detail = (msg.steps[i].detail ?? "") + delta
+          msg.steps[i].state = .running
+        } else {
+          msg.steps.append(
+            MessageStep(
+              id: "\(messageId)-reason-live",
+              kind: .reasoning,
+              state: .running,
+              label: "推理",
+              icon: "lightbulb",
+              detail: delta
+            )
+          )
+        }
+        msg.isStreaming = true
+      }
+
+    case "task:tool-input-start":
+      guard let messageId = event["messageId"] as? String,
+            let toolCallId = event["toolCallId"] as? String else { return }
+      let toolName = (event["toolName"] as? String) ?? ""
+      let described = StepDescriber.describe(toolName: toolName, input: nil, running: true)
+      promotePlaceholder(to: messageId, keepText: true)
+      upsertStep(
+        messageId: messageId,
+        step: MessageStep(
+          id: toolCallId,
+          kind: .tool,
+          state: .running,
+          label: described.label,
+          icon: described.icon
+        )
+      )
+
+    case "task:tool-call":
+      guard let messageId = event["messageId"] as? String,
+            let toolCallId = event["toolCallId"] as? String else { return }
+      let toolName = (event["toolName"] as? String) ?? ""
+      let args = event["args"] as? [String: Any]
+      let described = StepDescriber.describe(toolName: toolName, input: args, running: true)
+      var detail: String?
+      if let args {
+        detail = (args["command"] as? String) ?? (args["code"] as? String)
+      }
+      promotePlaceholder(to: messageId, keepText: true)
+      upsertStep(
+        messageId: messageId,
+        step: MessageStep(
+          id: toolCallId,
+          kind: .tool,
+          state: .running,
+          label: described.label,
+          icon: described.icon,
+          detail: detail
+        )
+      )
+
+    case "task:tool-result":
+      guard let messageId = event["messageId"] as? String,
+            let toolCallId = event["toolCallId"] as? String else { return }
+      let isError = (event["isError"] as? Bool) == true
+      let toolName = (event["toolName"] as? String)
+      promotePlaceholder(to: messageId, keepText: true)
+      upsertAssistant(messageId: messageId) { msg in
+        if let i = msg.steps.firstIndex(where: { $0.id == toolCallId }) {
+          msg.steps[i].state = isError ? .failed : .done
+          if let toolName, !toolName.isEmpty {
+            let described = StepDescriber.describe(toolName: toolName, input: nil, running: false)
+            msg.steps[i].label = described.label
+            msg.steps[i].icon = described.icon
+          } else {
+            // Soften the running ellipsis once the step settles.
+            let label = msg.steps[i].label
+            if label.hasSuffix("…") {
+              msg.steps[i].label = String(label.dropLast())
+            } else if label.hasSuffix("...") {
+              msg.steps[i].label = String(label.dropLast(3))
+            }
+          }
+          if let result = event["result"] as? [String: Any],
+             result["kind"] as? String == "media",
+             let pages = result["pages"] as? [[String: Any]] {
+            msg.steps[i].imagePaths = pages.compactMap { $0["path"] as? String }.prefix(4).map { $0 }
+          }
+        }
+        msg.isStreaming = true
+      }
+
+    case "task:tool-approval", "task:ask":
+      // Surface as a waiting step until the turn finishes; full HITL cards stay on web.
+      guard let messageId = event["messageId"] as? String,
+            let toolCallId = event["toolCallId"] as? String else { return }
+      promotePlaceholder(to: messageId, keepText: true)
+      upsertAssistant(messageId: messageId) { msg in
+        if let i = msg.steps.firstIndex(where: { $0.id == toolCallId }) {
+          msg.steps[i].state = .running
+          msg.steps[i].label = type == "task:ask" ? "等待回答…" : "等待批准…"
+        }
+        msg.isStreaming = true
+      }
 
     case "task:reset":
       guard let messageId = event["messageId"] as? String else { return }
       promotePlaceholder(to: messageId, keepText: false)
       upsertAssistant(messageId: messageId) { msg in
         msg.text = ""
+        msg.steps = []
         msg.isStreaming = true
       }
 
@@ -388,6 +522,20 @@ final class ChatViewModel {
 
     default:
       break
+    }
+  }
+
+  private func upsertStep(messageId: String, step: MessageStep) {
+    upsertAssistant(messageId: messageId) { msg in
+      if let i = msg.steps.firstIndex(where: { $0.id == step.id }) {
+        var merged = step
+        if merged.detail == nil { merged.detail = msg.steps[i].detail }
+        if merged.imagePaths.isEmpty { merged.imagePaths = msg.steps[i].imagePaths }
+        msg.steps[i] = merged
+      } else {
+        msg.steps.append(step)
+      }
+      msg.isStreaming = true
     }
   }
 
@@ -435,6 +583,9 @@ final class ChatViewModel {
         let status = task.status
         if status == "running" || status == "queued" {
           activeTaskId = task.id
+          // SSE may be blocked by a proxy — hydrate text/steps from the
+          // persisted snapshot so the activity rail still moves mid-turn.
+          await syncLiveMessages()
           return
         }
         // Terminal — reload transcript and clear streaming.
@@ -456,6 +607,53 @@ final class ChatViewModel {
       await session?.noteUnauthorized()
     } catch {
       // Ignore transient poll errors.
+    }
+  }
+
+  /// Merge a mid-turn server snapshot onto the live transcript without wiping
+  /// richer local SSE text/steps when the snapshot lags a beat.
+  private func syncLiveMessages() async {
+    guard let chatId else { return }
+    do {
+      let loaded = try await api.fetchMessages(chatId: chatId)
+      guard !loaded.isEmpty else { return }
+      let previous = messages
+      messages = loaded.map { server in
+        var merged = server
+        if let local = previous.first(where: { $0.id == server.id }) {
+          if local.text.count > server.text.count {
+            merged.text = local.text
+          }
+          if local.steps.count > server.steps.count {
+            merged.steps = local.steps
+          } else if local.steps.count == server.steps.count {
+            // Prefer the longer reasoning detail when both sides have the step.
+            merged.steps = zip(server.steps, local.steps).map { s, l in
+              var out = s
+              if (l.detail?.count ?? 0) > (s.detail?.count ?? 0) {
+                out.detail = l.detail
+              }
+              if out.state == .done || out.state == .failed { return out }
+              if l.state == .running { out.state = .running }
+              return out
+            }
+          }
+          if local.isStreaming || streamingMessageId == server.id {
+            merged.isStreaming = true
+          }
+        } else if streamingMessageId == server.id || activeTaskId != nil {
+          merged.isStreaming = true
+        }
+        return merged
+      }
+      // Keep an in-flight placeholder if the server hasn't written the row yet.
+      for local in previous where local.id.hasPrefix("pending-") {
+        if !messages.contains(where: { $0.id == local.id || ($0.isStreaming && $0.role == "assistant") }) {
+          messages.append(local)
+        }
+      }
+    } catch {
+      // keep local
     }
   }
 

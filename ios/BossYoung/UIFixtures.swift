@@ -88,6 +88,42 @@ enum CapkaFixtures {
           contextWindow: 200_000
         )
       ),
+      ChatUIMessage(
+        id: "t_ask",
+        role: "assistant",
+        text: "",
+        isStreaming: false,
+        groups: [
+          .text("在出 Word 版之前，有两处需要你确认："),
+          .activity([
+            MessageStep(
+              id: "t_ask_s1",
+              kind: .tool,
+              state: .done,
+              label: "读取了文件",
+              icon: "doc.text",
+              detail: "股权转让协议（第三稿）.docx"
+            )
+          ]),
+          .ask(AskCardData(
+            toolCallId: "call_ask_1",
+            title: "修改稿口径",
+            fields: [
+              AskField(id: "stance", label: "按哪一方立场修改", kind: "choice", options: [
+                (value: "buyer", label: "受让方"),
+                (value: "seller", label: "转让方"),
+                (value: "neutral", label: "中立"),
+              ]),
+              AskField(id: "deadline", label: "尾款最晚支付日", kind: "text"),
+              AskField(id: "track", label: "是否保留修订痕迹", kind: "boolean"),
+              AskField(id: "note", label: "补充说明", kind: "text", optional: true),
+            ],
+            state: "input-available",
+            kind: "ask",
+            answered: nil
+          )),
+        ]
+      ),
       ChatUIMessage(id: "t_2", role: "assistant", text: "", isStreaming: false, isCompaction: true),
       ChatUIMessage(
         id: "t_3",
@@ -338,6 +374,7 @@ enum CapkaFixtures {
         name: "Claude Sonnet 4.6",
         provider: "anthropic",
         group: "Anthropic",
+        icon: "anthropic",
         featured: true,
         context: 200_000,
         vision: true,
@@ -348,6 +385,7 @@ enum CapkaFixtures {
         name: "DeepSeek V3",
         provider: "deepseek",
         group: "DeepSeek",
+        icon: "deepseek",
         featured: false,
         context: 128_000,
         vision: false,

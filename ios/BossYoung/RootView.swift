@@ -58,6 +58,7 @@ struct MainShellView: View {
   @State private var starterType = "pdf"
   @State private var voice = VoiceDictation()
   @State private var sidebarDragOffset: CGFloat = 0
+  @State private var filesDragOffset: CGFloat = 0
   @FocusState private var composerFocused: Bool
 
   private var isAdmin: Bool { session.user?.role == "admin" }
@@ -79,8 +80,8 @@ struct MainShellView: View {
         }
       }
 
-      // Narrow left-edge strip — swipe right to open the drawer.
-      if !showSidebar {
+      // Narrow left-edge strip — swipe right to open the chat drawer.
+      if !showSidebar && !showFiles {
         HStack(spacing: 0) {
           Color.clear
             .frame(width: 20)
@@ -96,6 +97,21 @@ struct MainShellView: View {
                 }
             )
           Spacer(minLength: 0)
+          // Right-edge strip — swipe left to open the workspace (chat only).
+          if !chat.isEmptyChat {
+            Color.clear
+              .frame(width: 22)
+              .frame(maxHeight: .infinity)
+              .contentShape(Rectangle())
+              .gesture(
+                DragGesture(minimumDistance: 16, coordinateSpace: .global)
+                  .onEnded { value in
+                    if value.translation.width < -56, abs(value.translation.height) < 80 {
+                      openWorkspace()
+                    }
+                  }
+              )
+          }
         }
         .allowsHitTesting(true)
       }
@@ -106,10 +122,19 @@ struct MainShellView: View {
           .transition(.move(edge: .leading).combined(with: .opacity))
           .zIndex(2)
       }
+
+      if showFiles {
+        workspaceOverlay
+          .offset(x: max(0, filesDragOffset))
+          .transition(.move(edge: .trailing).combined(with: .opacity))
+          .zIndex(3)
+      }
     }
     .animation(Motion.easeOut(0.28), value: showSidebar)
+    .animation(Motion.easeOut(0.28), value: showFiles)
     .animation(Motion.easeOut(0.28), value: chat.isEmptyChat)
     .sensoryFeedback(.selection, trigger: showSidebar)
+    .sensoryFeedback(.selection, trigger: showFiles)
     .alert("语音输入", isPresented: Binding(
       get: { voice.error != nil },
       set: { if !$0 { voice.error = nil } }
@@ -237,17 +262,6 @@ struct MainShellView: View {
           }
       }
     }
-    .sheet(isPresented: $showFiles) {
-      NavigationStack {
-        WorkspaceFilesView(chatId: chat.chatId, projectId: nil, title: "工作区文件")
-          .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-              Button("完成") { showFiles = false }.foregroundStyle(Brand.primary)
-            }
-          }
-      }
-      .presentationDetents([.medium, .large])
-    }
     .alert("重命名", isPresented: Binding(
       get: { renameTarget != nil },
       set: { if !$0 { renameTarget = nil } }
@@ -325,7 +339,10 @@ struct MainShellView: View {
       // Web floating header: model chip sits beside the sidebar trigger.
       if !chat.isEmptyChat {
         Button { showModelPicker = true } label: {
-          HStack(spacing: 5) {
+          HStack(spacing: 6) {
+            if let model = chat.models.first(where: { $0.id == chat.selectedModelId }) {
+              ProviderIconView(slug: model.iconSlug, size: 14)
+            }
             Text(currentModelName)
               .font(.system(size: 13, weight: .medium))
               .lineLimit(1)
@@ -343,7 +360,7 @@ struct MainShellView: View {
       Spacer(minLength: 4)
 
       if !chat.isEmptyChat {
-        circleButton("folder") { showFiles = true }
+        circleButton("folder") { openWorkspace() }
       }
       circleButton("square.and.pencil") { chat.startNewChat() }
     }
@@ -368,12 +385,36 @@ struct MainShellView: View {
     chat.models.first(where: { $0.id == chat.selectedModelId })?.name ?? "选择型号"
   }
 
+  private func dismissComposer() {
+    composerFocused = false
+    voice.stop()
+  }
+
+  private func openWorkspace() {
+    dismissComposer()
+    withAnimation(Motion.easeOut(0.28)) {
+      showFiles = true
+      filesDragOffset = 0
+    }
+  }
+
+  private func closeWorkspace() {
+    withAnimation(Motion.easeOut(0.28)) {
+      showFiles = false
+      filesDragOffset = 0
+    }
+  }
+
   // MARK: - Empty home
 
   private func emptyHome(chat: ChatViewModel) -> some View {
     ScrollView {
       VStack(spacing: 0) {
-        Spacer(minLength: composerFocused ? 28 : 72)
+        Color.clear
+          .frame(height: composerFocused ? 28 : 72)
+          .frame(maxWidth: .infinity)
+          .contentShape(Rectangle())
+          .onTapGesture { dismissComposer() }
 
         Image("BrandWordmark")
           .resizable()
@@ -381,6 +422,7 @@ struct MainShellView: View {
           .frame(height: 46)
           .padding(.bottom, composerFocused ? 22 : 34)
           .capkaEntrance(.blurRise)
+          .onTapGesture { dismissComposer() }
 
         composerCard(chat: chat, homeStyle: true)
           .padding(.horizontal, 18)
@@ -388,7 +430,10 @@ struct MainShellView: View {
 
         Button { showModelPicker = true } label: {
           HStack(spacing: 6) {
-            if chat.models.first(where: { $0.id == chat.selectedModelId })?.featured == true {
+            if let model = chat.models.first(where: { $0.id == chat.selectedModelId }) {
+              ProviderIconView(slug: model.iconSlug, size: 13)
+            }
+            if modelFeatured {
               Image(systemName: "star.fill")
                 .font(.system(size: 10))
                 .foregroundStyle(Brand.burgundy)
@@ -410,15 +455,27 @@ struct MainShellView: View {
             .padding(.top, 32)
             .transition(.opacity.combined(with: .offset(y: 6)))
             .capkaEntrance(.blurRise, delay: 0.12)
+        } else {
+          Color.clear
+            .frame(minHeight: 120)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+            .onTapGesture { dismissComposer() }
         }
 
         Spacer(minLength: 60)
+          .contentShape(Rectangle())
+          .onTapGesture { dismissComposer() }
       }
       .frame(maxWidth: .infinity)
       .frame(minHeight: UIScreen.main.bounds.height * 0.68)
       .animation(Motion.easeOut(0.32), value: composerFocused)
     }
     .scrollDismissesKeyboard(.interactively)
+  }
+
+  private var modelFeatured: Bool {
+    chat.models.first(where: { $0.id == chat.selectedModelId })?.featured == true
   }
 
   private var homeSuggestions: some View {
@@ -566,6 +623,11 @@ struct MainShellView: View {
                 )
               },
               chatId: chat.chatId,
+              onAnswerAsk: { card, action, values in
+                Task {
+                  await chat.answerAsk(card, messageId: msg.id, action: action, values: values)
+                }
+              },
               onEdit: editHandler(chat: chat, message: msg),
               onSwitchBranch: branchHandler(chat: chat, message: msg)
             )
@@ -577,8 +639,13 @@ struct MainShellView: View {
         .padding(.bottom, 16)
       }
       .scrollDismissesKeyboard(.interactively)
+      .simultaneousGesture(TapGesture().onEnded { dismissComposer() })
       .refreshable { await chat.load() }
       .onChange(of: chat.messages.last?.text) { _, _ in
+        guard let id = chat.messages.last?.id else { return }
+        withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
+      }
+      .onChange(of: chat.messages.last?.steps.count) { _, _ in
         guard let id = chat.messages.last?.id else { return }
         withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
       }
@@ -729,7 +796,9 @@ struct MainShellView: View {
 
   private func canSend(_ chat: ChatViewModel) -> Bool {
     let hasText = !chat.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    return (hasText || !chat.pendingAttachments.isEmpty) && !chat.isSending
+    // A pending question is the one next action — the web blocks the composer
+    // the same way (useBackgroundChat.awaitingInput).
+    return (hasText || !chat.pendingAttachments.isEmpty) && !chat.isSending && !chat.awaitingInput
   }
 
   // MARK: - Sidebar
@@ -787,6 +856,45 @@ struct MainShellView: View {
                 closeSidebar()
               } else {
                 withAnimation(Motion.easeOut(0.22)) { sidebarDragOffset = 0 }
+              }
+            }
+        )
+      }
+      .ignoresSafeArea()
+    }
+  }
+
+  private var workspaceOverlay: some View {
+    GeometryReader { geo in
+      let width = min(340, geo.size.width * 0.9)
+      ZStack(alignment: .trailing) {
+        Color.black.opacity(0.28 * Double(1 - min(width, max(0, filesDragOffset)) / width))
+          .ignoresSafeArea()
+          .onTapGesture { closeWorkspace() }
+
+        NavigationStack {
+          WorkspaceFilesView(chatId: chat.chatId, projectId: nil, title: "工作区文件")
+            .toolbar {
+              ToolbarItem(placement: .topBarTrailing) {
+                Button("完成") { closeWorkspace() }
+                  .foregroundStyle(Brand.primary)
+              }
+            }
+        }
+        .frame(width: width)
+        .frame(maxHeight: .infinity)
+        .background(Brand.cream)
+        .shadow(color: .black.opacity(0.12), radius: 18, x: -4)
+        .gesture(
+          DragGesture(minimumDistance: 8, coordinateSpace: .global)
+            .onChanged { value in
+              filesDragOffset = max(0, value.translation.width)
+            }
+            .onEnded { value in
+              if value.translation.width > 80 || value.predictedEndTranslation.width > 160 {
+                closeWorkspace()
+              } else {
+                withAnimation(Motion.easeOut(0.22)) { filesDragOffset = 0 }
               }
             }
         )
@@ -956,9 +1064,7 @@ private struct ModelPickerSheet: View {
                 RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous)
                   .fill(Brand.accent)
                   .frame(width: 34, height: 34)
-                Text(String(model.displayGroup.prefix(1)))
-                  .font(.system(size: 14, weight: .semibold))
-                  .foregroundStyle(Brand.ink.opacity(0.7))
+                ProviderIconView(slug: model.iconSlug, size: 20)
               }
 
               VStack(alignment: .leading, spacing: 3) {

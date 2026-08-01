@@ -75,7 +75,18 @@ struct SidebarView: View {
       }
     }
     .background(Brand.sidebar)
+    // The search field is at the TOP of the drawer, so the default keyboard
+    // avoidance has nothing to reveal — all it did was shove the whole drawer
+    // (account card included) up above the keyboard. The chat list scrolls
+    // instead; see `.scrollDismissesKeyboard` on `content`.
+    .ignoresSafeArea(.keyboard, edges: .bottom)
     .animation(Motion.easeOut(0.22), value: showAccountMenu)
+    // A raised keyboard and the bottom-anchored account card cannot coexist.
+    .onChange(of: searchFocused) { _, focused in
+      if focused, showAccountMenu {
+        withAnimation(Motion.easeOut(0.2)) { showAccountMenu = false }
+      }
+    }
     .onDisappear {
       searchTask?.cancel()
       showAccountMenu = false
@@ -244,6 +255,7 @@ struct SidebarView: View {
         }
         .padding(.bottom, 12)
       }
+      .scrollDismissesKeyboard(.immediately)
     }
   }
 
@@ -361,10 +373,9 @@ struct SidebarView: View {
         Divider().overlay(Brand.line)
       }
 
-      menuRow(icon: "magnifyingglass", title: "搜索") {
-        showAccountMenu = false
-        searchFocused = true
-      }
+      // No 搜索 row here: the drawer's own search field is already on screen a
+      // few points above, and focusing it from this menu made the keyboard lift
+      // the account card into the middle of the drawer.
       menuRow(icon: "folder", title: "项目") {
         showAccountMenu = false
         onOpenProjects()

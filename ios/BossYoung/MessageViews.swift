@@ -16,6 +16,8 @@ struct CapkaMessageRow: View {
   var onOpenWorkspacePath: ((String) -> Void)?
   /// Which chat's workspace the reply's files live in.
   var chatId: String?
+  /// Submits an answer to a suspended `ask`, resuming the same turn.
+  var onAnswerAsk: ((AskCardData, String, [String: [String]]) -> Void)?
   /// Rewrite this user turn and re-run from it.
   var onEdit: ((String) -> Void)?
   /// Flip to the previous/next version of this message ("prev" / "next").
@@ -159,26 +161,46 @@ struct CapkaMessageRow: View {
 
   private var assistantBody: some View {
     VStack(alignment: .leading, spacing: 12) {
-      if !message.steps.isEmpty {
-        ActivityRail(
-          steps: message.steps,
-          streaming: message.isStreaming,
-          chatId: chatId,
-          durationMs: message.details.durationMs
-        )
+      // Rendered in emission order so prose and actions read as one timeline,
+      // the way the web groups parts. Falls back to the old flat layout when a
+      // message predates grouping (or the server sent no parts).
+      if message.groups.isEmpty {
+        if !message.steps.isEmpty {
+          ActivityRail(
+            steps: message.steps,
+            streaming: message.isStreaming,
+            chatId: chatId,
+            durationMs: message.details.durationMs
+          )
+        }
+        if !message.text.isEmpty {
+          MarkdownBody(text: message.text)
+        }
+      } else {
+        ForEach(message.groups) { group in
+          switch group {
+          case .text(let chunk):
+            MarkdownBody(text: chunk)
+          case .activity(let steps):
+            ActivityRail(
+              steps: steps,
+              streaming: message.isStreaming,
+              chatId: chatId,
+              durationMs: message.details.durationMs
+            )
+          case .ask(let card):
+            AskCardView(card: card, messageId: message.id, onAnswer: onAnswerAsk)
+          }
+        }
       }
 
-      if message.isStreaming && message.text.isEmpty && message.steps.isEmpty {
+      if message.isStreaming && message.groups.isEmpty && message.text.isEmpty && message.steps.isEmpty {
         HStack(spacing: 10) {
           ProgressView().controlSize(.small).tint(Brand.muted)
           Text("思考……")
             .font(.system(size: 15))
             .foregroundStyle(Brand.muted)
         }
-      }
-
-      if !message.text.isEmpty {
-        MarkdownBody(text: message.text)
       }
 
       if let err = message.error, !err.isEmpty, err != message.text {
@@ -1193,6 +1215,166 @@ private struct StepThumbnail: View {
           .frame(width: 110, height: 150)
           .overlay(ProgressView().controlSize(.small).tint(Brand.muted))
       }
+    }
+  }
+}
+
+
+/// A question the agent suspended the turn on. Frameless, like the web's
+/// `AskCard`: the prose above already frames it, so the fields read as part of
+/// the conversation rather than a boxed widget. Once answered it collapses to a
+/// quiet summary.
+struct AskCardView: View {
+  let card: AskCardData
+  let messageId: String
+  var onAnswer: ((AskCardData, String, [String: [String]]) -> Void)?
+
+  @State private var values: [String: [String]] = [:]
+  @State private var submitting = false
+
+  /// Every non-optional field needs a value before 提交 is live.
+  private var complete: Bool {
+    card.fields.filter { !$0.optional }.allSatisfy { !(values[$0.id] ?? []).isEmpty }
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      if let title = card.title, !title.isEmpty {
+        Text(title)
+          .font(.system(size: 15, weight: .medium))
+          .foregroundStyle(Brand.ink)
+      }
+
+      if card.isAwaiting {
+        ForEach(card.fields) { field in
+          fieldView(field)
+        }
+        HStack(spacing: 10) {
+          Button {
+            submit("submit")
+          } label: {
+            Text(submitting ? "提交中…" : "提交")
+              .font(.system(size: 13, weight: .medium))
+              .foregroundStyle(Brand.onPrimary)
+              .padding(.horizontal, 16)
+              .padding(.vertical, 8)
+              .background(complete && !submitting ? Brand.primary : Brand.muted.opacity(0.4))
+              .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+          }
+          .disabled(!complete || submitting)
+
+          Button("跳过") { submit("skip") }
+            .font(.system(size: 13))
+            .foregroundStyle(Brand.muted)
+            .disabled(submitting)
+        }
+      } else {
+        // Settled: show what was answered, not the inputs again.
+        VStack(alignment: .leading, spacing: 4) {
+          ForEach(card.fields) { field in
+            HStack(alignment: .top, spacing: 8) {
+              Text(field.label)
+                .font(.system(size: 12))
+                .foregroundStyle(Brand.muted)
+              Text(displayValue(field))
+                .font(.system(size: 12))
+                .foregroundStyle(Brand.ink)
+              Spacer(minLength: 0)
+            }
+          }
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.vertical, 4)
+    .capkaEntrance(.blurRise)
+  }
+
+  @ViewBuilder
+  private func fieldView(_ field: AskField) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text(field.label + (field.optional ? "（可选）" : ""))
+        .font(.system(size: 12.5, weight: .medium))
+        .foregroundStyle(Brand.muted)
+
+      switch field.kind {
+      case "choice":
+        // Multi-select toggles; single-select behaves like radio buttons.
+        FlowChips(
+          options: field.options,
+          selected: values[field.id] ?? [],
+          onTap: { value in
+            var current = values[field.id] ?? []
+            if field.multi {
+              if let i = current.firstIndex(of: value) { current.remove(at: i) } else { current.append(value) }
+            } else {
+              current = current == [value] ? [] : [value]
+            }
+            values[field.id] = current
+          }
+        )
+      case "boolean":
+        FlowChips(
+          options: [(value: "true", label: "是"), (value: "false", label: "否")],
+          selected: values[field.id] ?? [],
+          onTap: { values[field.id] = [$0] }
+        )
+      default:
+        TextField(field.kind == "number" ? "输入数字" : "输入内容", text: Binding(
+          get: { (values[field.id] ?? []).first ?? "" },
+          set: { values[field.id] = $0.isEmpty ? [] : [$0] }
+        ))
+        .keyboardType(field.kind == "number" ? .decimalPad : .default)
+        .font(.system(size: 15))
+        .padding(.horizontal, 12)
+        .frame(minHeight: 42)
+        .background(Brand.accent.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+      }
+    }
+  }
+
+  private func displayValue(_ field: AskField) -> String {
+    let stored = card.answered?[field.id] ?? []
+    guard !stored.isEmpty else { return "—" }
+    return stored.map { raw in
+      if field.kind == "boolean" { return raw == "true" ? "是" : "否" }
+      return field.options.first(where: { $0.value == raw })?.label ?? raw
+    }.joined(separator: "、")
+  }
+
+  private func submit(_ action: String) {
+    guard !submitting else { return }
+    submitting = true
+    onAnswer?(card, action, action == "submit" ? values : [:])
+  }
+}
+
+/// Wrapping row of selectable chips — used for choice and boolean ask fields.
+private struct FlowChips: View {
+  let options: [(value: String, label: String)]
+  let selected: [String]
+  let onTap: (String) -> Void
+
+  var body: some View {
+    ScrollView(.horizontal, showsIndicators: false) {
+      HStack(spacing: 8) {
+        ForEach(options, id: \.value) { option in
+          let isOn = selected.contains(option.value)
+          Button { onTap(option.value) } label: {
+            Text(option.label)
+              .font(.system(size: 13, weight: isOn ? .semibold : .regular))
+              .foregroundStyle(isOn ? Brand.ink : Brand.muted)
+              .padding(.horizontal, 14)
+              .padding(.vertical, 8)
+              .background(isOn ? Brand.accent : Color.clear)
+              .clipShape(Capsule())
+              .overlay(Capsule().stroke(Brand.line, lineWidth: isOn ? 0 : 1))
+          }
+          .buttonStyle(CapkaPressStyle())
+        }
+      }
+      .padding(.vertical, 1)
     }
   }
 }

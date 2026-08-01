@@ -250,6 +250,8 @@ struct ModelInfo: Identifiable, Equatable {
   var name: String
   var provider: String?
   var group: String?
+  /// Brand icon slug from the catalog (`anthropic`, `openai`, …) — same as web.
+  var icon: String?
   var featured: Bool?
   var context: Int?
   var vision: Bool?
@@ -284,6 +286,7 @@ struct ModelInfo: Identifiable, Equatable {
         name: (name?.isEmpty == false ? name! : bareId),
         provider: obj["provider"] as? String,
         group: obj["group"] as? String,
+        icon: obj["icon"] as? String,
         featured: boolValue(obj["featured"]),
         context: ctx,
         vision: boolValue(caps?["vision"]),
@@ -312,6 +315,58 @@ struct MessageStep: Identifiable, Equatable {
   /// Workspace paths of pages a `view_file`-style tool rendered. Served inline
   /// from the sandbox rather than embedded, so nothing large rides in the DB.
   var imagePaths: [String] = []
+}
+
+/// One field of a question the agent (or an MCP elicitation) asks mid-turn.
+/// Mirrors `askFieldSchema` in `src/lib/ask/types.ts`.
+struct AskField: Identifiable, Equatable {
+  var id: String
+  var label: String
+  /// text / choice / number / boolean
+  var kind: String
+  var options: [(value: String, label: String)] = []
+  var multi = false
+  var optional = false
+
+  static func == (lhs: AskField, rhs: AskField) -> Bool {
+    lhs.id == rhs.id && lhs.label == rhs.label && lhs.kind == rhs.kind
+      && lhs.multi == rhs.multi && lhs.optional == rhs.optional
+      && lhs.options.map(\.value) == rhs.options.map(\.value)
+  }
+}
+
+/// A suspended `ask` tool call — the turn is waiting on this answer, so it is
+/// the user's one next action and renders as a prominent card, not a rail row.
+struct AskCardData: Equatable {
+  var toolCallId: String?
+  var title: String?
+  var fields: [AskField]
+  /// `input-available` while it still needs an answer.
+  var state: String
+  /// "ask" resolves a suspended tool call; "elicitation" answers a blocked MCP tool.
+  var kind: String
+  /// Present once answered — the card collapses to a summary.
+  var answered: [String: [String]]?
+
+  var isAwaiting: Bool { state == "input-available" && answered == nil }
+}
+
+/// Assistant output in the order it happened. The web groups consecutive
+/// reasoning + tool calls into one activity rail and leaves answer text on its
+/// own, so prose and actions interleave as a single timeline; rendering all
+/// steps first and all text after (what this app used to do) reorders the reply.
+enum MessageGroup: Identifiable, Equatable {
+  case text(String)
+  case activity([MessageStep])
+  case ask(AskCardData)
+
+  var id: String {
+    switch self {
+    case .text(let s): return "t-\(s.hashValue)"
+    case .activity(let steps): return "a-\(steps.map(\.id).joined(separator: ","))"
+    case .ask(let card): return "k-\(card.toolCallId ?? card.title ?? "ask")"
+    }
+  }
 }
 
 struct MessageAttachment: Identifiable, Equatable {
@@ -354,6 +409,9 @@ struct ChatUIMessage: Identifiable, Equatable {
   var tools: [String]
   var steps: [MessageStep]
   var attachments: [MessageAttachment]
+  /// Assistant output in emission order — the render list. `text` and `steps`
+  /// stay as flattened views for copy, artifacts and the context meter.
+  var groups: [MessageGroup] = []
   /// Position among alternative versions of this message (edits/regenerations),
   /// and how many there are — drives the ‹ i/N › switcher.
   var siblingIndex: Int = 0
@@ -373,6 +431,7 @@ struct ChatUIMessage: Identifiable, Equatable {
     tools: [String] = [],
     steps: [MessageStep] = [],
     attachments: [MessageAttachment] = [],
+    groups: [MessageGroup] = [],
     siblingIndex: Int = 0,
     siblingCount: Int = 1,
     details: MessageDetails = MessageDetails(),
@@ -387,6 +446,7 @@ struct ChatUIMessage: Identifiable, Equatable {
     self.tools = tools
     self.steps = steps
     self.attachments = attachments
+    self.groups = groups
     self.siblingIndex = siblingIndex
     self.siblingCount = siblingCount
     self.details = details
