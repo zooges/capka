@@ -402,20 +402,6 @@ final class ChatViewModel {
     }
   }
 
-  /// Files handed over by the share extension. They open a fresh chat so a share
-  /// never lands in the middle of an unrelated conversation, and they are
-  /// attached — not sent — because only the user knows what to ask about them.
-  func adoptShared(_ urls: [URL]) async {
-    guard !urls.isEmpty else { return }
-    if !messages.isEmpty || chatId != nil {
-      startNewChat()
-    }
-    for url in urls {
-      await attach(fileURL: url)
-      try? FileManager.default.removeItem(at: url)
-    }
-  }
-
   func attach(fileURL: URL) async {
     do {
       if chatId == nil {
