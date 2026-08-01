@@ -148,6 +148,23 @@ enum CapkaFixtures {
         )
       ),
       ChatUIMessage(
+        id: "t_live",
+        role: "assistant",
+        text: "",
+        isStreaming: true,
+        groups: [
+          .text("好的，我先看一下这份表格的结构。"),
+          .activity([
+            MessageStep(id: "l1", kind: .tool, state: .done, label: "读取了文件", icon: "doc.text", detail: nil),
+            MessageStep(id: "l2", kind: .reasoning, state: .done, label: "推理", icon: "lightbulb", detail: "列名有空格，先规范化。"),
+          ]),
+          .text("三列里有两列的表头带了空格，我先清理再统计。"),
+          .activity([
+            MessageStep(id: "l3", kind: .tool, state: .running, label: "正在运行命令…", icon: "terminal", detail: nil),
+          ]),
+        ]
+      ),
+      ChatUIMessage(
         id: "t_4",
         role: "assistant",
         text: "",

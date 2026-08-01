@@ -411,7 +411,7 @@ final class ChatViewModel {
             let delta = event["delta"] as? String else { return }
       promotePlaceholder(to: messageId, keepText: true)
       upsertAssistant(messageId: messageId) { msg in
-        msg.text += delta
+        msg.appendStreamedText(delta)
         msg.isStreaming = true
       }
 
@@ -420,21 +420,7 @@ final class ChatViewModel {
             let delta = event["delta"] as? String, !delta.isEmpty else { return }
       promotePlaceholder(to: messageId, keepText: true)
       upsertAssistant(messageId: messageId) { msg in
-        if let i = msg.steps.lastIndex(where: { $0.kind == .reasoning }) {
-          msg.steps[i].detail = (msg.steps[i].detail ?? "") + delta
-          msg.steps[i].state = .running
-        } else {
-          msg.steps.append(
-            MessageStep(
-              id: "\(messageId)-reason-live",
-              kind: .reasoning,
-              state: .running,
-              label: "推理",
-              icon: "lightbulb",
-              detail: delta
-            )
-          )
-        }
+        msg.appendStreamedReasoning(delta, id: "\(messageId)-reason-\(msg.groups.count)")
         msg.isStreaming = true
       }
 
@@ -444,16 +430,12 @@ final class ChatViewModel {
       let toolName = (event["toolName"] as? String) ?? ""
       let described = StepDescriber.describe(toolName: toolName, input: nil, running: true)
       promotePlaceholder(to: messageId, keepText: true)
-      upsertStep(
-        messageId: messageId,
-        step: MessageStep(
-          id: toolCallId,
-          kind: .tool,
-          state: .running,
-          label: described.label,
-          icon: described.icon
+      upsertAssistant(messageId: messageId) { msg in
+        msg.upsertStreamedStep(
+          MessageStep(id: toolCallId, kind: .tool, state: .running, label: described.label, icon: described.icon)
         )
-      )
+        msg.isStreaming = true
+      }
 
     case "task:tool-call":
       guard let messageId = event["messageId"] as? String,
@@ -466,17 +448,19 @@ final class ChatViewModel {
         detail = (args["command"] as? String) ?? (args["code"] as? String)
       }
       promotePlaceholder(to: messageId, keepText: true)
-      upsertStep(
-        messageId: messageId,
-        step: MessageStep(
-          id: toolCallId,
-          kind: .tool,
-          state: .running,
-          label: described.label,
-          icon: described.icon,
-          detail: detail
+      upsertAssistant(messageId: messageId) { msg in
+        msg.upsertStreamedStep(
+          MessageStep(
+            id: toolCallId,
+            kind: .tool,
+            state: .running,
+            label: described.label,
+            icon: described.icon,
+            detail: detail
+          )
         )
-      )
+        msg.isStreaming = true
+      }
 
     case "task:tool-result":
       guard let messageId = event["messageId"] as? String,
@@ -484,41 +468,60 @@ final class ChatViewModel {
       let isError = (event["isError"] as? Bool) == true
       let toolName = (event["toolName"] as? String)
       promotePlaceholder(to: messageId, keepText: true)
+      let media = (event["result"] as? [String: Any]).flatMap { result -> [String]? in
+        guard result["kind"] as? String == "media",
+              let pages = result["pages"] as? [[String: Any]] else { return nil }
+        return pages.compactMap { $0["path"] as? String }.prefix(4).map { $0 }
+      }
       upsertAssistant(messageId: messageId) { msg in
-        if let i = msg.steps.firstIndex(where: { $0.id == toolCallId }) {
-          msg.steps[i].state = isError ? .failed : .done
+        msg.upsertStreamedStep(
+          MessageStep(id: toolCallId, kind: .tool, state: isError ? .failed : .done, label: "", icon: "wrench")
+        ) { step in
+          step.state = isError ? .failed : .done
           if let toolName, !toolName.isEmpty {
             let described = StepDescriber.describe(toolName: toolName, input: nil, running: false)
-            msg.steps[i].label = described.label
-            msg.steps[i].icon = described.icon
-          } else {
+            step.label = described.label
+            step.icon = described.icon
+          } else if step.label.hasSuffix("…") {
             // Soften the running ellipsis once the step settles.
-            let label = msg.steps[i].label
-            if label.hasSuffix("…") {
-              msg.steps[i].label = String(label.dropLast())
-            } else if label.hasSuffix("...") {
-              msg.steps[i].label = String(label.dropLast(3))
-            }
+            step.label = String(step.label.dropLast())
+          } else if step.label.hasSuffix("...") {
+            step.label = String(step.label.dropLast(3))
           }
-          if let result = event["result"] as? [String: Any],
-             result["kind"] as? String == "media",
-             let pages = result["pages"] as? [[String: Any]] {
-            msg.steps[i].imagePaths = pages.compactMap { $0["path"] as? String }.prefix(4).map { $0 }
-          }
+          if let media { step.imagePaths = media }
         }
         msg.isStreaming = true
       }
 
-    case "task:tool-approval", "task:ask":
-      // Surface as a waiting step until the turn finishes; full HITL cards stay on web.
+    case "task:ask":
+      // The event carries the form, so the question card can be built live
+      // rather than waiting for the finished turn to reload.
+      guard let messageId = event["messageId"] as? String,
+            let form = event["form"] as? [String: Any] else { return }
+      promotePlaceholder(to: messageId, keepText: true)
+      let askCard = CapkaAPIClient.askCard(
+        toolCallId: event["toolCallId"] as? String,
+        form: form
+      )
+      upsertAssistant(messageId: messageId) { msg in
+        msg.upsertCard(.ask(askCard))
+        msg.isStreaming = true
+      }
+
+    case "task:tool-approval":
       guard let messageId = event["messageId"] as? String,
             let toolCallId = event["toolCallId"] as? String else { return }
       promotePlaceholder(to: messageId, keepText: true)
       upsertAssistant(messageId: messageId) { msg in
-        if let i = msg.steps.firstIndex(where: { $0.id == toolCallId }) {
-          msg.steps[i].state = .running
-          msg.steps[i].label = type == "task:ask" ? "等待回答…" : "等待批准…"
-        }
+        // Promote the step already on screen into the decision card.
+        let label = msg.steps.first(where: { $0.id == toolCallId })?.label ?? "该操作需要你确认"
+        msg.upsertCard(.approval(ApprovalCardData(
+          toolCallId: toolCallId,
+          label: label,
+          detail: nil,
+          approved: nil,
+          reason: nil
+        )))
         msg.isStreaming = true
       }
 
@@ -526,8 +529,7 @@ final class ChatViewModel {
       guard let messageId = event["messageId"] as? String else { return }
       promotePlaceholder(to: messageId, keepText: false)
       upsertAssistant(messageId: messageId) { msg in
-        msg.text = ""
-        msg.steps = []
+        msg.resetGroups()
         msg.isStreaming = true
       }
 
@@ -539,20 +541,6 @@ final class ChatViewModel {
 
     default:
       break
-    }
-  }
-
-  private func upsertStep(messageId: String, step: MessageStep) {
-    upsertAssistant(messageId: messageId) { msg in
-      if let i = msg.steps.firstIndex(where: { $0.id == step.id }) {
-        var merged = step
-        if merged.detail == nil { merged.detail = msg.steps[i].detail }
-        if merged.imagePaths.isEmpty { merged.imagePaths = msg.steps[i].imagePaths }
-        msg.steps[i] = merged
-      } else {
-        msg.steps.append(step)
-      }
-      msg.isStreaming = true
     }
   }
 
@@ -700,12 +688,14 @@ final class ChatViewModel {
       if !loaded.isEmpty {
         // Preserve any richer local streaming text if the snapshot is briefly empty.
         messages = loaded.map { server in
-          guard server.text.isEmpty,
+          guard server.groups.isEmpty, server.text.isEmpty,
                 let local = messages.first(where: { $0.id == server.id }),
-                !local.text.isEmpty
+                !local.groups.isEmpty || !local.text.isEmpty
           else { return server }
           var merged = server
+          merged.groups = local.groups
           merged.text = local.text
+          merged.steps = local.steps
           merged.isStreaming = false
           return merged
         }
@@ -738,15 +728,21 @@ final class ChatViewModel {
     let old = messages[idx]
     messages.remove(at: idx)
     if let existing = messages.firstIndex(where: { $0.id == realId }) {
-      if keepText, messages[existing].text.isEmpty, !old.text.isEmpty {
+      if keepText, messages[existing].groups.isEmpty, !old.groups.isEmpty {
+        messages[existing].groups = old.groups
+        messages[existing].rebuildFlattened()
+      } else if keepText, messages[existing].text.isEmpty, !old.text.isEmpty {
         messages[existing].text = old.text
       }
       messages[existing].isStreaming = true
     } else {
-      messages.insert(
-        ChatUIMessage(id: realId, role: "assistant", text: keepText ? old.text : "", isStreaming: true),
-        at: min(idx, messages.count)
-      )
+      var promoted = ChatUIMessage(id: realId, role: "assistant", text: "", isStreaming: true)
+      if keepText {
+        promoted.groups = old.groups
+        promoted.rebuildFlattened()
+        if promoted.text.isEmpty { promoted.text = old.text }
+      }
+      messages.insert(promoted, at: min(idx, messages.count))
     }
     streamingMessageId = realId
   }
@@ -758,6 +754,8 @@ final class ChatViewModel {
       let old = messages[idx]
       messages.remove(at: idx)
       var msg = ChatUIMessage(id: messageId, role: "assistant", text: old.text, isStreaming: true)
+      msg.groups = old.groups
+      if !msg.groups.isEmpty { msg.rebuildFlattened() }
       mutate(&msg)
       messages.insert(msg, at: min(idx, messages.count))
     } else {

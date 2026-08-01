@@ -1794,7 +1794,7 @@ final class CapkaAPIClient: @unchecked Sendable {
 
   /// Reads an `ask` tool part into the question card. Mirrors `askFormSchema`
   /// plus the state the web's `AskCard` keys off.
-  private static func parseAskCard(part: [String: Any], form: [String: Any]) -> AskCardData {
+  static func parseAskCard(part: [String: Any], form: [String: Any]) -> AskCardData {
     let fields: [AskField] = (form["fields"] as? [[String: Any]] ?? []).compactMap { f in
       guard let id = f["id"] as? String, let label = f["label"] as? String else { return nil }
       let options = (f["options"] as? [[String: Any]] ?? []).compactMap { o -> (value: String, label: String)? in
@@ -1831,6 +1831,12 @@ final class CapkaAPIClient: @unchecked Sendable {
       kind: (part["askKind"] as? String) ?? "ask",
       answered: answered
     )
+  }
+
+  /// Build a question card from a live `task:ask` event, which carries the form
+  /// but no persisted part yet.
+  static func askCard(toolCallId: String?, form: [String: Any]) -> AskCardData {
+    parseAskCard(part: ["toolCallId": toolCallId as Any, "state": "input-available"], form: form)
   }
 
   static func mapUIMessage(_ raw: [String: Any]) -> ChatUIMessage {

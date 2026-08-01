@@ -779,3 +779,102 @@ private func intValue(_ any: Any?) -> Int? {
   if let n = any as? NSNumber { return n.intValue }
   return nil
 }
+
+// MARK: - Live streaming into ordered groups
+
+/// While a turn streams, `groups` is the source of truth — deltas append to it
+/// in emission order, exactly as the server will later persist them in
+/// `metadata.parts`. `text` and `steps` are kept as flattened views so copy,
+/// artifacts, and the context meter keep working off one message.
+///
+/// Maintaining only the flat fields (what this app used to do) meant the live
+/// reply rendered in the old "all steps, then all text" order and then visibly
+/// re-ordered itself when the finished turn reloaded.
+extension ChatUIMessage {
+  mutating func appendStreamedText(_ delta: String) {
+    if case .text(let existing)? = groups.last {
+      groups[groups.count - 1] = .text(existing + delta)
+    } else {
+      groups.append(.text(delta))
+    }
+    rebuildFlattened()
+  }
+
+  /// Reasoning joins the trailing activity run, extending the last reasoning row
+  /// rather than opening a new one per delta.
+  mutating func appendStreamedReasoning(_ delta: String, id: String) {
+    var run = trailingActivity()
+    if let i = run.lastIndex(where: { $0.kind == .reasoning }) {
+      run[i].detail = (run[i].detail ?? "") + delta
+      run[i].state = .running
+    } else {
+      run.append(
+        MessageStep(id: id, kind: .reasoning, state: .running, label: "推理", icon: "lightbulb", detail: delta)
+      )
+    }
+    setTrailingActivity(run)
+  }
+
+  /// Insert or update a tool step inside the trailing activity run. A step that
+  /// already exists anywhere keeps its position, so a late result never moves a
+  /// call out of the order it happened in.
+  mutating func upsertStreamedStep(_ step: MessageStep, mutate: ((inout MessageStep) -> Void)? = nil) {
+    for (gi, group) in groups.enumerated() {
+      guard case .activity(var run) = group else { continue }
+      guard let i = run.firstIndex(where: { $0.id == step.id }) else { continue }
+      if let mutate { mutate(&run[i]) } else { run[i] = step }
+      groups[gi] = .activity(run)
+      rebuildFlattened()
+      return
+    }
+    var run = trailingActivity()
+    var fresh = step
+    mutate?(&fresh)
+    run.append(fresh)
+    setTrailingActivity(run)
+  }
+
+  mutating func upsertCard(_ group: MessageGroup) {
+    if let i = groups.firstIndex(where: { $0.id == group.id }) {
+      groups[i] = group
+    } else {
+      groups.append(group)
+    }
+    rebuildFlattened()
+  }
+
+  mutating func resetGroups() {
+    groups = []
+    text = ""
+    steps = []
+  }
+
+  private func trailingActivity() -> [MessageStep] {
+    if case .activity(let run)? = groups.last { return run }
+    return []
+  }
+
+  private mutating func setTrailingActivity(_ run: [MessageStep]) {
+    if case .activity? = groups.last {
+      groups[groups.count - 1] = .activity(run)
+    } else {
+      groups.append(.activity(run))
+    }
+    rebuildFlattened()
+  }
+
+  /// Flat views derived from the ordered groups.
+  mutating func rebuildFlattened() {
+    var joined = ""
+    var flatSteps: [MessageStep] = []
+    for group in groups {
+      switch group {
+      case .text(let chunk): joined += chunk
+      case .activity(let run): flatSteps.append(contentsOf: run)
+      case .ask, .approval: break
+      }
+    }
+    text = joined
+    steps = flatSteps
+  }
+}
