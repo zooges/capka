@@ -234,7 +234,11 @@
       "contextFull": "Контекст: {pct}%",
       "contextTokens": "{used} / {total} токенів",
       "modelGoneBody": "Ця модель більше недоступна — оберіть іншу модель, щоб продовжити",
-      "modelGoneNew": "Новий чат"
+      "modelGoneNew": "Новий чат",
+      "selectProject": "Обрати проєкт",
+      "project": "Проєкт",
+      "noProject": "Без проєкту",
+      "noProjectsYet": "Ще немає проєктів"
     },
     "menu": {
       "rename": "Перейменувати",

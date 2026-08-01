@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { ArrowUp, Info, Loader2, Paperclip, RotateCw, Square, X } from "lucide-react";
 import { ContextMeter } from "@/components/chat/context-meter";
 import { AttachFolderMenu } from "@/components/chat/attach-folder-menu";
+import { ProjectChip } from "@/components/chat/project-chip";
 import { useIsMobile, MOBILE_BREAKPOINT } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { BinaryFileThumb, FileTile, SandboxFileTile, type PreviewFile } from "./file-preview";
@@ -82,6 +83,12 @@ interface ChatInputProps {
   /** PC-folder sync state + actions. When the user may attach a folder, the
    *  paperclip becomes a small menu (Upload files / Connect a folder). */
   folders?: ReturnType<typeof useFolderSync>;
+  /** The project this chat runs in — drives the composer's context chip. */
+  projectId?: string;
+  projectName?: string;
+  /** Home greeting uses these to enter “focus mode” (hide recent/history). */
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 export function ChatInput({
@@ -99,6 +106,10 @@ export function ChatInput({
   blindModalities,
   contextUsage,
   folders,
+  projectId,
+  projectName,
+  onFocus,
+  onBlur,
 }: ChatInputProps) {
   const t = useTranslations("chat.input");
   const tNotice = useTranslations("chat.notice");
@@ -202,7 +213,10 @@ export function ChatInput({
   );
 
   return (
-    <div className="px-4 md:px-6 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div
+      data-capka-composer="1"
+      className="capka-composer-pad px-4 md:px-6 pt-2 pb-[max(0.75rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))] md:pb-[max(1.5rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))]"
+    >
       <div className="mx-auto max-w-3xl lg:max-w-4xl">
         <div className="overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow focus-within:shadow-md">
           {/* Attached files preview — same square FileTile used in chat history, so
@@ -286,6 +300,8 @@ export function ChatInput({
               }}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
+              onFocus={onFocus}
+              onBlur={onBlur}
               disabled={awaitingInput}
               aria-label={files.length > 0 ? t("placeholderFiles") : t("placeholder")}
               rows={1}
@@ -312,8 +328,9 @@ export function ChatInput({
             )}
           </div>
           <div className="flex items-center justify-between px-3 pb-2.5">
-            {/* Attach button */}
-            <div>
+            {/* Left cluster: the working context, then what you add to it. */}
+            <div className="flex items-center gap-1.5">
+              <ProjectChip projectId={projectId} projectName={projectName} />
               <input
                 ref={fileInputRef}
                 type="file"

@@ -52,7 +52,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useBackgroundChat } from "@/hooks/use-background-chat";
 import { ChatNav } from "@/components/chat/chat-nav";
-import { ClawMark } from "@/components/brand/claw-mark";
+import { BrandHero } from "@/components/brand/brand-lockup";
 import { pickGreeting, type GreetingLocale } from "@/lib/chat/greeting";
 import { haptic } from "@/lib/haptics";
 import { chatTarget } from "@/lib/workspace-target";
@@ -134,16 +134,11 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
   const [showScrollDown, setShowScrollDown] = useState(false);
   // The user turn currently at the top of the view — highlighted in the nav.
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
-  // The composer floats over the scroll area as an overlay, so the scroll area
-  // reserves bottom room equal to the composer's live height. Attaching files
-  // grows the composer; a fixed inset would then hide the tail of the reply
-  // behind it with nowhere to scroll. Measured here and fed into paddingBottom.
+  // In-thread: composer is an in-flow bottom dock (not an absolute overlay).
+  // When it grows (attachments, queue), the flex scroll pane shrinks — mirror
+  // that delta into scrollTop so the last line stays glued above the dock.
   const composerRef = useRef<HTMLDivElement>(null);
   const [composerH, setComposerH] = useState(160);
-  // Carries a height delta from the ResizeObserver to a layout effect that
-  // applies the matching scroll shift — done after the new padding commits so
-  // the room exists and a grow-shift isn't clamped. prevComposerH lets the
-  // observer compute the delta without re-measuring.
   const pendingShift = useRef(0);
   const prevComposerH = useRef(160);
 
@@ -299,12 +294,10 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
     const spacer = spacerRef.current;
     if (!el || !userEl || !end || !spacer) return;
     const contentBelowUser = end.getBoundingClientRect().top - userEl.getBoundingClientRect().top;
-    // Subtract the composer's own footer (its live height + the 16px of air) —
-    // the scroll area already reserves exactly that as paddingBottom. Counting
-    // only the viewport here would stack the two and leave a composer-tall band
-    // of dead scroll below the turn. (--kb is left in the padding on purpose:
-    // that slack is what lets the list rise above the on-screen keyboard.)
-    const footer = prevComposerH.current + 16;
+    // Composer is in-flow below the scroll pane, so clientHeight already
+    // excludes it. Only keep a little air so the last line isn't flush against
+    // the dock. Keyboard room is owned by the outer --kb padding, not here.
+    const footer = 16;
     // -2: an exact fit would rest the content precisely on the overflow
     // boundary, where sub-pixel drift (fractional text heights vs the rounded
     // clientHeight) flips the scrollbar on and off with every streamed delta
@@ -388,15 +381,12 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Glue the conversation to the rising keyboard. iOS overlays the on-screen
-  // keyboard without resizing layout, so the --kb padding only adds room *below*
-  // — it never lifts what you're looking at, and the newest message slips behind
-  // the keyboard. Mirror the keyboard's height change into scrollTop so the list
-  // moves up in lockstep with it, the way every messenger does: your position
-  // (latest reply, or mid-history) is preserved, just raised above the keyboard —
-  // expected, not a jump. Deferred to a frame so useKeyboardInset's matching
-  // padding bump has committed first; otherwise the scroll would clamp for lack
-  // of room. Android resizes layout instead (inset stays ~0), so this is a no-op.
+  // Glue the conversation to the rising keyboard. Outer --kb padding shrinks
+  // the flex scroll pane from the bottom; mirror that into scrollTop so your
+  // place in the thread stays put relative to the composer (messenger-style).
+  // Deferred a frame so the padding commit lands first. Android resizes layout
+  // (--kb ~0) so this is a no-op there. Match useKeyboardInset (raw height gap,
+  // no offsetTop — that under-counts after the document scroll pin).
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
@@ -412,7 +402,11 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
       });
     };
     vv.addEventListener("resize", onResize);
-    return () => vv.removeEventListener("resize", onResize);
+    vv.addEventListener("scroll", onResize);
+    return () => {
+      vv.removeEventListener("resize", onResize);
+      vv.removeEventListener("scroll", onResize);
+    };
   }, []);
 
   // As the reply streams in, keep the spacer trimmed to just-enough and refresh
@@ -423,16 +417,55 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
     return () => cancelAnimationFrame(raf);
   }, [messages]);
 
+  // Signal busy state for the iOS WK shell (CapkaFeedback / beginBackgroundTask).
+  // Also post replyBusy/replyDone over the native bridge so completion is not
+  // solely dependent on DOM polling (which is throttled while backgrounded).
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.setAttribute("data-capka-busy", isLoading ? "1" : "0");
+    return () => {
+      document.body.removeAttribute("data-capka-busy");
+    };
+  }, [isLoading]);
+
   // A gentle "done" buzz on the falling edge of loading (touch devices only).
   const wasLoading = useRef(false);
   useEffect(() => {
+    type NativeBridge = {
+      replyBusy?: () => void;
+      replyDone?: (preview?: string) => void;
+    };
+    const native = (window as unknown as { CapkaNativeApp?: NativeBridge; webkit?: { messageHandlers?: { capkaNative?: { postMessage: (b: object) => void } } } });
+    const postNative = (type: "replyBusy" | "replyDone", preview?: string) => {
+      try {
+        if (type === "replyBusy" && native.CapkaNativeApp?.replyBusy) {
+          native.CapkaNativeApp.replyBusy();
+          return;
+        }
+        if (type === "replyDone" && native.CapkaNativeApp?.replyDone) {
+          native.CapkaNativeApp.replyDone(preview ?? "");
+          return;
+        }
+        native.webkit?.messageHandlers?.capkaNative?.postMessage(
+          type === "replyDone" ? { type, preview: preview ?? "" } : { type },
+        );
+      } catch {
+        /* not in iOS shell */
+      }
+    };
+
+    if (isLoading && !wasLoading.current) {
+      postNative("replyBusy");
+    }
     if (wasLoading.current && !isLoading) {
       haptic("success");
       // Turn finished — pull any files the agent changed back to the local folder.
       void folderSync.pullAll();
+      const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+      postNative("replyDone", lastAssistant ? msgText(lastAssistant).slice(0, 120) : "");
     }
     wasLoading.current = isLoading;
-  }, [isLoading, folderSync]);
+  }, [isLoading, folderSync, messages]);
 
   // Composer text is a per-chat draft persisted to localStorage, so a
   // typed-but-unsent message survives a reload, a closed tab, or a failed send.
@@ -576,12 +609,57 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
   // keeps the greeting from lingering after the first send on a truly new chat.
   const showGreeting = !initialHasHistory && messages.length === 0;
   const [filesOpen, setFilesOpen] = useState(false);
+  // Home focus mode (match web): focusing, typing, or keyboard-open collapses
+  // recent/history so logo + composer recenter above the keyboard.
+  const [homeComposerFocused, setHomeComposerFocused] = useState(false);
+  const [kbOpen, setKbOpen] = useState(false);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () => {
+      setKbOpen(Math.max(0, window.innerHeight - vv.height) > 24);
+    };
+    sync();
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+    };
+  }, []);
+  const homeFocusMode =
+    showGreeting &&
+    (homeComposerFocused || kbOpen || !!input.trim() || attachments.files.length > 0);
+  const homeScrollRef = useRef<HTMLDivElement>(null);
 
-  // Track the composer's height so the scroll inset always matches it. Re-run
-  // when the greeting gives way to the message stream, since the composer only
-  // mounts there. The initial measurement seeds prevComposerH WITHOUT queuing a
-  // shift (first paint shouldn't jump); subsequent growth/shrink (a file chip
-  // appearing, the queue filling) queues the delta.
+  // After history collapses / keyboard rises, pin the brand into the visible
+  // home scroller so the full wordmark stays above the composer (iOS WK).
+  useEffect(() => {
+    if (!homeFocusMode) return;
+    const el = homeScrollRef.current;
+    if (!el) return;
+    const pin = () => {
+      el.scrollTop = Math.min(el.scrollTop, 8);
+      el.querySelector<HTMLElement>("[data-capka-home-brand]")?.scrollIntoView({
+        block: "nearest",
+        inline: "nearest",
+      });
+    };
+    requestAnimationFrame(pin);
+    const t1 = window.setTimeout(pin, 50);
+    // Match home focus transition (~320ms) so the wordmark stays pinned
+    // through the collapse + keyboard reflow, not only at the start.
+    const t2 = window.setTimeout(pin, 180);
+    const t3 = window.setTimeout(pin, 340);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
+  }, [homeFocusMode, kbOpen]);
+
+  // Track composer height so a grow/shrink (file chip, queue) can shift scroll
+  // in lockstep. Re-run when greeting → thread mounts the dock composer.
   useIsomorphicLayoutEffect(() => {
     const el = composerRef.current;
     if (!el) return;
@@ -599,10 +677,8 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
     return () => ro.disconnect();
   }, [showGreeting]);
 
-  // Once the padding (driven by composerH) has committed, apply the queued
-  // scroll delta: the content shifts by exactly the composer's growth, so the
-  // last line you were reading stays glued to the composer's top edge instead
-  // of being swallowed by it.
+  // After the flex dock height commits, apply the queued scroll delta so the
+  // last visible line stays glued above the composer.
   useIsomorphicLayoutEffect(() => {
     const d = pendingShift.current;
     if (!d) return;
@@ -635,7 +711,7 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
   const modelGone = !readOnly && !isLoading && modelStatus.settled && !modelStatus.available;
 
   const inputEl = readOnly ? (
-    <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6 lg:max-w-4xl">
+    <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,var(--capka-sab,env(safe-area-inset-bottom)))] md:px-6 lg:max-w-4xl">
       <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card/50 px-4 py-5 text-center">
         {isLoading ? (
           // The bot (started from Telegram) is actively working on this read-only
@@ -665,7 +741,7 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
       </div>
     </div>
   ) : modelGone ? (
-    <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6 lg:max-w-4xl">
+    <div className="mx-auto max-w-3xl px-4 pb-[max(1rem,var(--capka-sab,env(safe-area-inset-bottom)))] md:px-6 lg:max-w-4xl">
       {/* Calm, centered — matches the read-only block above. No inline picker: it
           rendered awkwardly in this floating block, and the header picker already
           fixes it (picking an available model flips modelStatus and the composer
@@ -700,6 +776,27 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
       blindModalities={blindModalities}
       contextUsage={contextUsage}
       folders={folderSync}
+      projectId={projectId}
+      projectName={projectName}
+      onFocus={showGreeting ? () => setHomeComposerFocused(true) : undefined}
+      onBlur={
+        showGreeting
+          ? () => {
+              // Delay: tapping the model chip briefly blurs the textarea; keep
+              // focus mode if focus stays inside the home composer column.
+              requestAnimationFrame(() => {
+                const ae = document.activeElement;
+                if (
+                  ae instanceof Element &&
+                  ae.closest("[data-capka-home-focus='1'], [data-capka-composer='1']")
+                ) {
+                  return;
+                }
+                setHomeComposerFocused(false);
+              });
+            }
+          : undefined
+      }
     />
   );
 
@@ -733,38 +830,45 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
     <PreviewProvider>
     {/* Full-window drop target — disabled for read-only Telegram chats (no composer). */}
     <FileDropZone onFiles={attachments.add} disabled={readOnly} />
-    <div className="flex h-full">
-      <div className="flex min-w-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {showGreeting ? (
-        <div className="relative flex flex-1 flex-col overflow-hidden">
+        <div
+          className="capka-home-kb relative flex min-h-0 flex-1 flex-col overflow-hidden"
+          data-capka-home="1"
+          // Keyboard inset shrinks this column so min-h-full + justify-center
+          // recenters logo+composer in the visible area above the keyboard
+          // (same north star as web). Do NOT bottom-dock the home composer.
+          style={{ paddingBottom: "var(--kb, 0px)" }}
+        >
           {/* No header in the greeting state, so the sidebar handle lives in the
               top-left corner on mobile. Pinned outside the scroll area so it
               stays put while the greeting scrolls under it on short screens. */}
-          <SidebarTrigger className="absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 size-9 rounded-full border bg-card shadow-sm md:hidden" />
-          {/* Scroll wrapper: the inner block centers when it fits (min-h-full +
-              justify-center) and scrolls when the greeting is taller than the
-              viewport — otherwise centering clips the logo off the top with no
-              way to scroll back to it (mobile, keyboard open). */}
+          <SidebarTrigger className="absolute left-[max(0.75rem,var(--capka-sal,env(safe-area-inset-left,0px)))] top-[max(0.75rem,var(--capka-sat,env(safe-area-inset-top,0px)))] z-20 size-9 rounded-full border bg-card shadow-sm md:hidden" />
           <div
-            className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable_both-edges]"
-            // Keyboard inset as bottom padding so the centered composer rises above
-            // the keyboard instead of being covered (iOS).
-            style={{ paddingBottom: "calc(2.5rem + var(--kb, 0px))" }}
+            ref={homeScrollRef}
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable_both-edges]"
           >
-          <div className="flex min-h-full flex-col items-center justify-center py-10">
-          <div className="relative z-10 w-full">
-            {/* The brand claw reveals on mount — the one signature flourish — with
-                a soft halo lifting it off the surface, then the greeting floats up
-                just behind it. */}
-            <div className="mb-8 flex flex-col items-center px-6">
-              <div className="relative">
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_oklch,var(--foreground)_8%,transparent),transparent_70%)]"
-                />
-                <ClawMark animated className="relative h-20 w-20 text-foreground md:h-24 md:w-24" />
+          <div
+            className={`flex min-h-full flex-col items-center justify-center transition-[padding] duration-[320ms] ease-[var(--ease-out)] ${
+              homeFocusMode ? "py-5" : "py-10"
+            }`}
+          >
+          <div className="relative z-10 w-full" data-capka-home-focus="1">
+            <div
+              data-capka-home-brand
+              className={`mx-auto flex w-full max-w-xl flex-col items-center px-4 transition-[margin,transform,opacity] duration-[320ms] ease-[var(--ease-out)] sm:px-6 ${
+                homeFocusMode ? "mb-3" : "mb-8"
+              }`}
+            >
+              <div className="relative flex w-full items-center justify-center overflow-visible">
+                <BrandHero className="relative mx-auto" size="md" />
               </div>
-              <h1 className="animate-claw-greet mt-6 font-display text-balance text-center text-fluid-display font-medium tracking-tight text-foreground">
+              <h1
+                className={`animate-claw-greet font-display text-balance text-center text-fluid-display font-medium tracking-tight text-foreground transition-[margin,opacity] duration-[320ms] ease-[var(--ease-out)] ${
+                  homeFocusMode ? "mt-3" : "mt-6"
+                }`}
+              >
                 {greeting ?? t("panel.greeting")}
               </h1>
             </div>
@@ -773,30 +877,31 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
             <div className="animate-blur-rise [animation-delay:80ms]">{inputEl}</div>
 
             <div className="mx-auto max-w-3xl px-4 md:px-6 lg:max-w-4xl">
-              {/* relative z-20 keeps the picker (and its absolute dropdown) in a
-                  stacking context above the starters block below — otherwise the
-                  later sibling paints over the open dropdown. */}
-              <div className="animate-blur-rise relative z-20 -mt-3 flex justify-center [animation-delay:140ms]">
+              {/* Clear of the composer card — never -mt-3 into the input (iOS
+                  overlap when kb-open shrinks composer pad). Focus adds a little
+                  more air so the chip never kisses the rounded card. */}
+              <div
+                className={`relative z-20 flex justify-center transition-[margin] duration-[320ms] ease-[var(--ease-out)] ${
+                  homeFocusMode ? "mt-3" : "mt-1"
+                }`}
+              >
                 <div className="inline-flex rounded-full border bg-card px-1 shadow-sm">
                   <ModelPicker variant="pill" value={model} onChange={setModel} onResolved={handleModelResolved} />
                 </div>
               </div>
-              {/* Hint + recent + starters collapse away the moment the user starts
-                  typing. Animating grid-rows 1fr→0fr (not unmounting) shrinks the
-                  height over 300ms, so the centered composer above glides to its
-                  new center instead of snapping. `inert` drops the hidden controls
-                  from tab/click order; the global reduced-motion rule flattens the
-                  transition to instant. */}
+              {/* Focus / typing / keyboard collapses recent + starters so
+                  logo+composer recenter above the keyboard (web home north star). */}
               <div
-                className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
-                  input ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+                className={`grid transition-[grid-template-rows,opacity,transform] duration-[320ms] ease-[var(--ease-out)] ${
+                  homeFocusMode
+                    ? "grid-rows-[0fr] -translate-y-1 opacity-0"
+                    : "grid-rows-[1fr] translate-y-0 opacity-100"
                 }`}
-                inert={input ? true : undefined}
+                inert={homeFocusMode ? true : undefined}
               >
                 <div className="overflow-hidden">
-                  <div className="animate-blur-rise pt-2.5 [animation-delay:200ms]">
-                    <p className="text-center text-xs text-muted-foreground">{t("panel.greetingHint")}</p>
-                    <div className="mt-8 space-y-6">
+                  <div className="animate-blur-rise pt-5 [animation-delay:200ms]">
+                    <div className="space-y-6">
                       <RecentChats initial={recentChats} />
                       <FileTypeSuggestions onPick={setInput} />
                     </div>
@@ -809,20 +914,19 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
           </div>
         </div>
       ) : (
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Scroll area fills the whole panel; the header and input float over
-              it as gradients, so messages slide behind a soft fade at both ends.
-              both-edges keeps the centered column aligned with those overlays
-              (which don't know about the gutter) whether or not a classic
-              scrollbar is showing. */}
+        <div
+          className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
+          // In-thread only: shrink the column above the keyboard. Composer is
+          // in-flow at the bottom (no translateY) so it cannot overlap messages;
+          // model chip stays in the top header.
+          style={{ paddingBottom: "var(--kb, 0px)" }}
+        >
+          {/* Messages fill the space between header and in-flow composer dock. */}
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overscroll-contain pt-16 [scrollbar-gutter:stable_both-edges]"
-            // Bottom room tracks the composer's live height (+a little air, +the
-            // keyboard inset) so the last message always clears the overlaid
-            // composer — even after attachments grow it.
-            style={{ paddingBottom: `calc(${composerH + 16}px + var(--kb, 0px))` }}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pt-[calc(5.25rem+var(--capka-sat,env(safe-area-inset-top,0px)))] [scrollbar-gutter:stable_both-edges]"
+            style={{ paddingBottom: 16 }}
           >
             <div className="mx-auto max-w-3xl lg:max-w-4xl px-2 md:px-4">
               {importedFrom && (
@@ -859,11 +963,6 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
                   </div>
                 );
               })}
-              {/* One persistent "working…" indicator, rendered in a single place
-                  so it never remounts (and flickers) as the turn progresses. It
-                  shows only while nothing has streamed yet — before the assistant
-                  message exists, or while it's still empty. Once the first part
-                  arrives, the rail's own running tail node takes over. */}
               {isLoading && (() => {
                 const last = messages[messages.length - 1] as { role: string; parts?: unknown[] } | undefined;
                 const showStatus = !!last && (last.role === "user" || (last.role === "assistant" && (last.parts?.length ?? 0) === 0));
@@ -873,17 +972,13 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
                   </div>
                 ) : null;
               })()}
-              {/* End of real content (used to detect/scroll to the latest), then
-                  the spacer that lets the latest turn rise to the top. */}
               <div ref={contentEndRef} />
               <div ref={spacerRef} aria-hidden className="shrink-0" />
             </div>
           </div>
 
-          {/* Floating header — fades to transparent so messages scroll up
-              behind it. pointer-events-none lets scroll-over pass through;
-              only the controls themselves are interactive. */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 bg-gradient-to-b from-background via-background to-transparent px-4 pb-8 pt-3 md:px-6">
+          {/* Floating header — model picker stays at top; never rides the keyboard. */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 bg-gradient-to-b from-background via-background to-transparent px-4 pb-8 pt-[max(0.75rem,var(--capka-sat,env(safe-area-inset-top,0px)))] pl-[max(1rem,var(--capka-sal,env(safe-area-inset-left,0px)))] md:px-6">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="pointer-events-auto size-9 shrink-0 rounded-full border bg-card shadow-sm md:hidden" />
               <div className="pointer-events-auto inline-flex rounded-full border bg-card px-1 shadow-sm">
@@ -922,17 +1017,8 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
             label={t("panel.navigation")}
           />
 
-          {/* pointer-events-none lets the transparent gradient strip above the
-              composer pass clicks through to the message footers behind it —
-              otherwise this block's empty top band silently swallowed taps on
-              the (i)/copy/regenerate row of whatever message rested under it
-              (it worked in some chats and not others purely by scroll position).
-              Mirrors the header above; only the real controls re-enable events. */}
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background to-transparent pt-6 transition-transform duration-200 ease-out"
-            // Lift the composer above the on-screen keyboard (iOS; ~0 elsewhere).
-            style={{ transform: "translateY(calc(-1 * var(--kb, 0px)))" }}
-          >
+          {/* In-flow bottom dock — rises with outer --kb padding, never translateY. */}
+          <div className="relative z-10 shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-6">
             <div
               className={`pointer-events-none mb-2 flex justify-center transition-[transform,opacity] duration-200 ${
                 showScrollDown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
@@ -952,9 +1038,6 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
                 <ArrowDown className="h-4 w-4" />
               </Button>
             </div>
-            {/* The composer, queue and error banner are the genuinely
-                interactive part of this otherwise click-through block. Its
-                height (measured via composerRef) drives the scroll inset. */}
             <div ref={composerRef} className="pointer-events-auto">
               {error && !lastFailed && (
                 <div className="mx-auto max-w-3xl lg:max-w-4xl px-4 md:px-6 pb-2">

@@ -234,7 +234,11 @@
       "contextFull": "上下文：{pct}%",
       "contextTokens": "{used} / {total} Token",
       "modelGoneBody": "该型号不再可用 - 选择其他型号继续聊天",
-      "modelGoneNew": "新聊天"
+      "modelGoneNew": "新聊天",
+      "selectProject": "选择项目",
+      "project": "项目",
+      "noProject": "不使用项目",
+      "noProjectsYet": "还没有项目"
     },
     "menu": {
       "rename": "重命名",
