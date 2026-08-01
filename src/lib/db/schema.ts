@@ -23,7 +23,7 @@ export const users = pgTable("user", {
   // "suspended" was approved then had access revoked by an admin (sessions killed);
   // "rejected" was denied. Non-active statuses are all fail-closed server-side.
   status: text("status").notNull().default("active"), // "active" | "pending" | "suspended" | "rejected"
-  locale: text("locale"), // "en" | "uk" | null (null = follow browser/default)
+  locale: text("locale"), // "en" | "uk" | "zh-CN" | null (null = follow browser/default)
   // IANA tz (e.g. "Europe/Kyiv"), auto-detected from the browser. null → UTC.
   // Fed into the agent's volatile prompt so it knows the user's local date/time.
   timezone: text("timezone"),
@@ -183,6 +183,26 @@ export const telegramLinks = pgTable("telegram_links", {
   activeChatId: text("active_chat_id").references(() => chats.id, { onDelete: "set null" }),
   linkedAt: timestamp("linked_at").defaultNow(),
 }, (table) => [index("idx_telegram_links_tg_user_id").on(table.telegramUserId)]);
+
+/**
+ * APNs device tokens for the native iOS client. A turn that outlives the app's
+ * ~30s background budget can only be announced by a server push — everything
+ * else (local notification on the busy→idle edge) dies with the suspended
+ * process. Keyed by token so re-registering the same device is an upsert, and
+ * cascaded off the user so a deleted account stops receiving anything.
+ */
+export const pushTokens = pgTable("push_tokens", {
+  token: text("token").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // "ios" today; leaves room for another platform without a migration.
+  platform: text("platform").notNull().default("ios"),
+  // Sandbox builds (Xcode/TestFlight-from-Xcode) and App Store builds talk to
+  // different APNs hosts; sending to the wrong one fails with BadDeviceToken.
+  environment: text("environment").notNull().default("production"),
+  locale: text("locale"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+}, (table) => [index("idx_push_tokens_user_id").on(table.userId)]);
 
 export const linkCodes = pgTable("link_codes", {
   code: text("code").primaryKey(),

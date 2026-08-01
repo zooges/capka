@@ -7,6 +7,7 @@ import { chats, messages, users } from "@/lib/db/schema";
 import { publishTaskEvent } from "./events";
 import { stripNul } from "./sanitize";
 import { makeDeliverySink, type TaskOrigin, type StreamStatus } from "./delivery";
+import { isPushConfigured, pushToUser } from "@/lib/push/apns";
 import { getTranslator } from "@/lib/i18n/translator";
 import { describeStep } from "@/lib/chat/steps";
 import { loadActivePath } from "@/lib/chat/tree";
@@ -54,14 +55,30 @@ const errMsg = (e: unknown) => errorText(e);
  * Responses API ("openai" provider). Through an OpenAI-compatible gateway
  * ("litellm", Chat Completions) the summary is visible only if the upstream
  * model echoes `reasoning_content` (Anthropic/DeepSeek do; OpenAI hides it).
+ *
+ * Tunable via `REASONING_EFFORT`:
+ *   off|disabled|none — disable thinking where the wire format supports it
+ *   low|medium|high|max|… — pass through (provider-specific)
+ * DeepSeek V4 maps low/medium → high server-side; only `thinking:{type:"disabled"}`
+ * actually speeds short replies, so DeepSeek defaults to off when unset.
  */
+function reasoningEffortEnv(): string {
+  return (process.env.REASONING_EFFORT ?? "").trim().toLowerCase();
+}
+function reasoningOff(effort: string): boolean {
+  return effort === "off" || effort === "disabled" || effort === "none" || effort === "0";
+}
+
 function reasoningOptions(provider: string): Record<string, Record<string, unknown>> | undefined {
+  const effort = reasoningEffortEnv();
   switch (provider) {
     case "anthropic":
+      if (reasoningOff(effort)) return undefined;
       // The SDK sets max_tokens to fit the budget — don't cap it ourselves.
       return { anthropic: { thinking: { type: "enabled", budgetTokens: 4000 } } };
     case "openrouter":
-      return { openrouter: { reasoning: { enabled: true, effort: "medium" } } };
+      if (reasoningOff(effort)) return { openrouter: { reasoning: { enabled: false } } };
+      return { openrouter: { reasoning: { enabled: true, effort: effort || "low" } } };
     case "openai":
       // Responses API returns a visible reasoning summary.
       return { openai: { reasoningSummary: "auto" } };
@@ -78,15 +95,25 @@ function reasoningOptions(provider: string): Record<string, Record<string, unkno
       // providerNativeTools(), not here.)
       return { google: { thinkingConfig: { includeThoughts: true } } };
     case "bedrock":
+      if (reasoningOff(effort)) return undefined;
       // Converse reasoningConfig — Claude/Nova reasoning models stream
       // reasoningContent; non-reasoning models trip the retry-without path.
       return { bedrock: { reasoningConfig: { type: "enabled", budgetTokens: 4000 } } };
+    case "deepseek": {
+      // DeepSeek V4: `low`/`medium` map to `high` server-side — they do NOT
+      // reduce TTFT. openai-compatible spreads unknown providerOption keys into
+      // the Chat Completions body, so `thinking: {type:"disabled"}` reaches the
+      // API. Default off for short-reply latency; set REASONING_EFFORT=high|max
+      // when quality needs thinking.
+      if (!effort || reasoningOff(effort)) {
+        return { deepseek: { thinking: { type: "disabled" } } };
+      }
+      const mapped = effort === "low" || effort === "medium" || effort === "minimal"
+        ? "high"
+        : effort === "xhigh" ? "max" : effort;
+      return { deepseek: { thinking: { type: "enabled" }, reasoningEffort: mapped } };
+    }
     case "litellm":
-      // Namespace matches the provider `name` in getModel. reasoningEffort asks
-      // the gateway's reasoning model to think; openai-compatible then parses the
-      // streamed reasoning_content into reasoning-delta parts.
-      return { litellm: { reasoningEffort: "medium" } };
-    case "deepseek":
     case "mistral":
     case "xai":
     case "groq":
@@ -95,7 +122,8 @@ function reasoningOptions(provider: string): Record<string, Record<string, unkno
       // the namespace matches the provider `name` in getModel. A non-reasoning
       // model that rejects `reasoning_effort` trips the runner's
       // retry-without-reasoning path, so sending it unconditionally is safe.
-      return { [provider]: { reasoningEffort: "medium" } };
+      if (reasoningOff(effort)) return undefined;
+      return { [provider]: { reasoningEffort: effort || "low" } };
     default:
       return undefined;
   }
@@ -1390,6 +1418,24 @@ export async function runAgentTask(task: ClaimedTask, workerId: string): Promise
         status: finalStatus,
         err: String(e),
       });
+    }
+
+    // The native iOS client can only be told about a turn it outlived by a push:
+    // its background budget is ~30s and this one may have run for minutes. Same
+    // no-op-on-failure rule as the sink above — a push is never worth failing a
+    // completed task over. Skipped for Telegram-originated turns, which already
+    // got their answer in the chat they came from.
+    if (payload.origin?.platform !== "telegram" && isPushConfigured()) {
+      try {
+        const answer = getFullText().trim();
+        await pushToUser(userId, {
+          title: finalStatus === "completed" ? "回答已完成" : "任务未能完成",
+          body: answer ? answer.slice(0, 160) : "打开 App 查看详情",
+          chatId,
+        });
+      } catch (e) {
+        tlog.warn("push notify failed", { err: String(e) });
+      }
     }
     // Deliver any files the agent created/edited this run to the origin channel
     // (Telegram). Best-effort and only on success — never fail the task over it.

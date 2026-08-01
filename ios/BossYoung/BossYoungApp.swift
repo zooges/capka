@@ -37,6 +37,7 @@ struct BossYoungApp: SwiftUI.App {
         // Feishu SSO is registered lazily on first tap (SDK may prompt for push).
         .onChange(of: session.isAuthenticated) { _, ok in
           if ok { CapkaFeedback.requestNotificationPermissionIfNeeded() }
+          PushRegistrar.shared.noteSession(active: ok)
         }
         .onChange(of: scenePhase) { _, phase in
           switch phase {
@@ -63,7 +64,38 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     UNUserNotificationCenter.current().delegate = self
+    // Registering is cheap and idempotent; the token is only *sent* once there
+    // is a session to attach it to (see PushRegistrar).
+    application.registerForRemoteNotifications()
     return true
+  }
+
+  func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    PushRegistrar.shared.note(token: deviceToken.map { String(format: "%02x", $0) }.joined())
+  }
+
+  func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+  ) {
+    // No push is a degraded experience, not a broken one — the local
+    // notification path still covers turns that finish quickly.
+    PushRegistrar.shared.note(token: nil)
+  }
+
+  /// Tapping a push opens the chat it came from.
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    if let chatId = response.notification.request.content.userInfo["chatId"] as? String {
+      NotificationCenter.default.post(name: PushRegistrar.openChatNotification, object: chatId)
+    }
+    completionHandler()
   }
 
   func application(

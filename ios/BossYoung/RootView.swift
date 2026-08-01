@@ -185,6 +185,11 @@ struct MainShellView: View {
         composerFocused = true
       }
     }
+    .onReceive(NotificationCenter.default.publisher(for: PushRegistrar.openChatNotification)) { note in
+      guard let id = note.object as? String else { return }
+      showSidebar = false
+      Task { await chat.openChat(id) }
+    }
     .onChange(of: session.eventSeq) { _, _ in
       if let event = session.lastEvent {
         chat.applyEvent(event)

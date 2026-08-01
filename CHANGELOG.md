@@ -6,6 +6,104 @@ All notable changes to Capka are documented here. Format follows
 
 ## [Unreleased]
 
+### Added
+
+- iOS push notifications for finished turns (`APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`, `APNS_KEY_P8`). Unset leaves the previous behaviour; a migration adds `push_tokens`.
+- iOS app (`ios/`) is now a native SwiftUI client instead of the WKWebView shell: Feishu login, streaming chat with tool steps, chat rename/pin/archive/move, projects + workspace files, and settings (skills, connectors, automations, memory). Web-matched visuals; no server change. New iOS build.
+- `CAPKA_TAVILY_STEER` gates China open-web Tavily-first prompt steer (default on when `CAPKA_REGION=cn`). Set `CAPKA_TAVILY_STEER=0` or `CAPKA_WEB_SEARCH=open` on intranet hosts for open curl/Google/Bing without forcing Tavily. Passed through compose; recreate platform after changing.
+- `CAPKA_IOS_URL_SCHEME` selects the Feishu Safari→iOS-shell OAuth bridge scheme (`bossyoung` default; `bossyoung2` for the intranet 邦信阳2 app). Passed through compose; recreate platform after changing.
+- `MCP_ALWAYS_LOAD` keeps listed MCP servers active under progressive disclosure (no `find_tool` hop). When unset/empty and `CAPKA_REGION=cn`, defaults to `tavily`. Set `MCP_ALWAYS_LOAD=none` to disable. Passed through compose; recreate platform after changing.
+- `CAPKA_REGION=cn` (or `CAPKA_CHINA=1`) scopes **Tavily MCP to general web search only** (查网页/新闻/公开互联网；call directly — already configured; never `pip install` / marketplace / `find_tool` for it). Domain MCPs (法律/元典/企查查/微信等) stay on their connectors via `find_tool` when deferred. Overseas URL fetch and Google/Bing/Baidu last-resort SERP via `curl` are allowed when sandbox egress works. Documented in `docs/CHINA-FORK.md`. Recreate the platform image after setting.
+- `npm run mcp:seed-china` registers the official remote Tavily MCP (`tavily` → `https://mcp.tavily.com/mcp/`) when `TAVILY_API_KEY` is set; without the key the row is prepared disabled. Use `MCP_SEED_ONLY=tavily` to seed only that connector.
+
+### Changed
+
+- iOS chat: tap outside the composer dismisses the keyboard and restores the home layout; model picker/chip show provider brand logos (same lobehub glyphs as the web); live SSE streams reasoning + tool/command steps into the activity rail (with poll fallback when SSE is blocked); workspace opens from a right-edge swipe on the conversation page. New iOS build.
+- iOS native client: sidebar restores `BOSS & YOUNG` wordmark; account menu matches web (search / projects / archived / appearance / settings / sign-out); system/light/dark theme; mic control sits right of the composer; settings nav aligns with web personal + admin tabs (connections, users, usage, auth, activity, updates, …). New iOS build.
+- iOS native client: home drops the「我能帮忙做什么」greeting (logo + composer only); assistant markdown gains tables / task lists / copyable code / link tint; message and step entrances follow the web motion curve. Capka `URLSession` ignores the system HTTP proxy so office IP deploys stay reachable under Shadowrocket. New iOS build.
+- iOS login adds email/password under the Feishu button (same `POST /api/auth/sign-in/email` path as the web). New iOS build.
+- iOS login screen is vertically centered with filled fields, focus rings, password reveal, and deferred notification permission (no prompt over the sign-in form). New iOS build.
+- iOS login adds email sign-up (`POST /api/auth/sign-up/email`) with name/email/password; respects `registration-status` and pending-approval accounts. New iOS build.
+- iOS: settings redesigned to web personal tabs (general / extensions / memory / automations) with usage limits and Telegram link; latest assistant turn gains regenerate; composer adds speech-to-text mic; left-edge swipe opens sidebar and swipe-left closes it. New iOS build.
+
+### Fixed
+
+- iOS speech-to-text: avoid crashing when tearing down the audio tap; clearer errors when the simulator has no mic. New iOS build.
+- DeepSeek / gateway `Content Exists Risk` (and similar content-filter refusals) now map to a calm `content_blocked` message instead of the raw provider string. Recreate platform.
+- Always-load MCP servers (China default `tavily`) are connected on the current turn even with a cold schema cache, and a cached always-load server is pre-dialed so the first `tavily_search` skips a second `initialize`. Stops the agent from falling back to `pip install tavily-python` / empty `find_tool` after platform restart. Recreate platform.
+- China prompt + deferred MCP index no longer steer every retrieval to Tavily; domain connectors (chineselaw / wechat / company registry) stay reachable via `find_tool`. Chinese `find_tool` intents for 法律/企查查/微信 expand to those servers instead of Tavily. Recreate platform.
+- Login / auth screens vertically center on mobile and the iOS WKWebView shell (were top-pinned under the status bar). Recreate platform.
+- Chinese-only `find_tool` queries such as「搜索网页」no longer match zero tools (BM25 was Latin-only); common zh **open-web** search intents expand to English terms that hit Tavily, while domain zh intents expand to the matching connector. Recreate platform.
+- Empty home / new-chat: stays centered until focus/typing/keyboard; then collapses recent/starters so logo + composer recenter above the keyboard (matches web). In-chat uses an in-flow bottom dock + outer `--kb` padding (no `translateY`) so the composer cannot overlap messages; model chip stays in the top header. Recreate platform; new iOS build.
+- In-chat keyboard: `--kb` no longer under-counts when WK `visualViewport.offsetTop` races the scroll pin (raw height gap + iOS `--native-kb` from keyboard frame). Composer stays above the keyboard on conversation pages. Recreate platform; new iOS build.
+- Empty home focus: history collapse and logo/composer reflow animate (~320ms); model chip sits below the composer with a real gap (no negative margin overlap). Recreate platform.
+- Removed the home `greetingHint` copy (en / zh-CN / uk), including「将文件拖放到此处…」. Recreate platform.
+- iOS shell: keyboard no longer insets/offsets WK’s scroll view on top of web `--kb` (pins content offset + content inset). New iOS build.
+- iOS shell: background-task expiration no longer posts the misleading 「回复可能仍在服务器处理」 local notification or clears the in-flight reply watch. Completion notifications use title「回答已完成」+ preview, and the shell re-checks busy→idle on return to the app. New iOS build; recreate platform for the React `replyBusy`/`replyDone` bridge.
+- DeepSeek V4 DSML tool calls that leaked into assistant text through OpenAI-compatible gateways (LiteLLM, etc.) are parsed into real tool executions instead of showing protocol markup. Recreate the platform image after pulling.
+- Reply copy button works in the iOS WKWebView shell via a native clipboard bridge (`clipboardWrite` → UIPasteboard) plus `execCommand` fallback. New iOS build; recreate platform for the web fallback.
+
+### Changed
+
+- China sandbox prompt requires a real `curl`/`wget`/MCP attempt before claiming Google/YouTube/overseas sites are blocked; invent-GFW excuses stay forbidden. Recreate platform.
+- China `CAPKA_REGION=cn` sandbox prompt no longer forbids overseas URLs or Google SERP via `curl`; it states the host can reach domestic and foreign sites (use `SANDBOX_*_PROXY` when needed) and tells the model not to invent GFW/"连接会被阻断" excuses when egress is on. Tavily-first remains the default for cn unless `CAPKA_TAVILY_STEER=0`. Recreate platform.
+- `docker-compose.yml` sets `pull_policy: never` on platform and sandbox-controller so `compose up` no longer re-pulls GHCR and overwrites a locally tagged China-fork image. Upgrade with an explicit `docker compose pull` when intended.
+- MCP tool-schema cache is process-wide (`globalThis`) and disk-backed (`/tmp/capka-mcp-tool-schemas.json`) so Next.js module duplication no longer forces a cold HTTP reconnect every turn. Recreate the platform image after pulling.
+- HTTP MCP connectors no longer block time-to-first-token: schemas come from an in-process cache and connect only on the first tool call (cold cache warms schema-only in the background, then hangs up), same as stdio. A prior path still eagerly `await`ed every HTTP `initialize` in batches of 4 (~1–2s each), which dominated simple-chat latency even with `MCP_DEFER_TOKEN_PCT=0`. Recreate the platform image after pulling.
+- Deferred MCP system-prompt index is now connector name + tool count only (no capability essays). `find_tool` BM25 still uses full descriptions.
+- DeepSeek reasoning defaults to thinking disabled (`thinking:{type:disabled}`). V4 maps `low`/`medium` → `high` server-side, so those values never sped replies. Override with `REASONING_EFFORT=high|max` (passed through compose).
+- MCP progressive disclosure now also clamps the always-on connector budget with `MCP_DEFER_TOKEN_MAX` (default 8192, compose-passed). On ~1M-token models, percent-only gating (`MCP_DEFER_TOKEN_PCT=10`) left heavy MCP schemas always-on; the absolute cap forces `find_tool` without requiring `pct=0`. Set `MCP_DEFER_TOKEN_MAX=0` for percent-only; recreate platform after changing.
+- `MCP_DEFER_TOKEN_PCT` is now passed through `docker-compose.yml` into the platform, documented in `.env.example`, and treats `0` as always-defer (previously `|| 10` ignored an intentional zero). On large-window models, set `MCP_DEFER_TOKEN_PCT=1` (or `0`) then recreate platform so heavy MCP schemas load via `find_tool` instead of every turn.
+- Assistant persona identity is now **B&Y AI助手** (system prompt + Telegram/login copy); product UI prefers 邦信阳 / BOSS & YOUNG over Capka. Redeploy the platform image after pulling.
+
+### Added
+
+- iOS shell Feishu Mobile SSO (LarkSSO): jumps to the Feishu app and returns via the App ID URL scheme; Capka completes login at `GET/POST /api/auth/feishu/native`. Requires Feishu「移动应用登录」for Bundle ID `com.bossyoung.capka`. See `ios/README.md`.
+- iOS shell: left-edge swipe opens the sidebar; right-edge swipe goes to `/chat`; haptic + sound (and a local notification if backgrounded) when an assistant reply finishes.
+- iOS shell: while a reply is in flight, `beginBackgroundTask` keeps the WKWebView alive briefly after swipe-to-home and posts a local notification on `replyDone` (≈30s OS limit — see `ios/README.md`).
+- `/api/auth/registration-status` includes public `feishu.appId` when Feishu login is enabled.
+- iOS mobile shell under `ios/` (SwiftUI + WKWebView): fixed `http://111.231.24.43:3100`, shared web Feishu login, pull-to-refresh, in-app Feishu OAuth hosts, offline retry, injects `capka-native-app` for mobile CSS. See `ios/README.md`.
+- Simplified Chinese (`zh-CN`) locale with full UI strings; Chinese `Accept-Language` tags resolve to `zh-CN`.
+- Feishu / Lark OAuth login (admin Authentication settings + login button).
+- Configurable product brand via `NEXT_PUBLIC_PRODUCT_NAME` / `PRODUCT_NAME` (fork default: 邦信阳 / Boss & Young mark).
+- Legal skills pack (`skills-pack/legal/*`) and `npm run skills:seed-legal` seeder.
+- China-team fork operator guide: `docs/CHINA-FORK.md`.
+- MCP SSE remote transport end-to-end (persist, probe, load tools); China MCP sidecars via `docker-compose.mcp.yml` and `npm run mcp:seed-china`.
+- MCP connector token update in Connectors UI (Bearer header, encrypted at rest).
+- Large zh-CN translation quality pass (auth method, tokens, marketplace, nav).
+
+### Fixed
+
+- iOS / mobile Settings (incl. Connectors): content stays inside the viewport — safe-area padding on the settings chrome, no horizontal bleed from connector action rows / tab strips, and native shell overflow-x lockdown. Redeploy platform; new iOS build recommended.
+- iOS WKWebView shell: native safe-area CSS fallback is now `47px` (notch-class) when `--native-sat` has not been pushed yet, so opening a project from the sidebar no longer leaves the title under the status bar. Redeploy platform; new iOS build recommended.
+- iOS native shell: project / projects list top chrome no longer sits under the status bar / Dynamic Island — injects `--native-sa*` (matching `globals.css`) and keeps safe-area padding on `md` breakpoints. New iOS build; redeploy platform for the extra project-hub top padding.
+- Feishu Mobile SSO (`/api/auth/feishu/native`) now mints session cookies with better-call's standard base64 HMAC (the previous `base64urlnopad` signature was rejected by better-auth, so iOS returned from Feishu still bounced to `/login`). Native exchange omits `redirect_uri`; iOS prefers POST + cookie inject then `/chat`. Redeploy platform; new iOS build required for the client path.
+- Feishu OAuth on phone no longer 302s workplace / in-app webviews to `bossyoung://` (UA `Lark` / `Feishu` / …). Login stays in the Feishu web app; only non-Feishu mobile browsers without `capka_native` still bridge to the iOS shell. Redeploy the platform image after pulling.
+- Mobile inputs that auto-focus (sidebar chat search, command palette, model picker search) no longer trigger iOS/WKWebView page zoom — they use 16px (`text-base`) under `md`.
+- File preview fullscreen keeps the top toolbar below the notch / status bar (`safe-area` + `100dvh` pin) so close / download stay tappable.
+- iOS shell: downloading a file no longer leaves the top ProgressView spinning (attachment / frame-interrupted navigations now clear `isLoading`).
+- iOS shell: Feishu phone login opens the Feishu app; the HTTP callback is bridged back via `bossyoung://oauth` into the WKWebView (no tunnel domain required).
+- Assistant replies that name Chinese (or other non-ASCII) `/workspace/…` files again render inline chips and artifact tiles — the path matcher now uses Unicode letters instead of ASCII-only `\w`.
+- Feishu OAuth no longer returns `account_not_linked` when the Feishu work email matches an existing Capka user whose email is unverified (`requireLocalEmailVerified: false`). Redeploy the platform image after pulling.
+- Sandbox bridge sessions no longer die immediately when `SANDBOX_ENTRYPOINT_HOST` points at a non-executable `sandbox-entrypoint.sh` (`Permission denied` / exit 126). Deploy scripts now `chmod +x` that file.
+- zh-CN tool step labels translate past-tense verbs by meaning (e.g. `Ran Python` → `运行了 Python`), not phonetic transliteration (`冉·Python`).
+- Feishu OAuth callback origin is taken from the browser Host (auth route rewrites Docker's `0.0.0.0:3000` bind URL) so `redirect_uri` and the `oauth_state` cookie stay on the same entry (IP or tunnel). Register every entry's `/api/auth/oauth2/callback/feishu` in the Feishu app. Redeploy the platform image after pulling.
+- Feishu login falls back to `open_id` from the token when userinfo is denied, and the login page surfaces any `?error=` from the OAuth callback (not only `error=feishu`), including an on-page alert for `account_not_linked`.
+- HTTP deploys no longer emit `Strict-Transport-Security` unless `PUBLIC_URL` is `https://`.
+- Feishu OAuth token exchange now POSTs JSON to Feishu's token API (better-auth's default form-urlencoded body is rejected / fails for Feishu). Redeploy the platform image after pulling this change.
+- Feishu (and other OAuth) sign-in stores OAuth state in an encrypted cookie (`storeStateStrategy: "cookie"`) so HTTP IP logins no longer fail with `state_mismatch` / verification-not-found after Feishu redirects back.
+
+### Changed
+
+- Mobile / iOS shell: sidebar sheet, chat header, and message list pad for notch / home-indicator; home greeting top-aligns on small screens to cut the empty band under the composer; iOS shell writes `--capka-sa*` directly so WKWebView layouts work even when `env(safe-area-*)` is 0.
+- iOS shell opens tapped files in system Quick Look (PDF / Word / Excel 等) via a `capkaPreview` bridge; PDF iframe glitches no longer show a full-screen connection error.
+- Brand wordmark swaps to the white-type `/brand/boss-young-wordmark-on-dark.png` under `html.dark` so dark mode keeps the firm name readable.
+- Feishu login button uses the official Lark bird mark instead of a generic chat glyph.
+- Dev `allowedDevOrigins` includes `127.0.0.1` and `localhost` so local HMR/auth works over the loopback bind.
+- UI font stack includes Noto Sans SC for Chinese body text.
+- Remote MCP connectors may use Streamable HTTP or legacy SSE (`/sse` URL paths auto-detect).
+- Dev platform memory ceiling raised to 8g (`PLATFORM_MEM_LIMIT`) with larger Node heap to reduce click latency under `next dev`.
+
 ## [0.14.0] - 2026-07-24
 
 > **⚠ Breaking — `sandbox_enabled` is now enforced.** It previously saved but did nothing (no code read it). If you ever turned "Sandbox execution" off on Settings → Security, the agent will now really lose file and code access: turn it back on there.

@@ -1339,6 +1339,25 @@ final class CapkaAPIClient: @unchecked Sendable {
 
   /// Generic key/value settings write. The server enforces its own allow-list
   /// (`src/app/api/settings/keys.ts`), so an unknown key comes back 403.
+  /// Hand this device's APNs token to the server. Sandbox and production talk to
+  /// different APNs hosts and the token alone doesn't say which, so the build
+  /// tells it.
+  func registerPushToken(_ token: String, environment: String) async throws {
+    try await mutate(path: "api/push/register", method: "POST", json: [
+      "token": token,
+      "environment": environment,
+      "locale": Locale.current.identifier,
+    ])
+  }
+
+  func unregisterPushToken(_ token: String) async throws {
+    try await mutate(
+      path: "api/push/register",
+      method: "DELETE",
+      query: [URLQueryItem(name: "token", value: token)]
+    )
+  }
+
   // MARK: - Skills / connectors / plugins (writes)
 
   /// Skills arrive as an Anthropic-compatible zip; the server unpacks and
