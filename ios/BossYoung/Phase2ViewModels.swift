@@ -354,7 +354,6 @@ final class SettingsViewModel {
     var id: String { rawValue }
   }
 
-  var tab: Tab = .general
   var extTab: ExtTab = .skills
   var isAdmin = false
 
@@ -380,7 +379,14 @@ final class SettingsViewModel {
   var updates: AdminUpdatesInfo?
   var audit: [AuditEntry] = []
   var sandbox: SandboxCapabilities?
+  /// Admin security switches, each a row in the generic key/value settings table.
   var sandboxNetworkSetting: String?
+  var hostFolderAccess = false
+  var pcFolderAccess = "off"
+  var agentAutonomy = "supervised"
+  var blockPrivateProviderURLs = false
+  var agentProfile: AgentProfile?
+  var policies: [PolicyRow] = []
   var isLoading = false
   var isSaving = false
   var error: String?
@@ -458,6 +464,12 @@ final class SettingsViewModel {
       async let auditTask = api.fetchAuditLog()
       async let sandboxTask = api.fetchSandboxCapabilities()
       async let netTask = api.fetchSetting(key: "sandbox_network")
+      async let hostFoldersTask = api.fetchSetting(key: "host_folder_access")
+      async let pcFoldersTask = api.fetchSetting(key: "pc_folder_access")
+      async let autonomyTask = api.fetchSetting(key: "agent_autonomy")
+      async let blockPrivateTask = api.fetchSetting(key: "block_private_provider_urls")
+      async let profileTask = api.fetchAgentProfile()
+      async let policiesTask = api.listPolicies()
       adminUsers = (try? await usersTask) ?? []
       adminUsage = try? await usageTask
       if let b = try? await billTask {
@@ -469,10 +481,119 @@ final class SettingsViewModel {
       audit = (try? await auditTask) ?? []
       sandbox = try? await sandboxTask
       sandboxNetworkSetting = try? await netTask
+      hostFolderAccess = (try? await hostFoldersTask) == "true"
+      pcFolderAccess = (try? await pcFoldersTask) ?? "off"
+      agentAutonomy = (try? await autonomyTask) ?? "supervised"
+      blockPrivateProviderURLs = (try? await blockPrivateTask) == "true"
+      agentProfile = try? await profileTask
+      policies = (try? await policiesTask) ?? []
     }
+  }
 
-    if !visibleTabs.contains(tab) {
-      tab = .general
+  // MARK: - Admin security switches
+
+  /// Apply optimistically and roll back on failure, like the web page — the UI
+  /// must never claim a restriction that isn't actually in force.
+  private func writeSetting(key: String, value: String, rollback: @escaping () -> Void) async {
+    do {
+      try await api.putSetting(key: key, value: value)
+      savedBanner = "已更新"
+    } catch {
+      rollback()
+      self.error = error.localizedDescription
+    }
+  }
+
+  func setSandboxNetwork(_ allowed: Bool) async {
+    let previous = sandboxNetworkSetting
+    sandboxNetworkSetting = allowed ? "bridge" : "none"
+    await writeSetting(key: "sandbox_network", value: allowed ? "bridge" : "none") {
+      self.sandboxNetworkSetting = previous
+    }
+  }
+
+  func setHostFolderAccess(_ enabled: Bool) async {
+    hostFolderAccess = enabled
+    await writeSetting(key: "host_folder_access", value: enabled ? "true" : "false") {
+      self.hostFolderAccess = !enabled
+    }
+  }
+
+  func setPCFolderAccess(_ value: String) async {
+    let previous = pcFolderAccess
+    pcFolderAccess = value
+    await writeSetting(key: "pc_folder_access", value: value) {
+      self.pcFolderAccess = previous
+    }
+  }
+
+  func setAutonomous(_ autonomous: Bool) async {
+    let previous = agentAutonomy
+    agentAutonomy = autonomous ? "autonomous" : "supervised"
+    await writeSetting(key: "agent_autonomy", value: agentAutonomy) {
+      self.agentAutonomy = previous
+    }
+  }
+
+  func setBlockPrivateProviderURLs(_ enabled: Bool) async {
+    blockPrivateProviderURLs = enabled
+    await writeSetting(key: "block_private_provider_urls", value: enabled ? "true" : "false") {
+      self.blockPrivateProviderURLs = !enabled
+    }
+  }
+
+  func updateAgentProfile(_ mutate: (inout AgentProfile) -> Void) async {
+    guard let previous = agentProfile else { return }
+    var next = previous
+    mutate(&next)
+    agentProfile = next
+    do {
+      try await api.putAgentProfile(next)
+      savedBanner = "已更新"
+    } catch {
+      agentProfile = previous
+      self.error = error.localizedDescription
+    }
+  }
+
+  // MARK: - Governance policies
+
+  func setPolicyEffect(_ policy: PolicyRow, effect: String) async {
+    guard policy.scope == "system" else { return }
+    guard let idx = policies.firstIndex(where: { $0.id == policy.id }) else { return }
+    let previous = policies[idx].effect
+    policies[idx].effect = effect
+    do {
+      try await api.setSystemPolicy(
+        capabilityType: policy.capabilityType,
+        capabilityKey: policy.capabilityKey,
+        effect: effect
+      )
+      policies = (try? await api.listPolicies()) ?? policies
+    } catch {
+      policies[idx].effect = previous
+      self.error = error.localizedDescription
+    }
+  }
+
+  func removePolicy(_ policy: PolicyRow) async {
+    do {
+      try await api.clearPolicy(id: policy.id)
+      policies.removeAll { $0.id == policy.id }
+    } catch {
+      self.error = error.localizedDescription
+    }
+  }
+
+  func setKeyMode(_ mode: String) async {
+    let previous = adminKeyMode
+    adminKeyMode = mode
+    do {
+      try await api.setProviderKeyMode(mode)
+      savedBanner = "已更新"
+    } catch {
+      adminKeyMode = previous
+      self.error = error.localizedDescription
     }
   }
 

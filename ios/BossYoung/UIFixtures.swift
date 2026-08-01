@@ -13,12 +13,18 @@ enum CapkaFixtures {
     #endif
   }
 
+  /// `CAPKA_UI_FIXTURES_ADMIN=1` seeds an admin so the admin-only settings pages
+  /// are reachable in the harness.
+  private static var isAdminFixture: Bool {
+    ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_ADMIN"] == "1"
+  }
+
   static func seed(session: SessionStore) {
     session.user = CapkaUser(
       id: "u_1",
       name: "韩欣",
       email: "hanxin@boss-young.com",
-      role: "user"
+      role: isAdminFixture ? "admin" : "user"
     )
     session.isRestoring = false
   }
@@ -216,6 +222,62 @@ enum CapkaFixtures {
     ]
     settings.telegram = TelegramLinkInfo(linked: false, username: nil, botUsername: "capka_bot", linkedAt: nil)
     settings.locale = "zh-CN"
+
+    guard isAdminFixture else { return }
+    settings.sandbox = SandboxCapabilities(allowNetwork: true)
+    settings.sandboxNetworkSetting = "bridge"
+    settings.hostFolderAccess = false
+    settings.pcFolderAccess = "admins"
+    settings.agentAutonomy = "supervised"
+    settings.blockPrivateProviderURLs = true
+    settings.agentProfile = AgentProfile(
+      sandbox: true,
+      connectors: true,
+      skills: true,
+      manage: true,
+      memory: false,
+      persona: "append",
+      sessionContext: true
+    )
+    settings.policies = [
+      PolicyRow(id: "po_1", capabilityType: "connector", capabilityKey: "网页搜索", effect: "deny", scope: "system"),
+      PolicyRow(id: "po_2", capabilityType: "skill", capabilityKey: "合同审查", effect: "ask", scope: "system"),
+      PolicyRow(id: "po_3", capabilityType: "connector", capabilityKey: "飞书", effect: "allow", scope: "project"),
+    ]
+    settings.adminKeyMode = "shared_plus_own"
+    settings.adminMonthlyBudget = 500
+    settings.adminUsage = AdminUsageSummary(
+      days: 30,
+      cost: 42.1875,
+      inputTokens: 3_182_004,
+      outputTokens: 214_880,
+      calls: 1_264,
+      activeMembers: 18
+    )
+    settings.adminUsers = [
+      AdminUserRow(id: "u_1", name: "韩欣", email: "hanxin@boss-young.com", role: "admin", status: "active", cost30d: 12.4),
+      AdminUserRow(id: "u_2", name: "李闻", email: "liwen@boss-young.com", role: "user", status: "pending", cost30d: nil),
+    ]
+    settings.authConfig = AuthConfigInfo(
+      registrationMode: "approval",
+      emailSignupEnabled: true,
+      feishuReady: true,
+      feishuEnabled: true,
+      telegramReady: false,
+      telegramEnabled: false
+    )
+    settings.updates = AdminUpdatesInfo(
+      current: "0.14.0",
+      latest: "0.14.0",
+      updateAvailable: false,
+      releaseName: nil,
+      notes: nil,
+      error: nil
+    )
+    settings.audit = [
+      AuditEntry(id: "a_1", actorName: "韩欣", action: "policy.set", targetType: "connector", targetKey: "网页搜索", createdAt: iso(30)),
+      AuditEntry(id: "a_2", actorName: "系统", action: "user.approve", targetType: "user", targetKey: "liwen@boss-young.com", createdAt: iso(60 * 26)),
+    ]
   }
 
   static func seed(projects: ProjectsViewModel) {

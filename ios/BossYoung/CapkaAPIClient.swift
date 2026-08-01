@@ -1197,6 +1197,122 @@ final class CapkaAPIClient: @unchecked Sendable {
     return nil
   }
 
+  /// Generic key/value settings write. The server enforces its own allow-list
+  /// (`src/app/api/settings/keys.ts`), so an unknown key comes back 403.
+  func putSetting(key: String, value: String) async throws {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/settings"))
+    req.httpMethod = "PUT"
+    req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    req.httpBody = try JSONSerialization.data(withJSONObject: ["key": key, "value": value])
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+  }
+
+  func fetchAgentProfile() async throws -> AgentProfile {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/settings/agent-profile"))
+    req.setValue("application/json", forHTTPHeaderField: "Accept")
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode),
+          let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+    else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+    return AgentProfile.parse(root)
+  }
+
+  func putAgentProfile(_ profile: AgentProfile) async throws {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/settings/agent-profile"))
+    req.httpMethod = "PUT"
+    req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    req.httpBody = try JSONSerialization.data(withJSONObject: profile.payload)
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+  }
+
+  func setProviderKeyMode(_ mode: String) async throws {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/admin/billing"))
+    req.httpMethod = "PUT"
+    req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    req.httpBody = try JSONSerialization.data(withJSONObject: ["action": "setMode", "mode": mode])
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+  }
+
+  func listPolicies() async throws -> [PolicyRow] {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/admin/policies"))
+    req.setValue("application/json", forHTTPHeaderField: "Accept")
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode),
+          let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let rows = root["policies"] as? [[String: Any]]
+    else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+    return rows.compactMap { o in
+      guard let id = o["id"] as? String,
+            let type = o["capabilityType"] as? String,
+            let key = o["capabilityKey"] as? String,
+            let effect = o["effect"] as? String
+      else { return nil }
+      return PolicyRow(
+        id: id,
+        capabilityType: type,
+        capabilityKey: key,
+        effect: effect,
+        scope: (o["scope"] as? String) ?? "system"
+      )
+    }
+  }
+
+  /// Upsert a system-scope rule. The server keys on (type, key, scope), so this
+  /// replaces an existing system rule rather than stacking a second one.
+  func setSystemPolicy(capabilityType: String, capabilityKey: String, effect: String) async throws {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/admin/policies"))
+    req.httpMethod = "POST"
+    req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    req.httpBody = try JSONSerialization.data(withJSONObject: [
+      "capabilityType": capabilityType,
+      "capabilityKey": capabilityKey,
+      "effect": effect,
+      "scope": "system",
+    ])
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+  }
+
+  func clearPolicy(id: String) async throws {
+    var comps = URLComponents(url: baseURL.appendingPathComponent("api/admin/policies"), resolvingAgainstBaseURL: false)!
+    comps.queryItems = [URLQueryItem(name: "id", value: id)]
+    var req = URLRequest(url: comps.url!)
+    req.httpMethod = "DELETE"
+    let (data, response) = try await send(req)
+    let http = try requireHTTP(response)
+    try throwIfUnauthorized(http, data: data)
+    guard (200..<300).contains(http.statusCode) else {
+      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
+    }
+  }
+
   private func boolValue(_ any: Any?) -> Bool? {
     if any == nil || any is NSNull { return nil }
     if let b = any as? Bool { return b }

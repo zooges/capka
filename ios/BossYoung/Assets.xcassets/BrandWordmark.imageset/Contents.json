@@ -3,6 +3,16 @@
     {
       "filename" : "boss-young-wordmark-light.png",
       "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "boss-young-wordmark-on-dark.png",
+      "idiom" : "universal"
     }
   ],
   "info" : {

@@ -28,7 +28,11 @@ open ios/BossYoung2.xcodeproj  # 内网并行 TestFlight（套壳）
 | 附件 | 回形针菜单：照片（`PhotosPicker`）/ 拍照（相机）/ 文件。图片按最长边 2048px 缩放，HEIC 转 JPEG，PNG 保留 |
 | 文件预览 | 工作区文件与对话中的附件点击后经会话下载再交给 Quick Look；导出走 Quick Look 自带的分享按钮 |
 | 语音输入 | `SFSpeechRecognizer` 直接写入输入框 |
-| 调试 | `CAPKA_UI_FIXTURES=1` 用假数据启动；`CAPKA_OPEN_SCREEN` / `CAPKA_OPEN_CHAT` 直接跳到某个界面（仅 Debug） |
+| 设置 | 分组列表 + 二级页（与项目、归档、工作区同一套列表样式），而不是网页移动端那条横向标签栏 |
+| 调试 | `CAPKA_UI_FIXTURES=1` 用假数据启动；`CAPKA_OPEN_SCREEN` / `CAPKA_OPEN_CHAT` 跳到某个界面；`CAPKA_UI_FIXTURES_ADMIN=1` 以管理员身份进入，配合 `CAPKA_UI_FIXTURES_SETTINGS_TAB=security` 直接打开某个设置页（均仅 Debug） |
+
+品牌图与启动底色都带深色变体（`BrandWordmark` 用网页同一份 `boss-young-wordmark-on-dark.png`），
+主题可在 侧边栏账户区 或 设置 → 通用 → 外观 切换。
 
 ## 飞书登录（App）
 

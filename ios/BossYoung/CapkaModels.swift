@@ -511,6 +511,81 @@ struct SandboxCapabilities: Equatable {
   var allowNetwork: Bool?
 }
 
+/// The instance-wide agent ceiling (`/api/settings/agent-profile`). Mirrors
+/// `agentProfileSchema` in `src/lib/agents/profile.ts`: every field has a
+/// default, so any stored shape parses into a complete profile. It only ever
+/// restricts — a project asking for more still gets clamped to this.
+struct AgentProfile: Equatable {
+  var sandbox = true
+  var connectors = true
+  var skills = true
+  var manage = true
+  var memory = true
+  /// "append" keeps Capka's persona above project instructions; "replace" drops it.
+  var persona = "append"
+  var sessionContext = true
+
+  static func parse(_ root: [String: Any]) -> AgentProfile {
+    let caps = root["capabilities"] as? [String: Any] ?? [:]
+    var profile = AgentProfile()
+    profile.sandbox = boolValue(caps["sandbox"]) ?? true
+    profile.connectors = boolValue(caps["connectors"]) ?? true
+    profile.skills = boolValue(caps["skills"]) ?? true
+    profile.manage = boolValue(caps["manage"]) ?? true
+    profile.memory = boolValue(caps["memory"]) ?? true
+    profile.persona = (root["persona"] as? String) ?? "append"
+    profile.sessionContext = boolValue(root["sessionContext"]) ?? true
+    return profile
+  }
+
+  var payload: [String: Any] {
+    [
+      "capabilities": [
+        "sandbox": sandbox,
+        "connectors": connectors,
+        "skills": skills,
+        "manage": manage,
+        "memory": memory,
+      ],
+      "persona": persona,
+      "sessionContext": sessionContext,
+    ]
+  }
+}
+
+/// One governance rule from `/api/admin/policies`. The mobile page only edits
+/// system-scope rules; user- and project-scoped ones are shown but read-only,
+/// because picking their subject needs the web's pickers.
+struct PolicyRow: Identifiable, Equatable {
+  var id: String
+  var capabilityType: String
+  var capabilityKey: String
+  /// allow / deny / ask
+  var effect: String
+  /// system / user / project
+  var scope: String
+
+  var scopeLabel: String {
+    switch scope {
+    case "user": return "按用户"
+    case "project": return "按项目"
+    default: return "全实例"
+    }
+  }
+
+  var effectLabel: String {
+    switch effect {
+    case "allow": return "允许"
+    case "deny": return "拒绝"
+    default: return "每次询问"
+    }
+  }
+
+  var typeLabel: String {
+    capabilityType == "connector" ? "连接器" : "技能"
+  }
+}
+
 private func boolValue(_ any: Any?) -> Bool? {
   if any == nil || any is NSNull { return nil }
   if let b = any as? Bool { return b }

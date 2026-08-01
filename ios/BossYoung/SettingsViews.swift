@@ -1,48 +1,66 @@
 import SwiftUI
 import UIKit
 
-/// Settings shell matching web `/settings` nav: personal tabs + admin tabs.
+/// Settings landing screen. The web packs its nav into a horizontal tab strip on
+/// phones; here the rest of the app is already list-and-push (projects, archived
+/// chats, workspace files), so settings follows that instead — grouped rows that
+/// push a detail page, which is also what an iOS reader expects.
 struct SettingsHomeView: View {
   @Environment(SessionStore.self) private var session
   @State private var model = SettingsViewModel()
+  /// Debug-only jump straight to a detail page (`CAPKA_UI_FIXTURES_SETTINGS_TAB`).
+  @State private var deepLinkTab: SettingsViewModel.Tab?
+
+  private var personalTabs: [SettingsViewModel.Tab] {
+    model.visibleTabs.filter { !$0.isAdminOnly }
+  }
+
+  private var adminTabs: [SettingsViewModel.Tab] {
+    model.visibleTabs.filter(\.isAdminOnly)
+  }
 
   var body: some View {
-    @Bindable var model = model
     ZStack {
       Brand.cream.ignoresSafeArea()
 
-      VStack(spacing: 0) {
-        tabBar(model: model)
-        Divider().overlay(Brand.line)
+      ScrollView {
+        VStack(alignment: .leading, spacing: 22) {
+          accountHeader
 
-        ScrollView {
-          Group {
-            switch model.tab {
-            case .general: generalSection(model: model)
-            case .connections: connectionsSection(model: model)
-            case .memory: memorySection(model: model)
-            case .skills: extensionsSection(model: model)
-            case .automations: automationsSection(model: model)
-            case .security: securitySection(model: model)
-            case .integrations: integrationsSection(model: model)
-            case .authentication: authenticationSection(model: model)
-            case .permissions: permissionsSection(model: model)
-            case .billingAdmin: billingAdminSection(model: model)
-            case .usage: usageSection(model: model)
-            case .users: usersSection(model: model)
-            case .activity: activitySection(model: model)
-            case .updates: updatesSection(model: model)
-            }
+          group(title: "个人", tabs: personalTabs)
+          if !adminTabs.isEmpty {
+            group(title: "管理", tabs: adminTabs)
           }
-          .padding(16)
-          .padding(.bottom, 28)
+
+          Button(role: .destructive) {
+            Task { await session.signOut() }
+          } label: {
+            Text("退出登录")
+              .font(.system(size: 15, weight: .medium))
+              .foregroundStyle(Brand.dangerText)
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, 13)
+              .capkaCard(radius: Brand.Radius.lg)
+          }
         }
+        .padding(16)
+        .padding(.bottom, 28)
       }
     }
     .navigationTitle("设置")
     .navigationBarTitleDisplayMode(.inline)
     .toolbarBackground(Brand.cream, for: .navigationBar)
-    .task { await model.load(user: session.user) }
+    .navigationDestination(item: $deepLinkTab) { tab in
+      SettingsDetailView(tab: tab, model: model)
+    }
+    .task {
+      await model.load(user: session.user)
+      #if DEBUG
+      if let raw = ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_SETTINGS_TAB"] {
+        deepLinkTab = SettingsViewModel.Tab(rawValue: raw)
+      }
+      #endif
+    }
     .alert("出错了", isPresented: Binding(
       get: { model.error != nil },
       set: { if !$0 { model.error = nil } }
@@ -53,38 +71,126 @@ struct SettingsHomeView: View {
     }
   }
 
-  // MARK: - Tabs
+  private var accountHeader: some View {
+    HStack(spacing: 12) {
+      ZStack {
+        Circle().fill(Brand.accent)
+        Text(String(model.displayName.prefix(1)))
+          .font(.system(size: 18, weight: .medium))
+          .foregroundStyle(Brand.ink.opacity(0.7))
+      }
+      .frame(width: 46, height: 46)
 
-  private func tabBar(model: SettingsViewModel) -> some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      HStack(spacing: 6) {
-        ForEach(model.visibleTabs) { tab in
-          Button {
-            withAnimation(Motion.easeOut(0.2)) { model.tab = tab }
+      VStack(alignment: .leading, spacing: 3) {
+        Text(model.displayName.isEmpty ? "—" : model.displayName)
+          .font(.system(size: 16, weight: .medium))
+          .foregroundStyle(Brand.ink)
+        Text(model.email.isEmpty ? "已登录" : model.email)
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+          .lineLimit(1)
+      }
+      Spacer(minLength: 8)
+      if model.isAdmin {
+        Text("管理员")
+          .font(.system(size: 11, weight: .medium))
+          .foregroundStyle(Brand.muted)
+          .padding(.horizontal, 8)
+          .padding(.vertical, 3)
+          .background(Brand.accent)
+          .clipShape(Capsule())
+      }
+    }
+    .padding(14)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .capkaCard()
+  }
+
+  private func group(title: String, tabs: [SettingsViewModel.Tab]) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(title)
+        .font(.system(size: 13))
+        .foregroundStyle(Brand.muted)
+        .padding(.horizontal, 4)
+
+      VStack(spacing: 0) {
+        ForEach(Array(tabs.enumerated()), id: \.element.id) { index, tab in
+          NavigationLink {
+            SettingsDetailView(tab: tab, model: model)
           } label: {
-            HStack(spacing: 5) {
+            HStack(spacing: 12) {
               Image(systemName: tab.icon)
-                .font(.system(size: 12))
+                .font(.system(size: 14))
+                .foregroundStyle(Brand.muted)
+                .frame(width: 20)
               Text(tab.title)
-                .font(.system(size: 13, weight: model.tab == tab ? .semibold : .regular))
+                .font(.system(size: 15))
+                .foregroundStyle(Brand.ink)
+              Spacer(minLength: 8)
+              Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Brand.muted.opacity(0.6))
             }
-            .foregroundStyle(model.tab == tab ? Brand.ink : Brand.muted)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(model.tab == tab ? Brand.accent : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .contentShape(Rectangle())
           }
-          .buttonStyle(.plain)
+          .buttonStyle(CapkaPressStyle())
+
+          if index < tabs.count - 1 {
+            Divider().overlay(Brand.line).padding(.leading, 46)
+          }
         }
       }
-      .padding(.horizontal, 14)
-      .padding(.vertical, 10)
+      .capkaCard()
     }
+  }
+}
+
+// MARK: - Detail pages
+
+private struct SettingsDetailView: View {
+  let tab: SettingsViewModel.Tab
+  let model: SettingsViewModel
+
+  @Environment(SessionStore.self) private var session
+  @AppStorage(ThemePreference.storageKey) private var themeRaw = ThemePreference.system.rawValue
+
+  var body: some View {
+    ZStack {
+      Brand.cream.ignoresSafeArea()
+
+      ScrollView {
+        Group {
+          switch tab {
+          case .general: generalSection
+          case .connections: connectionsSection
+          case .memory: memorySection
+          case .skills: extensionsSection
+          case .automations: automationsSection
+          case .security: securitySection
+          case .integrations: integrationsSection
+          case .authentication: authenticationSection
+          case .permissions: permissionsSection
+          case .billingAdmin: billingAdminSection
+          case .usage: usageSection
+          case .users: usersSection
+          case .activity: activitySection
+          case .updates: updatesSection
+          }
+        }
+        .padding(16)
+        .padding(.bottom, 28)
+      }
+    }
+    .navigationTitle(tab.title)
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbarBackground(Brand.cream, for: .navigationBar)
   }
 
   // MARK: - General
 
-  private func generalSection(model: SettingsViewModel) -> some View {
+  private var generalSection: some View {
     @Bindable var model = model
     return VStack(alignment: .leading, spacing: 18) {
       sectionCard(title: "账户", subtitle: "您的个人资料详细信息") {
@@ -111,38 +217,34 @@ struct SettingsHomeView: View {
           }
           .padding(.top, 4)
 
-          Button {
+          primaryButton(model.isSaving ? "保存中…" : "保存") {
             Task { await model.saveName() }
-          } label: {
-            Text(model.isSaving ? "保存中…" : "保存")
-              .font(.system(size: 13, weight: .medium))
-              .foregroundStyle(Brand.onPrimary)
-              .padding(.horizontal, 16)
-              .padding(.vertical, 8)
-              .background(Brand.primary)
-              .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
           }
           .disabled(model.isSaving)
+        }
+      }
+
+      // The account menu in the sidebar carries the same control; keeping it here
+      // too matches the web, where appearance lives on Settings → General.
+      sectionCard(title: "外观", subtitle: "浅色、深色或跟随系统") {
+        HStack(spacing: 8) {
+          ForEach(ThemePreference.allCases) { pref in
+            pill(label: pref.label, icon: pref.icon, selected: themeRaw == pref.rawValue) {
+              themeRaw = pref.rawValue
+            }
+          }
+          Spacer(minLength: 0)
         }
       }
 
       sectionCard(title: "语言", subtitle: "界面显示语言") {
         HStack(spacing: 8) {
           ForEach([("zh-CN", "简体中文"), ("en", "English"), ("uk", "Українська")], id: \.0) { code, label in
-            Button {
+            pill(label: label, icon: nil, selected: model.locale == code) {
               Task { await model.setLocale(code) }
-            } label: {
-              Text(label)
-                .font(.system(size: 12, weight: model.locale == code ? .semibold : .regular))
-                .foregroundStyle(model.locale == code ? Brand.ink : Brand.muted)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(model.locale == code ? Brand.accent : Color.clear)
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(Brand.line, lineWidth: model.locale == code ? 0 : 1))
             }
-            .buttonStyle(.plain)
           }
+          Spacer(minLength: 0)
         }
       }
 
@@ -181,29 +283,14 @@ struct SettingsHomeView: View {
       }
 
       sectionCard(title: "Telegram", subtitle: "把邦信阳接到 Telegram，随时收发任务") {
-        telegramCard(model: model)
+        telegramCard
       }
 
-      if let banner = model.savedBanner {
-        Text(banner)
-          .font(.system(size: 12))
-          .foregroundStyle(Brand.muted)
-      }
-
-      Button(role: .destructive) {
-        Task { await session.signOut() }
-      } label: {
-        Text("退出登录")
-          .font(.system(size: 15, weight: .medium))
-          .foregroundStyle(Brand.dangerText)
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 13)
-          .capkaCard(radius: Brand.Radius.lg)
-      }
+      savedBannerLine
     }
   }
 
-  private func telegramCard(model: SettingsViewModel) -> some View {
+  private var telegramCard: some View {
     VStack(alignment: .leading, spacing: 10) {
       if model.telegram?.linked == true {
         HStack {
@@ -241,16 +328,9 @@ struct SettingsHomeView: View {
         }
 
         HStack(spacing: 10) {
-          Button("生成连接代码") {
+          primaryButton("生成连接代码") {
             Task { await model.generateTelegramCode() }
           }
-          .font(.system(size: 13, weight: .medium))
-          .foregroundStyle(Brand.onPrimary)
-          .padding(.horizontal, 14)
-          .padding(.vertical, 8)
-          .background(Brand.primary)
-          .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
-
           Button("刷新状态") {
             Task { await model.refreshTelegram() }
           }
@@ -263,7 +343,7 @@ struct SettingsHomeView: View {
 
   // MARK: - Connections (providers)
 
-  private func connectionsSection(model: SettingsViewModel) -> some View {
+  private var connectionsSection: some View {
     sectionCard(title: "模型连接", subtitle: "提供商 API 密钥与默认模型。新增密钥请在网页完成。") {
       if model.isLoading && model.providers.isEmpty {
         ProgressView().tint(Brand.primary).frame(maxWidth: .infinity).padding(.vertical, 12)
@@ -317,25 +397,16 @@ struct SettingsHomeView: View {
 
   // MARK: - Extensions
 
-  private func extensionsSection(model: SettingsViewModel) -> some View {
-    VStack(alignment: .leading, spacing: 14) {
+  private var extensionsSection: some View {
+    @Bindable var model = model
+    return VStack(alignment: .leading, spacing: 14) {
       HStack(spacing: 6) {
-        ForEach(SettingsViewModel.ExtTab.allCases) { tab in
-          Button {
-            withAnimation(Motion.easeOut(0.18)) { model.extTab = tab }
-          } label: {
-            Text(tab.rawValue)
-              .font(.system(size: 12.5, weight: model.extTab == tab ? .semibold : .regular))
-              .foregroundStyle(model.extTab == tab ? Brand.ink : Brand.muted)
-              .padding(.horizontal, 12)
-              .padding(.vertical, 6)
-              .background(model.extTab == tab ? Brand.card : Color.clear)
-              .clipShape(Capsule())
-              .overlay(Capsule().stroke(Brand.line, lineWidth: 1))
+        ForEach(SettingsViewModel.ExtTab.allCases) { extTab in
+          pill(label: extTab.rawValue, icon: nil, selected: model.extTab == extTab) {
+            withAnimation(Motion.easeOut(0.18)) { model.extTab = extTab }
           }
-          .buttonStyle(.plain)
         }
-        Spacer()
+        Spacer(minLength: 0)
       }
 
       switch model.extTab {
@@ -420,17 +491,17 @@ struct SettingsHomeView: View {
 
   // MARK: - Memory
 
-  private func memorySection(model: SettingsViewModel) -> some View {
+  private var memorySection: some View {
     @Bindable var model = model
     return VStack(alignment: .leading, spacing: 18) {
       if !model.memoryProjects.isEmpty {
         ScrollView(.horizontal, showsIndicators: false) {
           HStack(spacing: 8) {
-            memoryChip(title: "个人", selected: model.selectedMemoryProjectId == nil) {
+            pill(label: "个人", icon: nil, selected: model.selectedMemoryProjectId == nil) {
               model.selectedMemoryProjectId = nil
             }
             ForEach(model.memoryProjects) { doc in
-              memoryChip(title: doc.name, selected: model.selectedMemoryProjectId == doc.id) {
+              pill(label: doc.name, icon: nil, selected: model.selectedMemoryProjectId == doc.id) {
                 model.selectedMemoryProjectId = doc.id
               }
             }
@@ -453,42 +524,18 @@ struct SettingsHomeView: View {
           )
             .font(.system(size: 14))
             .lineLimit(6...16)
-          Button {
+          primaryButton(model.isSaving ? "保存中…" : "保存") {
             Task { await model.saveMemory() }
-          } label: {
-            Text(model.isSaving ? "保存中…" : "保存")
-              .font(.system(size: 13, weight: .medium))
-              .foregroundStyle(Brand.onPrimary)
-              .padding(.horizontal, 16)
-              .padding(.vertical, 8)
-              .background(Brand.primary)
-              .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
           }
-          if let banner = model.savedBanner {
-            Text(banner).font(.system(size: 12)).foregroundStyle(Brand.muted)
-          }
+          savedBannerLine
         }
       }
     }
   }
 
-  private func memoryChip(title: String, selected: Bool, action: @escaping () -> Void) -> some View {
-    Button(action: action) {
-      Text(title)
-        .font(.system(size: 12, weight: selected ? .semibold : .regular))
-        .foregroundStyle(selected ? Brand.ink : Brand.muted)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background(selected ? Brand.accent : Brand.card)
-        .clipShape(Capsule())
-        .overlay(Capsule().stroke(Brand.line, lineWidth: 1))
-    }
-    .buttonStyle(.plain)
-  }
-
   // MARK: - Automations
 
-  private func automationsSection(model: SettingsViewModel) -> some View {
+  private var automationsSection: some View {
     sectionCard(title: "自动化", subtitle: "按计划自动运行，无需打开聊天。") {
       if model.automations.isEmpty {
         VStack(alignment: .leading, spacing: 4) {
@@ -536,22 +583,155 @@ struct SettingsHomeView: View {
     }
   }
 
-  // MARK: - Admin pages
+  // MARK: - Security
 
-  private func securitySection(model: SettingsViewModel) -> some View {
+  /// The deployment-level egress kill switch. When the controller reports no
+  /// network, the in-app switch cannot grant it — it would downgrade bridge→none
+  /// anyway — so it is shown off and disabled with the reason spelled out.
+  private var networkBlockedAtHost: Bool {
+    model.sandbox?.allowNetwork == false
+  }
+
+  private var securitySection: some View {
     VStack(alignment: .leading, spacing: 18) {
-      sectionCard(title: "沙箱网络", subtitle: "执行环境是否允许出站访问") {
-        kvRow("控制器上报", networkLabel(model.sandbox?.allowNetwork))
-        kvRow("实例设置", model.sandboxNetworkSetting ?? "—")
-        Text("完整开关与主机文件夹策略请在网页设置中调整。")
-          .font(.system(size: 12))
-          .foregroundStyle(Brand.muted)
-          .padding(.top, 4)
+      sectionCard(title: "沙箱", subtitle: "助手运行代码和处理文件的隔离环境") {
+        VStack(spacing: 0) {
+          switchRow(
+            title: "允许出站网络",
+            hint: "关闭后沙箱无法访问互联网，只能处理已上传的文件。",
+            isOn: model.sandboxNetworkSetting == "bridge",
+            disabled: networkBlockedAtHost
+          ) { on in
+            Task { await model.setSandboxNetwork(on) }
+          }
+          if networkBlockedAtHost {
+            Text("该部署已在主机层禁止沙箱出站，此开关不会生效。")
+              .font(.system(size: 11, weight: .medium))
+              .foregroundStyle(Brand.warningText)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(.bottom, 10)
+          }
+
+          Divider().overlay(Brand.line)
+
+          switchRow(
+            title: "服务器文件夹",
+            hint: "允许把服务器上的文件夹挂载进沙箱。",
+            isOn: model.hostFolderAccess
+          ) { on in
+            Task { await model.setHostFolderAccess(on) }
+          }
+
+          Divider().overlay(Brand.line)
+
+          VStack(alignment: .leading, spacing: 8) {
+            Text("个人电脑文件夹")
+              .font(.system(size: 14))
+              .foregroundStyle(Brand.ink)
+            Text("谁可以把自己电脑上的文件夹同步进沙箱。")
+              .font(.system(size: 11))
+              .foregroundStyle(Brand.muted)
+            HStack(spacing: 8) {
+              ForEach([("off", "关闭"), ("admins", "仅管理员"), ("everyone", "所有人")], id: \.0) { value, label in
+                pill(label: label, icon: nil, selected: model.pcFolderAccess == value) {
+                  Task { await model.setPCFolderAccess(value) }
+                }
+              }
+              Spacer(minLength: 0)
+            }
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, 11)
+        }
+      }
+
+      sectionCard(title: "代理", subtitle: "助手在不询问的情况下可以改动多少") {
+        switchRow(
+          title: "自主模式",
+          hint: "开启后助手会自行完成多步任务，不再逐步征求确认。",
+          isOn: model.agentAutonomy == "autonomous"
+        ) { on in
+          Task { await model.setAutonomous(on) }
+        }
+      }
+
+      agentCeilingCard
+
+      sectionCard(title: "网络", subtitle: "限制对外的模型提供商连接") {
+        switchRow(
+          title: "阻止私有地址",
+          hint: "禁止提供商地址指向内网或本机，防止服务端请求伪造。",
+          isOn: model.blockPrivateProviderURLs
+        ) { on in
+          Task { await model.setBlockPrivateProviderURLs(on) }
+        }
+      }
+
+      savedBannerLine
+    }
+  }
+
+  /// The instance-wide agent ceiling. It only ever restricts: a project asking
+  /// for more still gets clamped here, which is why it also reaches chats that
+  /// belong to no project.
+  @ViewBuilder
+  private var agentCeilingCard: some View {
+    sectionCard(title: "能力上限", subtitle: "整个实例的能力天花板，项目只能更严，不能更宽") {
+      if let profile = model.agentProfile {
+        VStack(spacing: 0) {
+          let capabilities: [(String, String, KeyPath<AgentProfile, Bool>, (inout AgentProfile, Bool) -> Void)] = [
+            ("文件与代码", "沙箱容器、文件工具与工作区快照。", \.sandbox, { $0.sandbox = $1 }),
+            ("连接器", "MCP 连接器与提供商自带的检索工具。", \.connectors, { $0.connectors = $1 }),
+            ("技能", "技能库与技能调用工具。", \.skills, { $0.skills = $1 }),
+            ("管理与提问", "控制面板工具，以及回合中向你追问的能力。", \.manage, { $0.manage = $1 }),
+            ("长期记忆", "读取与写入记忆文档；关闭不会删除已有内容。", \.memory, { $0.memory = $1 }),
+          ]
+          ForEach(Array(capabilities.enumerated()), id: \.offset) { index, item in
+            let (title, hint, keyPath, setter) = item
+            switchRow(title: title, hint: hint, isOn: profile[keyPath: keyPath]) { on in
+              Task { await model.updateAgentProfile { setter(&$0, on) } }
+            }
+            if index < capabilities.count - 1 { Divider().overlay(Brand.line) }
+          }
+
+          Divider().overlay(Brand.line)
+
+          switchRow(
+            title: "会话上下文",
+            hint: "把用户名、日期和时区作为系统消息交给模型。",
+            isOn: profile.sessionContext
+          ) { on in
+            Task { await model.updateAgentProfile { $0.sessionContext = on } }
+          }
+
+          Divider().overlay(Brand.line)
+
+          VStack(alignment: .leading, spacing: 8) {
+            Text("项目指令")
+              .font(.system(size: 14))
+              .foregroundStyle(Brand.ink)
+            Text("追加：保留邦信阳的人设；替换：项目指令即全部系统提示。")
+              .font(.system(size: 11))
+              .foregroundStyle(Brand.muted)
+            HStack(spacing: 8) {
+              ForEach([("append", "追加"), ("replace", "替换")], id: \.0) { value, label in
+                pill(label: label, icon: nil, selected: profile.persona == value) {
+                  Task { await model.updateAgentProfile { $0.persona = value } }
+                }
+              }
+              Spacer(minLength: 0)
+            }
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, 11)
+        }
+      } else {
+        emptyLine("无法加载能力上限")
       }
     }
   }
 
-  private func integrationsSection(model: SettingsViewModel) -> some View {
+  private var integrationsSection: some View {
     sectionCard(title: "集成", subtitle: "组织级连接器（与扩展页相同数据源）") {
       toggleList(
         empty: "暂无连接器",
@@ -573,7 +753,7 @@ struct SettingsHomeView: View {
     }
   }
 
-  private func authenticationSection(model: SettingsViewModel) -> some View {
+  private var authenticationSection: some View {
     sectionCard(title: "认证", subtitle: "登录方式与注册策略") {
       if let auth = model.authConfig {
         kvRow("注册模式", auth.registrationMode ?? "—")
@@ -590,32 +770,143 @@ struct SettingsHomeView: View {
     }
   }
 
-  private func permissionsSection(model: SettingsViewModel) -> some View {
-    sectionCard(title: "权限", subtitle: "组织级代理能力上限") {
-      Text("沙箱、连接器、技能、记忆等治理策略的详细编辑请在网页「权限」页完成。移动端可查看扩展与连接器开关状态。")
-        .font(.system(size: 13))
-        .foregroundStyle(Brand.muted)
-      kvRow("技能", "\(model.skills.filter(\.enabled).count) / \(model.skills.count) 已启用")
-      kvRow("连接器", "\(model.connectors.filter(\.enabled).count) / \(model.connectors.count) 已启用")
-    }
-  }
+  // MARK: - Permissions
 
-  private func billingAdminSection(model: SettingsViewModel) -> some View {
-    sectionCard(title: "密钥与限额", subtitle: "实例密钥模式与预算") {
-      kvRow("密钥模式", keyModeLabel(model.adminKeyMode))
-      if let budget = model.adminMonthlyBudget {
-        kvRow("月度预算", String(format: "%.2f", budget))
-      } else {
-        kvRow("月度预算", "未设置")
+  private var permissionsSection: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      sectionCard(title: "治理规则", subtitle: "对技能与连接器的允许 / 询问 / 拒绝") {
+        if model.policies.isEmpty {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("还没有规则")
+              .font(.system(size: 13))
+              .foregroundStyle(Brand.ink)
+            Text("没有规则时按各能力自身的开关执行。")
+              .font(.system(size: 11))
+              .foregroundStyle(Brand.muted)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, 6)
+        } else {
+          VStack(spacing: 0) {
+            ForEach(Array(model.policies.enumerated()), id: \.element.id) { index, policy in
+              policyRow(policy)
+              if index < model.policies.count - 1 { Divider().overlay(Brand.line) }
+            }
+          }
+        }
       }
-      Text("层级分配与模式切换请在网页完成。")
-        .font(.system(size: 12))
-        .foregroundStyle(Brand.muted)
-        .padding(.top, 4)
+
+      sectionCard(title: "能力开关", subtitle: "当前启用的扩展数量") {
+        kvRow("技能", "\(model.skills.filter(\.enabled).count) / \(model.skills.count) 已启用")
+        kvRow("连接器", "\(model.connectors.filter(\.enabled).count) / \(model.connectors.count) 已启用")
+        Text("新增按用户 / 按项目的规则需要在网页「权限」页选择对象。")
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+          .padding(.top, 4)
+      }
     }
   }
 
-  private func usageSection(model: SettingsViewModel) -> some View {
+  private func policyRow(_ policy: PolicyRow) -> some View {
+    HStack(spacing: 10) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(policy.capabilityKey)
+          .font(.system(size: 14))
+          .foregroundStyle(Brand.ink)
+          .lineLimit(1)
+        Text("\(policy.typeLabel) · \(policy.scopeLabel)")
+          .font(.system(size: 11))
+          .foregroundStyle(Brand.muted)
+      }
+      Spacer(minLength: 8)
+
+      // Only system rules are editable here — user and project rules need their
+      // subject picked, which is a web-only flow.
+      if policy.scope == "system" {
+        Menu {
+          ForEach(["allow", "ask", "deny"], id: \.self) { effect in
+            Button(PolicyRow(id: "", capabilityType: "", capabilityKey: "", effect: effect, scope: "system").effectLabel) {
+              Task { await model.setPolicyEffect(policy, effect: effect) }
+            }
+          }
+          Divider()
+          Button(role: .destructive) {
+            Task { await model.removePolicy(policy) }
+          } label: {
+            Label("移除规则", systemImage: "trash")
+          }
+        } label: {
+          HStack(spacing: 4) {
+            Text(policy.effectLabel)
+              .font(.system(size: 12, weight: .medium))
+            Image(systemName: "chevron.down")
+              .font(.system(size: 8, weight: .semibold))
+          }
+          .foregroundStyle(policy.effect == "deny" ? Brand.dangerText : Brand.ink)
+          .padding(.horizontal, 10)
+          .padding(.vertical, 5)
+          .background(policy.effect == "deny" ? Brand.dangerSurface : Brand.accent)
+          .clipShape(Capsule())
+        }
+      } else {
+        Text(policy.effectLabel)
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+      }
+    }
+    .padding(.vertical, 10)
+  }
+
+  // MARK: - Billing
+
+  private var billingAdminSection: some View {
+    VStack(alignment: .leading, spacing: 18) {
+      sectionCard(title: "密钥模式", subtitle: "成员用共享密钥、自带密钥，还是两者皆可") {
+        VStack(spacing: 0) {
+          let modes = [
+            ("shared_plus_own", "共享 + 自带密钥", "成员默认用实例密钥，也可以填自己的。"),
+            ("shared_only", "仅共享密钥", "成员只能用实例密钥，额度由层级控制。"),
+            ("own_only", "仅自带密钥", "实例不提供密钥，每人必须自己配置。"),
+          ]
+          ForEach(Array(modes.enumerated()), id: \.offset) { index, item in
+            let (value, title, hint) = item
+            Button {
+              Task { await model.setKeyMode(value) }
+            } label: {
+              HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(title).font(.system(size: 14)).foregroundStyle(Brand.ink)
+                  Text(hint).font(.system(size: 11)).foregroundStyle(Brand.muted)
+                }
+                Spacer(minLength: 8)
+                if model.adminKeyMode == value {
+                  Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Brand.primary)
+                }
+              }
+              .padding(.vertical, 11)
+              .contentShape(Rectangle())
+            }
+            .buttonStyle(CapkaPressStyle())
+            if index < modes.count - 1 { Divider().overlay(Brand.line) }
+          }
+        }
+      }
+
+      sectionCard(title: "预算", subtitle: "实例的月度上限") {
+        kvRow("月度预算", model.adminMonthlyBudget.map { String(format: "%.2f", $0) } ?? "未设置")
+        Text("层级额度与逐人分配请在网页完成。")
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+          .padding(.top, 4)
+      }
+
+      savedBannerLine
+    }
+  }
+
+  private var usageSection: some View {
     sectionCard(title: "用量分析", subtitle: "近 \(model.adminUsage?.days ?? 30) 天汇总") {
       if let u = model.adminUsage {
         kvRow("费用", String(format: "%.4f", u.cost))
@@ -631,7 +922,7 @@ struct SettingsHomeView: View {
     }
   }
 
-  private func usersSection(model: SettingsViewModel) -> some View {
+  private var usersSection: some View {
     sectionCard(title: "用户", subtitle: "批准、分配角色并查看消费") {
       if model.adminUsers.isEmpty {
         emptyLine("还没有用户")
@@ -694,7 +985,7 @@ struct SettingsHomeView: View {
     }
   }
 
-  private func activitySection(model: SettingsViewModel) -> some View {
+  private var activitySection: some View {
     sectionCard(title: "活动", subtitle: "审计日志") {
       if model.audit.isEmpty {
         emptyLine("暂无活动记录")
@@ -731,7 +1022,7 @@ struct SettingsHomeView: View {
     }
   }
 
-  private func updatesSection(model: SettingsViewModel) -> some View {
+  private var updatesSection: some View {
     sectionCard(title: "更新", subtitle: "当前部署版本") {
       if let u = model.updates {
         kvRow("当前版本", u.current ?? "—")
@@ -780,6 +1071,78 @@ struct SettingsHomeView: View {
     .capkaCard()
   }
 
+  /// Title + hint on the left, switch on the right — the shape every admin
+  /// toggle on the web's security page uses.
+  private func switchRow(
+    title: String,
+    hint: String,
+    isOn: Bool,
+    disabled: Bool = false,
+    onChange: @escaping (Bool) -> Void
+  ) -> some View {
+    Toggle(isOn: Binding(get: { isOn }, set: onChange)) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title)
+          .font(.system(size: 14))
+          .foregroundStyle(Brand.ink)
+        Text(hint)
+          .font(.system(size: 11))
+          .foregroundStyle(Brand.muted)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+    .tint(Brand.primary)
+    .disabled(disabled)
+    .opacity(disabled ? 0.5 : 1)
+    .padding(.vertical, 11)
+  }
+
+  private func pill(
+    label: String,
+    icon: String?,
+    selected: Bool,
+    action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      HStack(spacing: 5) {
+        if let icon {
+          Image(systemName: icon).font(.system(size: 11))
+        }
+        Text(label)
+          .font(.system(size: 12, weight: selected ? .semibold : .regular))
+      }
+      .foregroundStyle(selected ? Brand.ink : Brand.muted)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 7)
+      .background(selected ? Brand.accent : Color.clear)
+      .clipShape(Capsule())
+      .overlay(Capsule().stroke(Brand.line, lineWidth: selected ? 0 : 1))
+    }
+    .buttonStyle(CapkaPressStyle())
+  }
+
+  private func primaryButton(_ title: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Text(title)
+        .font(.system(size: 13, weight: .medium))
+        .foregroundStyle(Brand.onPrimary)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Brand.primary)
+        .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+    }
+    .buttonStyle(CapkaPressStyle())
+  }
+
+  @ViewBuilder
+  private var savedBannerLine: some View {
+    if let banner = model.savedBanner {
+      Text(banner)
+        .font(.system(size: 12))
+        .foregroundStyle(Brand.muted)
+    }
+  }
+
   private func toggleList<Content: View>(
     empty: String,
     loading: Bool,
@@ -825,21 +1188,6 @@ struct SettingsHomeView: View {
     case "d7": return "近 7 天"
     case "d30": return "近 30 天"
     default: return key
-    }
-  }
-
-  private func networkLabel(_ value: Bool?) -> String {
-    guard let value else { return "未知" }
-    return value ? "允许出站" : "禁止出站"
-  }
-
-  private func keyModeLabel(_ mode: String?) -> String {
-    switch mode {
-    case "shared_plus_own": return "共享 + 自带密钥"
-    case "shared_only": return "仅共享密钥"
-    case "own_only": return "仅自带密钥"
-    case .some(let m): return m
-    case nil: return "—"
     }
   }
 
