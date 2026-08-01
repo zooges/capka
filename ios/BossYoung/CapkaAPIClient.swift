@@ -999,20 +999,6 @@ final class CapkaAPIClient: @unchecked Sendable {
     }
   }
 
-  func fetchMemory() async throws -> String {
-    var req = URLRequest(url: baseURL.appendingPathComponent("api/memory-docs"))
-    req.setValue("application/json", forHTTPHeaderField: "Accept")
-    let (data, response) = try await send(req)
-    let http = try requireHTTP(response)
-    try throwIfUnauthorized(http, data: data)
-    guard (200..<300).contains(http.statusCode),
-          let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    else {
-      throw CapkaAPIError.http(http.statusCode, String(data: data, encoding: .utf8))
-    }
-    return (root["user"] as? String) ?? ""
-  }
-
   func fetchProjectMemory(projectId: String) async throws -> String {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/memory-docs"))
     req.setValue("application/json", forHTTPHeaderField: "Accept")

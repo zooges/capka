@@ -154,6 +154,7 @@ struct MainShellView: View {
         return
       }
       await chat.load()
+      await chat.flushOutbox()
       await list.refreshQuietly()
       // Real-session screen jumps for offline/online QA (Debug launchctl only).
       openDebugScreen(ProcessInfo.processInfo.environment["CAPKA_OPEN_SCREEN"])
