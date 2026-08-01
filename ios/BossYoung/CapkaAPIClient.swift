@@ -1644,6 +1644,14 @@ final class CapkaAPIClient: @unchecked Sendable {
           if detail == nil, let input = p["input"] as? [String: Any] {
             detail = (input["command"] as? String) ?? (input["code"] as? String)
           }
+          // `{ kind: "media", pages: [{ path }] }` — the shape the web's
+          // `asMediaRef` looks for. Cap at four, as it does.
+          var imagePaths: [String] = []
+          if let output = p["output"] as? [String: Any],
+             output["kind"] as? String == "media",
+             let pages = output["pages"] as? [[String: Any]] {
+            imagePaths = pages.compactMap { $0["path"] as? String }.prefix(4).map { $0 }
+          }
           steps.append(
             MessageStep(
               id: (p["toolCallId"] as? String) ?? "\(id)-tool-\(index)",
@@ -1651,7 +1659,8 @@ final class CapkaAPIClient: @unchecked Sendable {
               state: stepState,
               label: described.label,
               icon: described.icon,
-              detail: detail
+              detail: detail,
+              imagePaths: imagePaths
             )
           )
         }

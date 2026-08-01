@@ -564,7 +564,8 @@ struct MainShellView: View {
                   path: rel,
                   name: (rel as NSString).lastPathComponent
                 )
-              }
+              },
+              chatId: chat.chatId
             )
             .id(msg.id)
             .capkaEntrance(.message)

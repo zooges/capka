@@ -264,6 +264,9 @@ struct MessageStep: Identifiable, Equatable {
   var label: String
   var icon: String
   var detail: String?
+  /// Workspace paths of pages a `view_file`-style tool rendered. Served inline
+  /// from the sandbox rather than embedded, so nothing large rides in the DB.
+  var imagePaths: [String] = []
 }
 
 struct MessageAttachment: Identifiable, Equatable {

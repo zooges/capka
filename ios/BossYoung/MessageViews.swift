@@ -14,6 +14,8 @@ struct CapkaMessageRow: View {
   var onOpenAttachment: ((MessageAttachment) -> Void)?
   /// Opens a `/workspace/…` path the reply named. Same loader as attachments.
   var onOpenWorkspacePath: ((String) -> Void)?
+  /// Which chat's workspace the reply's files live in.
+  var chatId: String?
 
   @State private var showDetails = false
   @State private var copied = false
@@ -89,6 +91,7 @@ struct CapkaMessageRow: View {
         ActivityRail(
           steps: message.steps,
           streaming: message.isStreaming,
+          chatId: chatId,
           durationMs: message.details.durationMs
         )
       }
@@ -110,6 +113,10 @@ struct CapkaMessageRow: View {
         ErrorNotice(text: err)
       }
 
+      if !message.isStreaming, !artifactPaths.isEmpty {
+        artifactRow
+      }
+
       if !message.isStreaming {
         footer
       }
@@ -124,6 +131,32 @@ struct CapkaMessageRow: View {
         Label("复制", systemImage: "doc.on.doc")
       }
     }
+  }
+
+  /// Files this reply produced, surfaced as tiles so the user doesn't have to go
+  /// hunting in the workspace browser for what the agent just made.
+  private var artifactPaths: [String] { WorkspaceLinks.paths(in: message.text) }
+
+  private var artifactRow: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("产出文件")
+        .font(.system(size: 12, weight: .medium))
+        .foregroundStyle(Brand.muted)
+      ScrollView(.horizontal, showsIndicators: false) {
+        HStack(spacing: 12) {
+          ForEach(artifactPaths, id: \.self) { rel in
+            let name = (rel as NSString).lastPathComponent
+            AttachmentTile(
+              name: name,
+              kind: .of(name),
+              onTap: onOpenWorkspacePath.map { open in { open(rel) } }
+            )
+          }
+        }
+        .padding(.vertical, 2)
+      }
+    }
+    .padding(.top, 2)
   }
 
   private var footer: some View {
@@ -225,6 +258,8 @@ struct CapkaMessageRow: View {
 struct ActivityRail: View {
   let steps: [MessageStep]
   let streaming: Bool
+  /// Addresses the workspace stream for a step's rendered pages.
+  var chatId: String?
   /// Turn duration from metadata, used for the "为 42s 工作" header.
   var durationMs: Int?
 
@@ -301,7 +336,7 @@ struct ActivityRail: View {
   private func stepRow(_ step: MessageStep) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       Button {
-        guard step.detail != nil else { return }
+        guard step.detail != nil || !step.imagePaths.isEmpty else { return }
         withAnimation(Motion.easeOut(0.2)) {
           openStep = openStep == step.id ? nil : step.id
         }
@@ -328,7 +363,7 @@ struct ActivityRail: View {
             .lineLimit(2)
             .multilineTextAlignment(.leading)
 
-          if step.detail != nil {
+          if step.detail != nil || !step.imagePaths.isEmpty {
             Image(systemName: "chevron.right")
               .font(.system(size: 9, weight: .semibold))
               .foregroundStyle(Brand.muted)
@@ -340,16 +375,29 @@ struct ActivityRail: View {
       }
       .buttonStyle(.plain)
 
-      if openStep == step.id, let detail = step.detail {
-        Text(detail)
-          .font(.system(size: 12, design: .monospaced))
-          .foregroundStyle(Brand.muted)
-          .textSelection(.enabled)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(10)
-          .background(Brand.accent)
-          .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
-          .padding(.leading, 37)
+      if openStep == step.id {
+        VStack(alignment: .leading, spacing: 8) {
+          if let detail = step.detail {
+            Text(detail)
+              .font(.system(size: 12, design: .monospaced))
+              .foregroundStyle(Brand.muted)
+              .textSelection(.enabled)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(10)
+              .background(Brand.accent)
+              .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+          }
+          if !step.imagePaths.isEmpty, let chatId {
+            ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 8) {
+                ForEach(step.imagePaths, id: \.self) { path in
+                  StepThumbnail(chatId: chatId, path: path)
+                }
+              }
+            }
+          }
+        }
+        .padding(.leading, 37)
       }
     }
     .padding(.vertical, 3)
@@ -830,6 +878,23 @@ enum WorkspaceLinks {
       .allSatisfy { $0 != ".." && $0 != "." }
   }
 
+  /// Unique workspace paths the reply names, first-seen order — the same
+  /// definition of "artifact" the web and the Telegram channel use: only what
+  /// the model actually named, never every file the run happened to touch.
+  static func paths(in text: String) -> [String] {
+    guard let regex else { return [] }
+    let source = text as NSString
+    var seen = Set<String>()
+    var out: [String] = []
+    for match in regex.matches(in: text, range: NSRange(location: 0, length: source.length)) {
+      guard match.numberOfRanges > 1 else { continue }
+      let rel = source.substring(with: match.range(at: 1))
+      guard isSafe(rel), seen.insert(rel).inserted else { continue }
+      out.append(rel)
+    }
+    return out
+  }
+
   static func url(for rel: String) -> URL? {
     guard let encoded = rel.addingPercentEncoding(withAllowedCharacters: .alphanumerics) else { return nil }
     return URL(string: "\(scheme)://open?path=\(encoded)")
@@ -1017,6 +1082,40 @@ private struct MarkdownTable: View {
         .frame(minWidth: 56, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+      }
+    }
+  }
+}
+
+
+/// One page a tool rendered, streamed inline from the sandbox. `URLSession`'s
+/// shared cookie jar is the one the API client authenticates with, so
+/// `AsyncImage` is already signed in. A page rotated out of the sandbox 404s —
+/// show nothing rather than a broken frame, matching the web.
+private struct StepThumbnail: View {
+  let chatId: String
+  let path: String
+
+  var body: some View {
+    AsyncImage(url: CapkaAPIClient.shared.downloadURL(chatId: chatId, path: path, inline: true)) { phase in
+      switch phase {
+      case .success(let image):
+        image
+          .resizable()
+          .scaledToFit()
+          .frame(maxHeight: 150)
+          .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+          .overlay(
+            RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous)
+              .stroke(Brand.line, lineWidth: 1)
+          )
+      case .failure:
+        EmptyView()
+      default:
+        RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous)
+          .fill(Brand.accent)
+          .frame(width: 110, height: 150)
+          .overlay(ProgressView().controlSize(.small).tint(Brand.muted))
       }
     }
   }
