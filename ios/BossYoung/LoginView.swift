@@ -120,11 +120,12 @@ struct LoginView: View {
           if activeMethod == .feishu && session.isLoggingIn {
             ProgressView().tint(.white)
           } else {
-            Image("FeishuGlyph")
-              .renderingMode(.template)
-              .resizable()
-              .scaledToFit()
-              .frame(width: 23, height: 23)
+            // Placeholder, NOT the Feishu mark. The `FeishuGlyph` asset that used
+            // to sit here (copied from the web's feishu-sign-in.tsx) draws a paper
+            // plane, not Feishu's swallow — a wrong trademark is worse than none.
+            // Swap in the official artwork from 飞书开放平台 品牌资源 when we have it.
+            Text("飞")
+              .font(.system(size: 22, weight: .medium))
               .foregroundStyle(.white)
           }
         }
