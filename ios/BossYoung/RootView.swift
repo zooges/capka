@@ -50,6 +50,8 @@ struct MainShellView: View {
   @State private var showModelPicker = false
   @State private var showProjects = false
   @State private var showProjectPicker = false
+  /// Whether the transcript keeps itself pinned to the newest content.
+  @State private var follow = true
   @State private var showArchived = false
   @State private var showSettings = false
   @State private var showFiles = false
@@ -695,19 +697,56 @@ struct MainShellView: View {
       }
       .scrollDismissesKeyboard(.interactively)
       .simultaneousGesture(TapGesture().onEnded { dismissComposer() })
+      // Reading back over a reply while it streams must win over following it.
+      // Any drag hands control to the reader until they return to the bottom.
+      .simultaneousGesture(
+        DragGesture(minimumDistance: 12).onChanged { value in
+          if value.translation.height > 0 { follow = false }
+        }
+      )
       .refreshable { await chat.load() }
       .onChange(of: chat.messages.last?.text) { _, _ in
-        guard let id = chat.messages.last?.id else { return }
-        withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
+        // Deltas arrive many times a second; animating each one makes the text
+        // shiver. Plain scrollTo keeps the tail pinned without the jitter.
+        guard follow, let id = chat.messages.last?.id else { return }
+        proxy.scrollTo(id, anchor: .bottom)
       }
       .onChange(of: chat.messages.last?.steps.count) { _, _ in
-        guard let id = chat.messages.last?.id else { return }
+        guard follow, let id = chat.messages.last?.id else { return }
         withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
       }
       .onChange(of: chat.messages.count) { _, _ in
+        // A new turn always pulls the view back: the reader just sent it.
+        follow = true
         guard let id = chat.messages.last?.id else { return }
-        proxy.scrollTo(id, anchor: .bottom)
+        withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
       }
+      .overlay(alignment: .bottom) {
+        if !follow {
+          Button {
+            follow = true
+            guard let id = chat.messages.last?.id else { return }
+            withAnimation(Motion.easeOut(0.3)) { proxy.scrollTo(id, anchor: .bottom) }
+          } label: {
+            HStack(spacing: 5) {
+              Image(systemName: "arrow.down")
+                .font(.system(size: 11, weight: .semibold))
+              if chat.isBusy {
+                Text("正在回复")
+                  .font(.system(size: 12, weight: .medium))
+              }
+            }
+            .foregroundStyle(Brand.ink)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .capkaCard(radius: 999)
+          }
+          .buttonStyle(CapkaPressStyle())
+          .padding(.bottom, 10)
+          .transition(.opacity.combined(with: .offset(y: 8)))
+        }
+      }
+      .animation(Motion.easeOut(0.2), value: follow)
     }
   }
 

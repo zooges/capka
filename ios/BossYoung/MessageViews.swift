@@ -191,7 +191,10 @@ struct CapkaMessageRow: View {
         ForEach(message.groups) { group in
           switch group {
           case .text(let chunk):
-            MarkdownBody(text: chunk)
+            MarkdownBody(
+              text: chunk,
+              showsCaret: message.isStreaming && group.id == message.groups.last?.id
+            )
           case .activity(let steps):
             ActivityRail(
               steps: steps,
@@ -761,6 +764,8 @@ struct AttachmentTile: View {
 /// copy action, links, inline-code chips and horizontal rules.
 struct MarkdownBody: View {
   let text: String
+  /// Draws a caret after the final block while text is still arriving.
+  var showsCaret = false
 
   private enum Block {
     case paragraph(String)
@@ -779,8 +784,13 @@ struct MarkdownBody: View {
     VStack(alignment: .leading, spacing: 0) {
       let items = blocks
       ForEach(Array(items.enumerated()), id: \.offset) { index, block in
-        view(for: block)
-          .padding(.top, topGap(at: index, in: items))
+        HStack(alignment: .lastTextBaseline, spacing: 3) {
+          view(for: block)
+          if showsCaret, index == items.count - 1 {
+            StreamingCaret()
+          }
+        }
+        .padding(.top, topGap(at: index, in: items))
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1533,5 +1543,27 @@ private struct PulseWhile: ViewModifier {
         .onAppear { dim = true }
         .onDisappear { dim = false }
     }
+  }
+}
+
+
+/// The blinking block that says text is still arriving. A pause between deltas
+/// otherwise reads as a finished answer — this is the cheapest possible signal
+/// that the turn is alive, and the one every chat client converges on.
+private struct StreamingCaret: View {
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var on = true
+
+  var body: some View {
+    RoundedRectangle(cornerRadius: 1, style: .continuous)
+      .fill(Brand.ink)
+      .frame(width: 7, height: 15)
+      .opacity(reduceMotion ? 0.7 : (on ? 1 : 0.12))
+      .animation(
+        reduceMotion ? nil : .easeInOut(duration: 0.55).repeatForever(autoreverses: true),
+        value: on
+      )
+      .onAppear { on = false }
+      .accessibilityHidden(true)
   }
 }
