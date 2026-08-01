@@ -6,9 +6,10 @@ import SwiftUI
 
 extension ChatListViewModel {
   func refreshFiltered(archived: Bool = false, projectId: String? = nil, search: String? = nil) async {
-    isLoading = true
+    // Deliberately NOT setting `isLoading`: the sidebar picks one of four
+    // branches off it, so flipping it on every keystroke swapped the whole list
+    // for a spinner and back — one flash per character typed.
     error = nil
-    defer { isLoading = false }
     do {
       let page = try await api.listChats(archived: archived, projectId: projectId, search: search)
       chats = page.chats

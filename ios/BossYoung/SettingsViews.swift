@@ -54,6 +54,12 @@ struct SettingsHomeView: View {
       SettingsDetailView(tab: tab, model: model)
     }
     .task {
+      // The role is already known from the session — waiting for load() to set
+      // it meant the 管理 group popped in a beat later and the whole list
+      // re-laid out under the user's finger.
+      model.isAdmin = session.user?.role == "admin"
+      model.displayName = session.user?.name ?? model.displayName
+      model.email = session.user?.email ?? model.email
       await model.load(user: session.user)
       #if DEBUG
       if let raw = ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_SETTINGS_TAB"] {

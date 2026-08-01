@@ -843,6 +843,10 @@ struct MainShellView: View {
   // MARK: - Sidebar
 
   private var sidebarOverlay: some View {
+    // The keyboard must not reach this GeometryReader: it feeds safeAreaInsets
+    // into SidebarView, so a keyboard-driven inset change rebuilt the whole
+    // drawer — the flash seen when tapping the search field. The drawer's own
+    // search field sits at the top and has nothing to reveal anyway.
     GeometryReader { geo in
       let width = min(300, geo.size.width * 0.86)
       ZStack(alignment: .leading) {
@@ -901,6 +905,7 @@ struct MainShellView: View {
       }
       .ignoresSafeArea()
     }
+    .ignoresSafeArea(.keyboard, edges: .bottom)
   }
 
   private var workspaceOverlay: some View {

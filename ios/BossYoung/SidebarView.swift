@@ -75,11 +75,6 @@ struct SidebarView: View {
       }
     }
     .background(Brand.sidebar)
-    // The search field is at the TOP of the drawer, so the default keyboard
-    // avoidance has nothing to reveal — all it did was shove the whole drawer
-    // (account card included) up above the keyboard. The chat list scrolls
-    // instead; see `.scrollDismissesKeyboard` on `content`.
-    .ignoresSafeArea(.keyboard, edges: .bottom)
     .animation(Motion.easeOut(0.22), value: showAccountMenu)
     // A raised keyboard and the bottom-anchored account card cannot coexist.
     .onChange(of: searchFocused) { _, focused in
@@ -196,7 +191,7 @@ struct SidebarView: View {
 
   @ViewBuilder
   private var content: some View {
-    if list.isLoading && list.chats.isEmpty {
+    if list.isLoading && !list.hasLoaded {
       ProgressView().tint(Brand.primary).frame(maxWidth: .infinity, maxHeight: .infinity)
     } else if let err = list.error, list.chats.isEmpty {
       VStack(spacing: 12) {

@@ -9,6 +9,9 @@ final class ChatListViewModel {
   var isLoadingMore = false
   var error: String?
   var nextCursor: String?
+  /// The spinner belongs to the first load only. Once rows have arrived, a later
+  /// fetch updates them in place instead of replacing the list with a spinner.
+  var hasLoaded = false
 
   let api = CapkaAPIClient.shared
   weak var session: SessionStore?
@@ -34,6 +37,7 @@ final class ChatListViewModel {
       let page = try await api.listChats()
       chats = page.chats
       nextCursor = page.nextCursor
+      hasLoaded = true
       error = nil
     } catch CapkaAPIError.unauthorized {
       await session?.noteUnauthorized()
