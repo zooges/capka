@@ -351,6 +351,21 @@ struct AskCardData: Equatable {
   var isAwaiting: Bool { state == "input-available" && answered == nil }
 }
 
+/// A `manage` call the runner suspended for human approval. Authorization is
+/// the session cookie, so a prompt-injected agent that staged the call can never
+/// approve it — the decision has to come from this card.
+struct ApprovalCardData: Equatable {
+  var toolCallId: String
+  /// What the agent wants to do, in the label the step describer produces.
+  var label: String
+  var detail: String?
+  /// nil while awaiting; true/false once decided.
+  var approved: Bool?
+  var reason: String?
+
+  var isAwaiting: Bool { approved == nil }
+}
+
 /// Assistant output in the order it happened. The web groups consecutive
 /// reasoning + tool calls into one activity rail and leaves answer text on its
 /// own, so prose and actions interleave as a single timeline; rendering all
@@ -359,12 +374,14 @@ enum MessageGroup: Identifiable, Equatable {
   case text(String)
   case activity([MessageStep])
   case ask(AskCardData)
+  case approval(ApprovalCardData)
 
   var id: String {
     switch self {
     case .text(let s): return "t-\(s.hashValue)"
     case .activity(let steps): return "a-\(steps.map(\.id).joined(separator: ","))"
     case .ask(let card): return "k-\(card.toolCallId ?? card.title ?? "ask")"
+    case .approval(let card): return "p-\(card.toolCallId)"
     }
   }
 }

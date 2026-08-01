@@ -221,8 +221,25 @@ final class ChatViewModel {
     messages.contains { msg in
       msg.groups.contains { group in
         if case .ask(let card) = group { return card.isAwaiting }
+        if case .approval(let card) = group { return card.isAwaiting }
         return false
       }
+    }
+  }
+
+  /// Record an approval decision. Like `ask`, this resumes the same turn.
+  func decideApproval(_ card: ApprovalCardData, messageId: String, approved: Bool) async {
+    do {
+      try await api.respondToApproval(
+        messageId: messageId,
+        toolCallId: card.toolCallId,
+        approved: approved
+      )
+      CapkaFeedback.replyStarted(chatId: chatId)
+      startPolling()
+    } catch {
+      self.error = error.localizedDescription
+      await load()
     }
   }
 

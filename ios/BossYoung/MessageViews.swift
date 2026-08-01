@@ -18,6 +18,8 @@ struct CapkaMessageRow: View {
   var chatId: String?
   /// Submits an answer to a suspended `ask`, resuming the same turn.
   var onAnswerAsk: ((AskCardData, String, [String: [String]]) -> Void)?
+  /// Approves or denies a suspended `manage` call.
+  var onDecideApproval: ((ApprovalCardData, Bool) -> Void)?
   /// Rewrite this user turn and re-run from it.
   var onEdit: ((String) -> Void)?
   /// Flip to the previous/next version of this message ("prev" / "next").
@@ -190,6 +192,8 @@ struct CapkaMessageRow: View {
             )
           case .ask(let card):
             AskCardView(card: card, messageId: message.id, onAnswer: onAnswerAsk)
+          case .approval(let card):
+            ApprovalCardView(card: card, onDecide: onDecideApproval)
           }
         }
       }
@@ -1376,5 +1380,82 @@ private struct FlowChips: View {
       }
       .padding(.vertical, 1)
     }
+  }
+}
+
+
+/// A `manage` action waiting on the user's go-ahead. Louder than the activity
+/// rail on purpose — it is a decision, not a log line.
+struct ApprovalCardView: View {
+  let card: ApprovalCardData
+  var onDecide: ((ApprovalCardData, Bool) -> Void)?
+
+  @State private var submitting = false
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
+        Image(systemName: card.isAwaiting ? "hand.raised" : (card.approved == true ? "checkmark.circle" : "xmark.circle"))
+          .font(.system(size: 14))
+          .foregroundStyle(card.isAwaiting ? Brand.warningText : Brand.muted)
+        Text(card.isAwaiting ? "需要你确认" : (card.approved == true ? "已批准" : "已拒绝"))
+          .font(.system(size: 13, weight: .medium))
+          .foregroundStyle(Brand.ink)
+        Spacer(minLength: 0)
+      }
+
+      Text(card.label)
+        .font(.system(size: 14))
+        .foregroundStyle(Brand.ink)
+        .fixedSize(horizontal: false, vertical: true)
+
+      if let detail = card.detail, !detail.isEmpty {
+        Text(detail)
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      if card.isAwaiting {
+        HStack(spacing: 10) {
+          Button {
+            decide(true)
+          } label: {
+            Text(submitting ? "处理中…" : "允许")
+              .font(.system(size: 13, weight: .medium))
+              .foregroundStyle(Brand.onPrimary)
+              .padding(.horizontal, 16)
+              .padding(.vertical, 8)
+              .background(Brand.primary)
+              .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+          }
+          .disabled(submitting)
+
+          Button("拒绝") { decide(false) }
+            .font(.system(size: 13))
+            .foregroundStyle(Brand.dangerText)
+            .disabled(submitting)
+        }
+      } else if let reason = card.reason, !reason.isEmpty {
+        Text(reason)
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(12)
+    .background(card.isAwaiting ? Brand.warningSurface.opacity(0.55) : Brand.accent.opacity(0.5))
+    .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous)
+        .stroke(card.isAwaiting ? Brand.warningBorder.opacity(0.6) : Brand.line, lineWidth: 1)
+    )
+    .capkaEntrance(.blurRise)
+  }
+
+  private func decide(_ approved: Bool) {
+    guard !submitting else { return }
+    submitting = true
+    onDecide?(card, approved)
   }
 }

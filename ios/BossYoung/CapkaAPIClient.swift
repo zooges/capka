@@ -480,6 +480,17 @@ final class CapkaAPIClient: @unchecked Sendable {
     try await mutate(path: "api/ask/answer", method: "POST", json: body)
   }
 
+  /// Record the user's decision on a suspended `manage` call. Approving
+  /// re-runs the tool; denying lets the model acknowledge it. Either way the
+  /// server enqueues the turn's continuation.
+  func respondToApproval(messageId: String, toolCallId: String, approved: Bool) async throws {
+    try await mutate(path: "api/manage/approve", method: "POST", json: [
+      "messageId": messageId,
+      "toolCallId": toolCallId,
+      "approved": approved,
+    ])
+  }
+
   func cancelTask(taskId: String) async throws {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/tasks/\(taskId)/cancel"))
     req.httpMethod = "POST"
@@ -1799,11 +1810,12 @@ final class CapkaAPIClient: @unchecked Sendable {
         optional: (f["optional"] as? Bool) ?? false
       )
     }
-    // A stored answer arrives as the tool output; normalise both the single and
-    // multi shapes to arrays so the settled view has one thing to read.
+    // The answer rides on `askValue` ({ action, values }) — the same field the
+    // web's AskCard treats as "settled". Normalise the single and multi shapes
+    // to arrays so the summary view has one thing to read.
     var answered: [String: [String]]?
-    if let output = part["output"] as? [String: Any],
-       let values = output["values"] as? [String: Any] {
+    if let askValue = part["askValue"] as? [String: Any],
+       let values = askValue["values"] as? [String: Any] {
       var map: [String: [String]] = [:]
       for (key, value) in values {
         if let one = value as? String { map[key] = [one] }
@@ -1884,6 +1896,25 @@ final class CapkaAPIClient: @unchecked Sendable {
           if name == "ask", let form = p["askForm"] as? [String: Any] {
             flushActivity()
             groups.append(.ask(parseAskCard(part: p, form: form)))
+            continue
+          }
+          // A `manage` call staged for approval owns its whole lifecycle as a
+          // card, in every state — never the quiet activity rail.
+          if let approval = p["approval"] as? [String: Any],
+             let toolCallId = p["toolCallId"] as? String {
+            flushActivity()
+            let described = StepDescriber.describe(
+              toolName: name,
+              input: p["input"] as? [String: Any],
+              running: false
+            )
+            groups.append(.approval(ApprovalCardData(
+              toolCallId: toolCallId,
+              label: described.label,
+              detail: (p["input"] as? [String: Any]).flatMap { $0["summary"] as? String },
+              approved: approval["approved"] as? Bool,
+              reason: approval["reason"] as? String
+            )))
             continue
           }
           if !name.isEmpty { tools.append(name) }
@@ -1969,8 +2000,8 @@ final class CapkaAPIClient: @unchecked Sendable {
       steps: steps,
       attachments: attachments,
       groups: groups,
-      siblingIndex: intOf(raw["siblingIndex"]) ?? 0,
-      siblingCount: intOf(raw["siblingCount"]) ?? 1,
+      siblingIndex: intOf(meta?["siblingIndex"]) ?? 0,
+      siblingCount: intOf(meta?["siblingCount"]) ?? 1,
       details: details,
       isCompaction: meta?["compaction"] != nil && !(meta?["compaction"] is NSNull),
       compactionSummary: (meta?["compaction"] as? [String: Any])?["summary"] as? String
