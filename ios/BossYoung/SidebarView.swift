@@ -12,7 +12,7 @@ struct SidebarView: View {
   let safeAreaBottom: CGFloat
 
   var onNewChat: () -> Void
-  var onOpenChat: (String) -> Void
+  var onOpenChat: (ChatSummary) -> Void
   var onOpenProjects: () -> Void
   var onOpenArchived: () -> Void
   var onOpenSettings: () -> Void
@@ -288,7 +288,7 @@ struct SidebarView: View {
   @ViewBuilder
   private func chatRow(_ row: ChatSummary) -> some View {
     Button {
-      onOpenChat(row.id)
+      onOpenChat(row)
     } label: {
       SidebarChatRow(chat: row, selected: row.id == currentChatId)
     }

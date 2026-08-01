@@ -49,6 +49,7 @@ struct MainShellView: View {
   @State private var preview = FilePreviewLoader()
   @State private var showModelPicker = false
   @State private var showProjects = false
+  @State private var showProjectPicker = false
   @State private var showArchived = false
   @State private var showSettings = false
   @State private var showFiles = false
@@ -56,6 +57,7 @@ struct MainShellView: View {
   @State private var renameText = ""
   @State private var moveTarget: ChatSummary?
   @State private var moveProjects: [ProjectSummary] = []
+  @State private var filesProject: ProjectSummary?
   @State private var starterType = "pdf"
   @State private var voice = VoiceDictation()
   @State private var sidebarDragOffset: CGFloat = 0
@@ -241,6 +243,38 @@ struct MainShellView: View {
       )
       .presentationDetents([.medium, .large])
       .presentationDragIndicator(.visible)
+    }
+    .sheet(isPresented: $showProjectPicker) {
+      ProjectContextSheet(
+        currentId: chat.projectId,
+        currentName: chat.projectName,
+        onSelect: { project in
+          // Switching context only makes sense for a chat that doesn't exist
+          // yet; an existing one keeps the sandbox it was created in.
+          if chat.chatId != nil { chat.startNewChat() }
+          chat.selectProject(project)
+          showProjectPicker = false
+        },
+        onOpenFiles: { project in
+          showProjectPicker = false
+          filesProject = project
+        },
+        onOpenChat: { id in
+          showProjectPicker = false
+          Task { await chat.openChat(id, projectId: chat.projectId, projectName: chat.projectName) }
+        },
+        onClose: { showProjectPicker = false }
+      )
+    }
+    .sheet(item: $filesProject) { project in
+      NavigationStack {
+        WorkspaceFilesView(chatId: nil, projectId: project.id, title: project.name)
+          .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+              Button("完成") { filesProject = nil }.foregroundStyle(Brand.primary)
+            }
+          }
+      }
     }
     .sheet(isPresented: $showProjects) {
       NavigationStack {
@@ -738,6 +772,10 @@ struct MainShellView: View {
       }
 
       HStack(spacing: 6) {
+        // Working context first, then what you add to it.
+        ProjectChip(name: chat.projectName) { showProjectPicker = true }
+          .padding(.leading, 4)
+
         // On a phone the common case is a photo of a paper document, not a file
         // sitting in the Files app — so 照片 / 拍照 come before 文件.
         Menu {
@@ -869,9 +907,11 @@ struct MainShellView: View {
             chat.startNewChat()
             closeSidebar()
           },
-          onOpenChat: { id in
+          onOpenChat: { row in
             closeSidebar()
-            Task { await chat.openChat(id) }
+            Task {
+              await chat.openChat(row.id, projectId: row.projectId, projectName: row.projectName)
+            }
           },
           onOpenProjects: { showProjects = true },
           onOpenArchived: { showArchived = true },

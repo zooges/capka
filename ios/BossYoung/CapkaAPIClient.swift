@@ -363,7 +363,9 @@ final class CapkaAPIClient: @unchecked Sendable {
     attachedFiles: [[String: String]]?,
     history: [[String: Any]]? = nil,
     /// `.some(nil)` roots the new version; omit entirely to append to the leaf.
-    parentId: String?? = nil
+    parentId: String?? = nil,
+    /// Only read when creating the chat — an existing chat keeps its own project.
+    projectId: String? = nil
   ) async throws -> SendChatResponse {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/chat"))
     req.httpMethod = "POST"
@@ -376,6 +378,7 @@ final class CapkaAPIClient: @unchecked Sendable {
     if let attachedFiles { body["attachedFiles"] = attachedFiles }
     if let history { body["messages"] = history }
     if let parentId { body["parentId"] = parentId as Any? ?? NSNull() }
+    if let projectId, !projectId.isEmpty, chatId == nil { body["projectId"] = projectId }
     req.httpBody = try JSONSerialization.data(withJSONObject: body)
     let (data, response) = try await send(req)
     let http = try requireHTTP(response)

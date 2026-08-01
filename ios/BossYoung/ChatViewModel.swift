@@ -19,6 +19,11 @@ final class ChatViewModel {
   var activeTaskId: String?
   var pendingAttachments: [(name: String, type: String)] = []
   var title: String = "新对话"
+  /// The project this chat belongs to. Not decoration: sessions are keyed by
+  /// `projectId ?? chatId`, so picking one puts the chat in that project's
+  /// shared sandbox and workspace alongside its other chats.
+  var projectId: String?
+  var projectName: String?
 
   private let api = CapkaAPIClient.shared
   private weak var session: SessionStore?
@@ -101,9 +106,14 @@ final class ChatViewModel {
     }
   }
 
-  func openChat(_ id: String?) async {
+  /// `project` comes from the row that opened the chat, so the composer's chip
+  /// shows the workspace this conversation actually runs in rather than the last
+  /// one that happened to be picked.
+  func openChat(_ id: String?, projectId: String? = nil, projectName: String? = nil) async {
     stopPolling()
     chatId = id
+    self.projectId = projectId
+    self.projectName = projectName
     messages = []
     activeTaskId = nil
     streamingMessageId = nil
@@ -117,6 +127,14 @@ final class ChatViewModel {
     }
   }
 
+  /// Pick the project a *new* chat will be created in. An existing chat keeps
+  /// the project it was created in — moving one is 移至项目 in the sidebar.
+  func selectProject(_ project: ProjectSummary?) {
+    projectId = project?.id
+    projectName = project?.name
+  }
+
+  /// A new chat keeps the picked project — that is the point of picking one.
   func startNewChat() {
     stopPolling()
     chatId = nil
@@ -362,7 +380,8 @@ final class ChatViewModel {
         text: text,
         model: selectedModelId,
         userMessageId: userId,
-        attachedFiles: attachments.isEmpty ? nil : attachments.map { ["name": $0.name, "type": $0.type] }
+        attachedFiles: attachments.isEmpty ? nil : attachments.map { ["name": $0.name, "type": $0.type] },
+        projectId: projectId
       )
       chatId = res.chatId
       activeTaskId = res.taskId
@@ -405,7 +424,7 @@ final class ChatViewModel {
   func attach(fileURL: URL) async {
     do {
       if chatId == nil {
-        chatId = try await api.createChat(title: "新对话", model: selectedModelId)
+        chatId = try await api.createChat(title: "新对话", model: selectedModelId, projectId: projectId)
       }
       guard let chatId else { return }
       let accessing = fileURL.startAccessingSecurityScopedResource()
