@@ -58,6 +58,7 @@ struct MainShellView: View {
   @State private var moveProjects: [ProjectSummary] = []
   @State private var starterType = "pdf"
   @State private var voice = VoiceDictation()
+  @Environment(\.scenePhase) private var scenePhase
   @State private var sidebarDragOffset: CGFloat = 0
   @State private var filesDragOffset: CGFloat = 0
   @FocusState private var composerFocused: Bool
@@ -154,6 +155,9 @@ struct MainShellView: View {
         return
       }
       await chat.load()
+      if ShareInbox.hasPending {
+        await chat.adoptShared(ShareInbox.drain())
+      }
       await list.refreshQuietly()
       // Real-session screen jumps for offline/online QA (Debug launchctl only).
       openDebugScreen(ProcessInfo.processInfo.environment["CAPKA_OPEN_SCREEN"])
@@ -170,6 +174,16 @@ struct MainShellView: View {
         await chat.send()
       }
       #endif
+    }
+    // A share can arrive while the app is backgrounded, so check on every
+    // activation rather than only at launch.
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .active, ShareInbox.hasPending else { return }
+      Task {
+        showSidebar = false
+        await chat.adoptShared(ShareInbox.drain())
+        composerFocused = true
+      }
     }
     .onChange(of: session.eventSeq) { _, _ in
       if let event = session.lastEvent {

@@ -38,6 +38,10 @@
 		A10000000000000000000037 /* ProviderIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000037 /* ProviderIcons.swift */; };
 		A10000000000000000000035 /* DocumentScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000035 /* DocumentScanner.swift */; };
 		A10000000000000000000036 /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000036 /* AppLock.swift */; };
+		A10000000000000000000040 /* ShareInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000040 /* ShareInbox.swift */; };
+		A10000000000000000000045 /* ShareInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000040 /* ShareInbox.swift */; };
+		A10000000000000000000041 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000041 /* ShareViewController.swift */; };
+		A10000000000000000000046 /* BossYoungShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000044 /* BossYoungShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -50,6 +54,17 @@
 				A1000000000000000000000C /* LarkSSOSDK.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A50000000000000000000014 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A10000000000000000000046 /* BossYoungShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -87,6 +102,11 @@
 		A20000000000000000000037 /* ProviderIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderIcons.swift; sourceTree = "<group>"; };
 		A20000000000000000000035 /* DocumentScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScanner.swift; sourceTree = "<group>"; };
 		A20000000000000000000036 /* AppLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLock.swift; sourceTree = "<group>"; };
+		A20000000000000000000040 /* ShareInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShareInbox.swift; path = Shared/ShareInbox.swift; sourceTree = "<group>"; };
+		A20000000000000000000041 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		A20000000000000000000042 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000043 /* BossYoungShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BossYoungShare.entitlements; sourceTree = "<group>"; };
+		A20000000000000000000044 /* BossYoungShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BossYoungShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +118,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A50000000000000000000012 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -105,6 +132,8 @@
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000002 /* BossYoung */,
+				A40000000000000000000004 /* BossYoungShare */,
+				A20000000000000000000040 /* ShareInbox.swift */,
 				A2000000000000000000000B /* LarkSSOSDK.xcframework */,
 				A2000000000000000000000D /* LarkSSO.bundle */,
 				A40000000000000000000003 /* Products */,
@@ -151,8 +180,19 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000007 /* BossYoung.app */,
+				A20000000000000000000044 /* BossYoungShare.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000004 /* BossYoungShare */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000041 /* ShareViewController.swift */,
+				A20000000000000000000042 /* Info.plist */,
+				A20000000000000000000043 /* BossYoungShare.entitlements */,
+			);
+			path = BossYoungShare;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -166,17 +206,54 @@
 				A30000000000000000000001 /* Frameworks */,
 				A50000000000000000000003 /* Resources */,
 				A50000000000000000000004 /* Embed Frameworks */,
+				A50000000000000000000014 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A90000000000000000000001 /* PBXTargetDependency */,
 			);
 			name = BossYoung;
 			productName = BossYoung;
 			productReference = A20000000000000000000007 /* BossYoung.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A50000000000000000000010 /* BossYoungShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000000010 /* Build configuration list for PBXNativeTarget "BossYoungShare" */;
+			buildPhases = (
+				A50000000000000000000011 /* Sources */,
+				A50000000000000000000012 /* Frameworks */,
+				A50000000000000000000013 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BossYoungShare;
+			productName = BossYoungShare;
+			productReference = A20000000000000000000044 /* BossYoungShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXTargetDependency section */
+		A90000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A50000000000000000000010 /* BossYoungShare */;
+			targetProxy = A90000000000000000000002 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		A90000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A60000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A50000000000000000000010;
+			remoteInfo = BossYoungShare;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXProject section */
 		A60000000000000000000001 /* Project object */ = {
@@ -206,6 +283,7 @@
 			projectRoot = "";
 			targets = (
 				A50000000000000000000001 /* BossYoung */,
+				A50000000000000000000010 /* BossYoungShare */,
 			);
 		};
 /* End PBXProject section */
@@ -217,6 +295,13 @@
 			files = (
 				A10000000000000000000005 /* Assets.xcassets in Resources */,
 				A1000000000000000000000D /* LarkSSO.bundle in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A50000000000000000000013 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -254,6 +339,16 @@
 				A10000000000000000000032 /* MediaAttach.swift in Sources */,
 				A10000000000000000000009 /* FeishuNativeSSO.swift in Sources */,
 				A1000000000000000000000A /* CapkaFeedback.swift in Sources */,
+				A10000000000000000000040 /* ShareInbox.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A50000000000000000000011 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000041 /* ShareViewController.swift in Sources */,
+				A10000000000000000000045 /* ShareInbox.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,6 +447,58 @@
 			};
 			name = Release;
 		};
+		A80000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BossYoungShare/BossYoungShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 18;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoungShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A80000000000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BossYoungShare/BossYoungShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 18;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoungShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -369,6 +516,15 @@
 			buildConfigurations = (
 				A80000000000000000000003 /* Debug */,
 				A80000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000000010 /* Build configuration list for PBXNativeTarget "BossYoungShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000010 /* Debug */,
+				A80000000000000000000011 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
