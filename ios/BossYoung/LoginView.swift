@@ -42,15 +42,6 @@ struct LoginView: View {
                 .padding(.bottom, 14)
             }
 
-            if !isRegister {
-              feishuButton
-                .padding(.bottom, 18)
-                .capkaEntrance(.blurRise, delay: 0.05)
-
-              authDivider
-                .padding(.bottom, 18)
-            }
-
             if isRegister {
               nameField
                 .padding(.bottom, 11)
@@ -68,6 +59,17 @@ struct LoginView: View {
 
             if registrationEnabled || isRegister {
               modeSwitch
+            }
+
+            // Feishu is the alternative, not the headline: credentials first, then
+            // the usual small third-party mark underneath.
+            if !isRegister {
+              authDivider
+                .padding(.top, 26)
+                .padding(.bottom, 16)
+
+              feishuButton
+                .capkaEntrance(.blurRise, delay: 0.05)
             }
           }
           .frame(maxWidth: formMaxWidth)
@@ -107,35 +109,40 @@ struct LoginView: View {
   }
 
   private var feishuButton: some View {
-    Button(action: startFeishuLogin) {
-      HStack(spacing: 10) {
-        if activeMethod == .feishu && session.isLoggingIn {
-          ProgressView().tint(.white)
-        } else {
-          Image("FeishuGlyph")
-            .renderingMode(.template)
-            .resizable()
-            .scaledToFit()
-            .frame(width: 19, height: 19)
+    VStack(spacing: 7) {
+      Button(action: startFeishuLogin) {
+        ZStack {
+          Circle()
+            .fill(feishuBlue)
+            .frame(width: 50, height: 50)
+            .shadow(color: feishuBlue.opacity(0.26), radius: 9, y: 4)
+
+          if activeMethod == .feishu && session.isLoggingIn {
+            ProgressView().tint(.white)
+          } else {
+            Image("FeishuGlyph")
+              .renderingMode(.template)
+              .resizable()
+              .scaledToFit()
+              .frame(width: 23, height: 23)
+              .foregroundStyle(.white)
+          }
         }
-        Text("使用飞书登录")
-          .font(.system(size: 15, weight: .semibold))
       }
-      .frame(maxWidth: .infinity)
-      .frame(height: 50)
-      .background(feishuBlue)
-      .foregroundStyle(.white)
-      .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.xl, style: .continuous))
-      .shadow(color: feishuBlue.opacity(0.28), radius: 12, y: 6)
+      .buttonStyle(CapkaPressStyle())
+      .disabled(session.isLoggingIn)
+      .accessibilityLabel("使用飞书登录")
+
+      Text("飞书")
+        .font(.system(size: 11.5))
+        .foregroundStyle(Brand.muted)
     }
-    .buttonStyle(CapkaPressStyle())
-    .disabled(session.isLoggingIn)
   }
 
   private var authDivider: some View {
     HStack(spacing: 14) {
       capsuleRule
-      Text("或使用电子邮件")
+      Text("其他登录方式")
         .font(.system(size: 12, weight: .medium))
         .foregroundStyle(Brand.muted.opacity(0.85))
         .fixedSize()
@@ -268,7 +275,7 @@ struct LoginView: View {
     } label: {
       HStack(spacing: 8) {
         if activeMethod == .email && session.isLoggingIn {
-          ProgressView().tint(.white)
+          ProgressView().tint(Brand.onPrimary)
         }
         Text(submitLabel)
           .font(.system(size: 15, weight: .semibold))
@@ -276,9 +283,11 @@ struct LoginView: View {
       .frame(maxWidth: .infinity)
       .frame(height: 50)
       .background(Brand.primary)
-      .foregroundStyle(.white)
+      // `Brand.primary` is near-white in dark mode, so the label has to be its
+      // paired on-colour — hardcoded white disappears entirely.
+      .foregroundStyle(Brand.onPrimary)
       .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.xl, style: .continuous))
-      .shadow(color: Brand.ink.opacity(0.12), radius: 10, y: 5)
+      .shadow(color: .black.opacity(0.12), radius: 10, y: 5)
     }
     .buttonStyle(CapkaPressStyle())
     .disabled(session.isLoggingIn)
