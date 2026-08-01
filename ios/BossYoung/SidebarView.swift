@@ -8,8 +8,6 @@ struct SidebarView: View {
 
   let list: ChatListViewModel
   let currentChatId: String?
-  let safeAreaTop: CGFloat
-  let safeAreaBottom: CGFloat
 
   var onNewChat: () -> Void
   var onOpenChat: (ChatSummary) -> Void
@@ -46,8 +44,6 @@ struct SidebarView: View {
   var body: some View {
     ZStack(alignment: .bottom) {
       VStack(alignment: .leading, spacing: 0) {
-        Color.clear.frame(height: safeAreaTop)
-
         header
         newChatButton
         searchField
@@ -69,7 +65,7 @@ struct SidebarView: View {
 
         accountMenuCard
           .padding(.horizontal, 10)
-          .padding(.bottom, max(8, safeAreaBottom))
+          .padding(.bottom, 8)
           .transition(.move(edge: .bottom).combined(with: .opacity))
           .zIndex(3)
       }
@@ -344,7 +340,6 @@ struct SidebarView: View {
       }
       .padding(.horizontal, 14)
       .padding(.vertical, 12)
-      .padding(.bottom, max(0, safeAreaBottom - 6))
       .contentShape(Rectangle())
     }
     .buttonStyle(CapkaPressStyle())

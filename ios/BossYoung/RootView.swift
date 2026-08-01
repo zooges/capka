@@ -901,8 +901,6 @@ struct MainShellView: View {
         SidebarView(
           list: list,
           currentChatId: chat.chatId,
-          safeAreaTop: geo.safeAreaInsets.top,
-          safeAreaBottom: geo.safeAreaInsets.bottom,
           onNewChat: {
             chat.startNewChat()
             closeSidebar()
@@ -930,6 +928,7 @@ struct MainShellView: View {
         )
         .frame(width: width)
         .frame(maxHeight: .infinity)
+        .background(Brand.sidebar.ignoresSafeArea())
         .gesture(
           DragGesture(minimumDistance: 8, coordinateSpace: .global)
             .onChanged { value in
@@ -944,7 +943,6 @@ struct MainShellView: View {
             }
         )
       }
-      .ignoresSafeArea()
     }
     .ignoresSafeArea(.keyboard, edges: .bottom)
   }
