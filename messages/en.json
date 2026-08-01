@@ -43,6 +43,7 @@
       "rate_limited": "The assistant is busy right now. Please try again in a few moments.",
       "model_unavailable": "The selected AI model isn't available right now. Try a different model, or ask your administrator.",
       "context_too_long": "This conversation got too long for the model. Start a new chat or shorten your message and try again.",
+      "content_blocked": "The AI provider blocked this reply for content-safety reasons. Try rephrasing, narrowing the topic, or switching to a different model.",
       "network": "Couldn't reach the AI service. Please try again in a moment.",
       "timed_out": "This task took too long and was stopped. Please try again, or break it into smaller steps.",
       "interrupted": "The task was interrupted before it finished. Please try again.",
@@ -151,7 +152,7 @@
     },
     "panel": {
       "greeting": "What can I help with?",
-      "greetingHint": "Drop a file here, or just describe what you need",
+      "greetingHint": "",
       "workspaceFiles": "Workspace files",
       "sendFailed": "Failed to send message",
       "recent": "Recent",
@@ -409,7 +410,11 @@
       "source": "Source",
       "codeViewer": "Code viewer",
       "fullscreen": "Fullscreen",
-      "exitFullscreen": "Exit fullscreen"
+      "exitFullscreen": "Exit fullscreen",
+      "nativePdfHint": "Opening with the system viewer…",
+      "tryOpen": "Try opening",
+      "openingPreview": "Opening preview…",
+      "openPreview": "Open preview"
     },
     "tool": {
       "done": "Done",
@@ -806,7 +811,7 @@
       "nameSaved": "Name updated",
       "nameSaveFailed": "Failed to update name",
       "appearance": "Appearance",
-      "appearanceDesc": "Choose how Capka looks on your device",
+      "appearanceDesc": "Choose how BOSS & YOUNG looks on your device",
       "theme": "Theme",
       "registration": "Registration",
       "registrationDesc": "Control whether new users can create accounts",
@@ -819,7 +824,7 @@
       "shareEnabled": "Key sharing enabled",
       "shareDisabled": "Key sharing disabled",
       "about": "About",
-      "aboutDesc": "Capka is open-source software",
+      "aboutDesc": "BOSS & YOUNG is open-source software",
       "openSource": "Open source under the <license>AGPL-3.0</license> license.",
       "sourceCode": "Source on GitHub",
       "version": "Version {version}",
@@ -841,7 +846,7 @@
     },
     "integrations": {
       "title": "Integrations",
-      "subtitle": "Connect external services to Capka",
+      "subtitle": "Connect external services to BOSS & YOUNG",
       "checking": "Checking…",
       "tokenConfigured": "Token configured",
       "notConfigured": "Not configured",
@@ -857,7 +862,7 @@
       },
       "link": {
         "title": "Link Telegram account",
-        "desc": "Connect your Telegram account to chat with Capka from Telegram.",
+        "desc": "Connect your Telegram account to chat with B&Y AI助手 from Telegram.",
         "checkingStatus": "Checking status…",
         "linked": "Linked",
         "linkedAs": "Linked as @{username}",
@@ -1273,7 +1278,13 @@
       "envPlaceholder": "KEY=value (one per line)",
       "envHint": "Environment variables (e.g. access keys), if the package needs any. Optional.",
       "localBadge": "Local",
-      "localRuns": "Runs in the sandbox"
+      "sseBadge": "SSE",
+      "localRuns": "Runs in the sandbox",
+      "updateToken": "Update token",
+      "updateTokenHint": "Paste a new access token. It is stored encrypted and replaces the previous one.",
+      "tokenUpdated": "Token updated",
+      "tokenUpdateFailed": "Couldn't update the token",
+      "authRequiredHint": "This service needs authentication. Choose Token and paste the key before saving."
     },
     "marketplace": {
       "title": "Marketplace",
@@ -1413,6 +1424,20 @@
       },
       "pending": {
         "moved": "Approve or remove people on the Users page →"
+      },
+      "feishu": {
+        "title": "Login with Feishu",
+        "desc": "Let people sign in with their Feishu / Lark work account.",
+        "active": "Active",
+        "incomplete": "Needs credentials",
+        "toggleAria": "Toggle Feishu login",
+        "hint": "In Feishu Open Platform create a web app, add the redirect URI below, then paste App ID and App Secret here. Request scopes: contact:user.base:readonly and contact:user.email:readonly.",
+        "clientId": "App ID",
+        "clientSecret": "App Secret",
+        "secretStored": "•••••••• (stored, leave blank to keep)",
+        "secretPlaceholder": "Paste the App Secret",
+        "redirectUri": "Redirect URI",
+        "redirectHint": "Paste this into Feishu Open Platform → Security settings → Redirect URLs."
       }
     },
     "security": {
@@ -1446,8 +1471,8 @@
       "updateFailed": "Failed to update",
       "sandboxNet": "Internet access",
       "sandboxNetHint": "Let sandboxed code and local (stdio) connectors reach the public internet. Tools that self-install on first use (e.g. npx) need this. Private/internal ranges and cloud metadata stay blocked.",
-      "netEnabled": "Internet access on for the sandbox",
-      "netDisabled": "Internet access off for the sandbox",
+      "netEnabled": "Internet access on for the sandbox. Send another message so the sandbox restarts with network.",
+      "netDisabled": "Internet access off for the sandbox. Send another message so the sandbox restarts without network.",
       "sandboxNetBlocked": "Blocked at the deployment level — set SANDBOX_ALLOW_NETWORK=true and restart the sandbox controller to enable this.",
       "updated": "Setting updated",
       "hostFolders": "Server folders",
@@ -1586,13 +1611,13 @@
   "setup": {
     "back": "Back",
     "brand": {
-      "wordmark": "Capka",
+      "wordmark": "BOSS & YOUNG",
+      "footnote": "Setup takes about a minute",
       "headline": "One AI workspace for your whole team",
       "sub": "Connect a provider once. Then everyone can open a chat and get to work — in a browser or Telegram.",
       "point1": "One shared key for the whole company",
       "point2": "You choose which models are available",
-      "point3": "The same assistant in the browser and Telegram",
-      "footnote": "Setup takes about a minute"
+      "point3": "The same assistant in the browser and Telegram"
     },
     "steps": {
       "account": "Account",
@@ -1680,7 +1705,7 @@
     "passwordLabel": "Password",
     "login": {
       "title": "Sign in",
-      "description": "Enter your credentials to access Capka",
+      "description": "Enter your credentials to access BOSS & YOUNG",
       "submit": "Sign in",
       "submitting": "Signing in…",
       "invalidCredentials": "Invalid email or password. Please try again",
@@ -1689,7 +1714,7 @@
     },
     "register": {
       "title": "Create account",
-      "description": "Sign up to start using Capka",
+      "description": "Sign up to start using BOSS & YOUNG",
       "nameLabel": "Name",
       "namePlaceholder": "Your name",
       "nameRequired": "Name is required",
@@ -1729,19 +1754,26 @@
       "hint": "Your chats and files are kept. Contact your administrator to have your access restored — you'll be able to sign in again as soon as they do.",
       "recheck": "Check again",
       "signOut": "Sign out"
-    }
+    },
+    "feishu": {
+      "signIn": "Sign in with Feishu",
+      "failed": "Couldn't sign in with Feishu. Please try again.",
+      "accountNotLinked": "Your Feishu email matches an existing BOSS & YOUNG account that isn't linked yet. Sign in with email once, or ask an admin to link Feishu — then try again.",
+      "name": "Feishu"
+    },
+    "otherSignIn": "other sign-in options"
   },
   "telegram": {
-    "start": "👋 **Welcome to Capka!**\n\nI'm your AI assistant right here in Telegram — I answer questions and work with text, photos and files.\n\nJust send me a message and I'll get going. /new starts a fresh chat.\n\nAlready have a Capka account? Open Capka and connect Telegram in Settings.",
+    "start": "👋 **Welcome to BOSS & YOUNG!**\n\nI'm B&Y AI助手 — your AI assistant right here in Telegram. I answer questions and work with text, photos and files.\n\nJust send me a message and I'll get going. /new starts a fresh chat.\n\nAlready have an account? Open BOSS & YOUNG and connect Telegram in Settings.",
     "startLinked": "👋 **Welcome back!** Your account is already connected.\n\nJust message me and I'll get going. You can send text, photos and files, and /new opens a fresh chat.",
-    "openApp": "🦀 Open Capka",
+    "openApp": "Open BOSS & YOUNG",
     "openInBrowser": "💬 Open in browser",
     "tooManyAttempts": "⏳ Too many attempts. Please wait a minute and try again.",
-    "linkUsage": "Send the code right after the command: `/link CODE`\n\nYou'll find your connection code in Capka's settings.",
-    "invalidCode": "🤔 That code is invalid or has expired. Generate a new one in Capka and try again.",
+    "linkUsage": "Send the code right after the command: `/link CODE`\n\nYou'll find your connection code in BOSS & YOUNG settings.",
+    "invalidCode": "🤔 That code is invalid or has expired. Generate a new one in BOSS & YOUNG and try again.",
     "linked": "✅ **Account linked!**\n\nJust message me and I'll get going. You can send text, photos and files.",
     "newChat": "🆕 **New chat**\n\nYour previous conversation is saved. Go ahead — we're starting fresh.",
-    "notLinked": "To let me reply, connect your account first.\n\nOpen Capka and sign in with Telegram — it takes a few seconds and links automatically.",
+    "notLinked": "To let me reply, connect your account first.\n\nOpen BOSS & YOUNG and sign in with Telegram — it takes a few seconds and links automatically.",
     "tooFast": "⏳ Hold on a moment — you're sending messages too fast.",
     "budgetReached": "💳 Spending limit reached. Please contact your admin to raise it.",
     "fileTooBig": "📎 `{name}` is larger than 20 MB, so Telegram won't let me fetch it.",
@@ -1755,7 +1787,7 @@
     "doneLog": "✅ {count, plural, one {# tool} other {# tools}} · {secs}s",
     "pendingApproval": "⏳ **Account awaiting approval**\n\nAn administrator needs to approve your account. You'll be able to chat as soon as they do.",
     "registrationClosed": "Registration is currently closed. Ask your administrator for access.",
-    "setupIncomplete": "Capka isn't set up yet. Ask your administrator to finish the initial setup, then message me again.",
+    "setupIncomplete": "BOSS & YOUNG isn't set up yet. Ask your administrator to finish the initial setup, then message me again.",
     "accountNotActive": "Your account isn't active. If you think this is a mistake, ask your administrator.",
     "capabilityNotice": "⚠️ The current model can't process this attachment ({modalities}). Use /model to pick one that supports it.",
     "modality": {
@@ -1766,7 +1798,7 @@
     },
     "modelPrompt": "🧠 Pick a model for this chat:",
     "modelSet": "✅ Now using *{model}* in this chat.",
-    "modelEmpty": "No models available yet. Add a provider in Capka settings.",
+    "modelEmpty": "No models available yet. Add a provider in BOSS & YOUNG settings.",
     "modelStale": "That list is out of date — send /model again.",
     "confirmApply": "✓ Confirm",
     "confirmCancel": "Cancel",
@@ -1777,7 +1809,7 @@
     "confirmDetails": "Details"
   },
   "updateBanner": {
-    "message": "Capka {version} is available",
+    "message": "BOSS & YOUNG {version} is available",
     "action": "Update",
     "dismiss": "Dismiss"
   },

@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { authErrorKey } from "@/lib/auth/client-error";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { SsoMarkButton } from "@/components/auth/sso-mark-button";
 
 /** The official Telegram brand mark (Simple Icons), brand-blue, so the button
  *  reads instantly as "Telegram" without pulling in an icon font. */
@@ -46,24 +46,22 @@ export function TelegramSignIn({ enabled, callbackURL = "/chat" }: { enabled: bo
   };
 
   return (
-    <Button
-      type="button"
-      onClick={start}
-      disabled={loading}
-      className="h-11 w-full rounded-xl bg-[#229ED9] text-[15px] text-white hover:bg-[#1c8dc2]"
-    >
-      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TelegramGlyph className="mr-2 h-5 w-5" />}
-      {t("telegram.signIn")}
-    </Button>
+    <SsoMarkButton onClick={start} disabled={loading} label="Telegram" title={t("telegram.signIn")}>
+      {loading ? (
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      ) : (
+        <TelegramGlyph className="h-[26px] w-[26px] text-[#229ED9]" />
+      )}
+    </SsoMarkButton>
   );
 }
 
-/** A subtle "or" divider between the Telegram button and the email form. */
+/** A subtle "or" divider between the email form and the SSO marks. */
 export function AuthDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className="h-px flex-1 bg-border" />
-      <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="font-sans text-xs text-muted-foreground">{label}</span>
       <div className="h-px flex-1 bg-border" />
     </div>
   );

@@ -77,7 +77,13 @@ export default function RegisterPage() {
           </Link>
         }
       >
-        {telegramEnabled ? <TelegramSignIn enabled={telegramEnabled} /> : <></>}
+        {telegramEnabled ? (
+          <div className="flex justify-center">
+            <TelegramSignIn enabled={telegramEnabled} />
+          </div>
+        ) : (
+          <></>
+        )}
       </AuthShell>
     );
   }
@@ -95,12 +101,6 @@ export default function RegisterPage() {
         </>
       }
     >
-      {telegramEnabled && (
-        <div className="mb-4 space-y-4">
-          <TelegramSignIn enabled={telegramEnabled} />
-          <AuthDivider label={t("orContinueWithEmail")} />
-        </div>
-      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="name">{t("register.nameLabel")}</Label>
@@ -148,6 +148,14 @@ export default function RegisterPage() {
           {loading ? t("register.submitting") : t("register.submit")}
         </Button>
       </form>
+      {telegramEnabled && (
+        <div className="mt-6 space-y-4">
+          <AuthDivider label={t("otherSignIn")} />
+          <div className="flex items-start justify-center gap-6">
+            <TelegramSignIn enabled={telegramEnabled} />
+          </div>
+        </div>
+      )}
     </AuthShell>
   );
 }

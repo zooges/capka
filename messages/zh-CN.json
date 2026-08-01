@@ -1,0 +1,1957 @@
+{
+  "common": {
+    "skipToContent": "跳至内容",
+    "save": "保存",
+    "saving": "保存…",
+    "cancel": "取消",
+    "delete": "删除",
+    "deleting": "正在删除...",
+    "edit": "编辑",
+    "create": "创建",
+    "creating": "创建中…",
+    "close": "关闭",
+    "back": "返回",
+    "retry": "再试一次",
+    "loading": "加载中...",
+    "search": "搜索",
+    "confirm": "确认",
+    "remove": "删除",
+    "add": "添加",
+    "copy": "复制",
+    "copied": "已复制",
+    "optional": "可选",
+    "required": "必填",
+    "error": "出了点问题",
+    "saved": "已保存"
+  },
+  "errors": {
+    "page": {
+      "title": "出了点问题",
+      "message": "我们在此页面上遇到了意外问题。再试一次，如果这种情况持续发生，请告知您的管理员。",
+      "technicalDetails": "技术细节",
+      "errorId": "参考：{id}",
+      "home": "返回首页"
+    },
+    "notFound": {
+      "title": "找不到页面",
+      "message": "该页面不存在或可能已被移动。",
+      "home": "返回首页"
+    },
+    "llm": {
+      "out_of_credits": "助手已暂停：AI 账户已无信用。请您的管理员充值。",
+      "invalid_key": "助手目前未连接。您的管理员需要检查 AI 提供商设置。",
+      "rate_limited": "助理现在很忙。请稍后重试。",
+      "model_unavailable": "所选的 AI 模型目前不可用。尝试不同的模型，或询问您的管理员。",
+      "context_too_long": "对于模型来说，这次对话太长了。开始新的聊天或缩短消息并重试。",
+      "content_blocked": "AI 服务商因内容安全策略拦截了这次回复。请换一种说法、缩小话题范围，或切换其他模型后再试。",
+      "network": "无法访问 AI 服务。请稍后重试。",
+      "timed_out": "这个任务花了太长时间，被停止了。请重试，或将其分成更小的步骤。",
+      "interrupted": "任务在完成之前就被中断了。请再试一次。",
+      "unknown": "生成响应时出现问题。请再试一次。如果这种情况持续发生，请告知您的管理员。"
+    }
+  },
+  "providerStatus": {
+    "outOfCredits": "AI 额度已用尽，充值后即可恢复助手",
+    "invalidKey": "AI 提供商未连接 — 检查提供商设置以恢复助手",
+    "fix": "打开设置",
+    "dismiss": "解雇"
+  },
+  "theme": {
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "language": {
+    "label": "语言",
+    "description": "界面语言",
+    "updated": "语言已更新",
+    "updateFailed": "无法更改语言"
+  },
+  "nav": {
+    "newChat": "新聊天",
+    "expandSidebar": "展开侧边栏",
+    "unreadReply": "未读回复",
+    "working": "生成…",
+    "pinned": "已固定",
+    "telegram": "Telegram",
+    "showMore": "再显示 {count} 条",
+    "showLess": "显示更少",
+    "archived": "已归档",
+    "projects": "项目",
+    "settings": "设置",
+    "noChatsFound": "没有找到聊天记录",
+    "startNewChat": "开始新的聊天",
+    "groups": {
+      "today": "今天",
+      "yesterday": "昨天",
+      "thisWeek": "本周",
+      "older": "更早"
+    },
+    "signOut": "退出登录",
+    "search": "搜索",
+    "theme": "主题",
+    "account": "账户"
+  },
+  "steps": {
+    "createdFile": "创建 {file}",
+    "creatingFile": "创建 {file}...",
+    "createdFileGeneric": "创建了一个文件",
+    "creatingFileGeneric": "创建文件...",
+    "editedFile": "编辑 {file}",
+    "editingFile": "正在编辑 {file}...",
+    "editedFileGeneric": "编辑了一个文件",
+    "editingFileGeneric": "编辑文件...",
+    "readFile": "读取 {file}",
+    "readingFile": "正在读取 {file}...",
+    "readFileGeneric": "读取文件",
+    "readingFileGeneric": "正在读取文件...",
+    "viewedFile": "已浏览 {file}",
+    "viewingFile": "正在查看 {file}...",
+    "viewedFileGeneric": "查看了一个文件",
+    "viewingFileGeneric": "查看文件...",
+    "startedJob": "已启动后台任务",
+    "startingJob": "正在启动后台任务…",
+    "checkedJob": "已检查后台任务",
+    "checkingJob": "正在检查后台任务…",
+    "listedFiles": "已列出文件",
+    "listingFiles": "正在浏览文件…",
+    "searchedFor": "搜索了“{query}”",
+    "searchedFiles": "已搜索文件",
+    "searchingFiles": "正在搜索文件…",
+    "ranCommand": "运行了命令",
+    "runningCommand": "正在运行命令…",
+    "ranPython": "运行了 Python",
+    "runningPython": "正在运行 Python…",
+    "ranJavaScript": "运行了 JavaScript",
+    "runningJavaScript": "正在运行 JavaScript…",
+    "searchedWebFor": "在网上搜索了“{query}”",
+    "searchedWeb": "已搜索网页",
+    "searchingWeb": "正在搜索网页…",
+    "fetchedPage": "已获取页面",
+    "fetchingPage": "正在获取页面…",
+    "usedSkill": "技能“{name}”",
+    "usingSkill": "正在加载技能“{name}”…",
+    "usedSkillGeneric": "使用了技能",
+    "usingSkillGeneric": "正在加载技能…",
+    "usedTool": "使用了工具",
+    "working": "处理中…",
+    "managedSettings": "已更新设置",
+    "managingSettings": "正在更新设置…",
+    "checkedSettings": "已检查设置",
+    "checkingSettings": "正在检查设置…",
+    "reviewedNamed": "已查看 {name}",
+    "checkedConnector": "已检查连接器",
+    "checkingConnector": "正在检查连接器…"
+  },
+  "chat": {
+    "untitled": "新聊天",
+    "searchChats": "搜索聊天记录...",
+    "fileType": {
+      "image": "图片",
+      "file": "文件"
+    },
+    "panel": {
+      "greeting": "我能帮忙做什么？",
+      "greetingHint": "",
+      "workspaceFiles": "工作区文件",
+      "sendFailed": "发送消息失败",
+      "recent": "最近",
+      "getToWork": {
+        "header": "开始工作",
+        "types": {
+          "pdf": "PDF 文件",
+          "spreadsheet": "电子表格",
+          "document": "文件",
+          "image": "图片"
+        },
+        "pdf": {
+          "extractText": {
+            "label": "提取文本",
+            "prompt": "从我将附上的 PDF 中提取文本： "
+          },
+          "fillForm": {
+            "label": "填写表格",
+            "prompt": "填写我将附上的 PDF 中的表单字段： "
+          },
+          "toWord": {
+            "label": "转换为Word",
+            "prompt": "将我要附加的 PDF 转换为可编辑的 Word 文档。"
+          }
+        },
+        "spreadsheet": {
+          "analyze": {
+            "label": "分析数据",
+            "prompt": "分析我将附上的电子表格并总结主要趋势： "
+          },
+          "chart": {
+            "label": "构建图表",
+            "prompt": "从我将附上的电子表格中构建一个清晰的图表。"
+          },
+          "clean": {
+            "label": "清理数据",
+            "prompt": "清理并整理我将附上的电子表格中的数据。"
+          }
+        },
+        "document": {
+          "summarize": {
+            "label": "总结一下",
+            "prompt": "总结一下我将附上的文件： "
+          },
+          "translate": {
+            "label": "翻译一下",
+            "prompt": "翻译我要附加的文件 "
+          },
+          "reformat": {
+            "label": "让它看起来干净",
+            "prompt": "重新格式化我要附加的文档，使其看起来干净、专业。"
+          }
+        },
+        "image": {
+          "ocr": {
+            "label": "拉出文字",
+            "prompt": "从我要附加的图像中提取文本： "
+          },
+          "removeBg": {
+            "label": "删除背景",
+            "prompt": "从我要附加的图像中删除背景。"
+          },
+          "resize": {
+            "label": "调整大小或转换",
+            "prompt": "调整或转换我要附加的图像： "
+          }
+        }
+      },
+      "scrollDown": "滚动到底部",
+      "retry": "重试",
+      "navigation": "聊天导航",
+      "telegramReadOnly": "这是 Telegram 聊天。在那里回复",
+      "telegramBusy": "机器人正在处理此聊天...",
+      "stopBot": "停止",
+      "continueHere": "继续网络聊天",
+      "importedFrom": "从 {service} 导入",
+      "queuedFiles": "{count, plural, one {# 个文件} other {# 个文件}}",
+      "cancelQueued": "从队列中删除",
+      "contextFull": "上下文：{pct}%",
+      "contextTokens": "{used} / {total} Token",
+      "modelGoneBody": "该型号不再可用 - 选择其他型号继续聊天",
+      "modelGoneNew": "新聊天"
+    },
+    "menu": {
+      "rename": "重命名",
+      "pin": "销",
+      "unpin": "取消固定",
+      "archive": "存档",
+      "unarchive": "取消存档",
+      "export": "出口",
+      "deleteTitle": "删除聊天记录",
+      "deleteDescription": "这将永久删除“{title}”及其所有消息。",
+      "options": "聊天动作",
+      "share": "分享",
+      "moveToProject": "移至项目"
+    },
+    "share": {
+      "title": "分享聊天",
+      "description": "选择谁可以通过链接查看此聊天",
+      "private": "私人",
+      "privateHint": "只有你",
+      "link": "任何有链接的人",
+      "linkHint": "即使没有帐户，每个人都可以查看",
+      "users": "仅限登录用户",
+      "usersHint": "仅限拥有此处帐户的人",
+      "copy": "复制",
+      "copied": "链接已复制",
+      "unpublish": "取消发布",
+      "updateFailed": "无法更新访问权限",
+      "readOnly": "只读",
+      "clone": "复印一份",
+      "cloning": "复制…",
+      "cloneFailed": "无法复制聊天内容",
+      "signInToClone": "登录以制作副本",
+      "gateTitle": "此聊天仅适用于登录用户",
+      "gateDescription": "登录您的帐户以查看此对话",
+      "signIn": "登录"
+    },
+    "taskStatus": {
+      "thinking": "思考……",
+      "retrying": "该模型很慢 - 正在重试......"
+    },
+    "model": {
+      "search": "搜索型号...",
+      "placeholder": "选择型号",
+      "selectModel": "选择型号",
+      "clearSelection": "使用全局默认值",
+      "needKey": "输入您的 API 密钥以加载模型",
+      "noneFound": "没有找到型号",
+      "noneFoundHint": "要使用未列出的模型，请输入其完整 ID（例如 openrouter/owl-alpha）",
+      "noneAvailable": "无可用型号",
+      "syncing": "准备型号列表...",
+      "loadError": "无法加载模型",
+      "active": "活跃的",
+      "unavailable": "不可用",
+      "unavailableProvider": "提供商已断开连接",
+      "currentUnavailable": "当前型号不可用。下面再选一个。",
+      "shared": "共享",
+      "sharedTooltip": "使用管理员的共享提供程序配置",
+      "context": "上下文大小：一次能记住多少内容",
+      "caps": {
+        "vision": "读取图像",
+        "pdf": "阅读 PDF",
+        "audio": "听懂音频",
+        "video": "看懂视频",
+        "tools": "可以使用工具",
+        "reasoning": "一步步思考"
+      },
+      "close": "关闭",
+      "featured": "精选",
+      "all": "全部",
+      "filter": {
+        "title": "过滤器",
+        "clear": "清除",
+        "vision": "图片",
+        "pdf": "PDF",
+        "audio": "音频",
+        "video": "视频",
+        "reasoning": "推理",
+        "free": "免费"
+      },
+      "price": {
+        "label": "大约。成本",
+        "free": "免费",
+        "io": "每 1M Token 输入 {in} / 输出 {out}"
+      }
+    },
+    "input": {
+      "placeholder": "分配任务或提出任何问题",
+      "placeholderFiles": "添加有关文件的消息...",
+      "awaitingInput": "响应上述请求以继续",
+      "attach": "附加文件",
+      "stop": "停止生成",
+      "send": "发送消息",
+      "queue": "队列消息",
+      "remove": "删除 {name}",
+      "tooLarge": "太大（最大 {max}）：{files}",
+      "dropHere": "拖放要附加的文件",
+      "uploadFailed": "上传失败：{files}",
+      "retryUpload": "重试上传 {name}",
+      "blindModalities": "该模型不会直接看到 {modalities}"
+    },
+    "import": {
+      "offer": "这是 {service} 对话。在这里导入并继续？",
+      "import": "进口",
+      "dismiss": "只需发送链接即可",
+      "reading": "阅读 {service} 对话……",
+      "creating": "创建聊天...",
+      "untitled": "{service} 对话",
+      "summary": "{service} · {count, plural, one {# 条消息} other {# 条消息}}",
+      "droppedNote": "附件和图像不会导入",
+      "truncatedNote": "对话很长，所以只导入了一部分。",
+      "confirm": "导入并继续",
+      "cancel": "取消",
+      "retry": "再试一次",
+      "error": {
+        "NETWORK_DISABLED": "从 {service} 导入需要沙盒网络访问，该访问在此实例上已关闭。请询问您的管理员，或粘贴对话文本。",
+        "PLAYWRIGHT_MISSING": "此实例无法打开外部页面来导入它们。请询问您的管理员，或粘贴对话文本。",
+        "BLOCKED": "{service} 阻止了导入。请稍后再试，或者粘贴对话文本。",
+        "NOT_FOUND": "该共享链接未加载 - 检查它是否公开且正确。",
+        "FORMAT_CHANGED": "{service} 更改了共享聊天的外观，因此暂时无法导入。您可以改为粘贴对话文本。",
+        "EMPTY": "该对话中没有可导入的文本",
+        "RENDER_FAILED": "无法导入该对话。稍后再试一次。"
+      }
+    },
+    "ask": {
+      "title": "一个简单的问题",
+      "submit": "发送",
+      "skip": "跳过",
+      "answered": "已回答",
+      "skipped": "跳过",
+      "expired": "该问题不再有效 - 您的答案未保存。",
+      "yes": "是的",
+      "no": "否"
+    },
+    "workspace": {
+      "title": "文件",
+      "close": "关闭面板",
+      "files": "文件",
+      "upload": "上传文件",
+      "download": "下载{name}",
+      "downloadAll": "下载全部",
+      "notCreated": "文件未创建",
+      "createHint": "发送消息以创建工作区",
+      "loadError": "加载文件失败",
+      "empty": "还没有文件",
+      "uploadFailed": "上传 {name} 失败",
+      "sortName": "按名字",
+      "sortDate": "按修改日期",
+      "sortSize": "按尺寸",
+      "sortDesc": "颠倒顺序",
+      "groupByType": "按类型分组",
+      "viewList": "列表",
+      "viewGrid": "网格",
+      "groupFolders": "文件夹",
+      "groupImages": "图片",
+      "groupDocuments": "文件",
+      "groupOther": "其他",
+      "synced": "已同步",
+      "syncedFolder": "与您的计算机同步",
+      "statusSynced": "已同步到您的计算机",
+      "statusPending": "尚未在您的计算机上",
+      "statusSyncing": "正在同步..."
+    },
+    "preview": {
+      "prev": "上一页",
+      "next": "下一步",
+      "download": "下载",
+      "close": "关闭",
+      "loadError": "无法打开该文件",
+      "gone": "该文件不再位于聊天工作区中",
+      "temporary": "该文件暂时不可用，请稍后重试",
+      "tooLarge": "文件太大无法预览",
+      "rendered": "预览",
+      "source": "来源",
+      "codeViewer": "代码查看器",
+      "fullscreen": "全屏",
+      "exitFullscreen": "退出全屏",
+      "nativePdfHint": "正在用系统预览打开…",
+      "tryOpen": "尝试打开",
+      "openingPreview": "正在打开预览…",
+      "openPreview": "打开预览"
+    },
+    "tool": {
+      "done": "完成",
+      "failed": "失败了",
+      "unknownError": "未知错误",
+      "technicalDetails": "技术细节",
+      "artifacts": "{count, plural, one {# 个产物} other {# 个产物}}",
+      "steps": "{count, plural, one {# 个步骤} other {# 个步骤}}",
+      "more": "+{count} 更多"
+    },
+    "notice": {
+      "modality": {
+        "audio": "音频",
+        "video": "视频",
+        "image": "图片",
+        "pdf": "PDF"
+      }
+    },
+    "time": {
+      "justNow": "刚才",
+      "yesterday": "昨天 {time}"
+    },
+    "details": {
+      "show": "留言详情",
+      "model": "型号",
+      "technical": "技术",
+      "provider": "提供者",
+      "steps": "步骤",
+      "inputTokens": "输入令牌",
+      "outputTokens": "输出 Token",
+      "reasoningTokens": "推理标记",
+      "cache": "缓存读取",
+      "cacheWrite": "缓存写入",
+      "speed": "速度",
+      "speedValue": "{n} token/秒",
+      "cost": "成本",
+      "duration": "工作时间",
+      "latency": "延迟",
+      "generationTime": "生成时间",
+      "route": "路线",
+      "loadingRoute": "加载中...",
+      "durationSec": "{s}s",
+      "durationMin": "{m}m {s}s",
+      "sentAt": "已发送"
+    },
+    "message": {
+      "cancelled": "回复已取消",
+      "genericError": "生成响应时出现问题。请再试一次。",
+      "thinking": "思考……",
+      "copy": "复制",
+      "copied": "已复制",
+      "regenerate": "再生",
+      "edit": "编辑",
+      "reasoning": "推理",
+      "compacted": "上下文压缩",
+      "reasonedFor": "针对 {duration} 的推理",
+      "workedFor": "为 {duration} 工作",
+      "activity": "活动",
+      "fork": "分叉进入新聊天",
+      "actions": "消息操作",
+      "prevVersion": "以前的版本",
+      "nextVersion": "下一个版本",
+      "versions": "{count, plural, one {# 个版本} other {# 个版本}}"
+    },
+    "forkFailed": "无法分叉聊天",
+    "archived": {
+      "title": "存档的聊天记录",
+      "back": "返回聊天",
+      "empty": "没有存档的聊天记录",
+      "restore": "恢复聊天",
+      "delete": "永久删除",
+      "confirmTitle": "永久删除聊天记录？",
+      "confirmDescription": "此操作无法撤消。该聊天记录及其所有消息将被永久删除。"
+    },
+    "hook": {
+      "loadFailed": "无法加载消息",
+      "uploadFailed": "无法上传 {files}。消息未发送。",
+      "processFiles": "处理这些文件",
+      "requestFailed": "请求失败",
+      "rateLimited": "留言太多，请稍等",
+      "budgetReached": "已达到支出限额。请联系您的管理员。",
+      "offline": "没有连接。检查您的互联网并重试。"
+    },
+    "clearSearch": "清除搜索",
+    "manage": {
+      "settingTitle": "设置已更新",
+      "confirmTitle": "确认变更",
+      "apply": "确认",
+      "cancel": "取消",
+      "undo": "撤消更改",
+      "recheckMsg": "重新检查 {name} 连接器",
+      "debugTitle": "诊断",
+      "connectorsTitle": "连接器",
+      "openHint": "打开链接继续",
+      "statusOn": "上",
+      "statusOff": "关闭",
+      "statusSignin": "登录",
+      "applying": "正在申请…",
+      "checking": "正在检查...",
+      "confirmed": "已确认",
+      "declined": "拒绝",
+      "reverted": "已恢复",
+      "expired": "此确认已过期 - 请再次询问",
+      "applyError": "无法应用 - 请重试",
+      "cancelled": "取消",
+      "recheck": "重新检查",
+      "viewInstructions": "查看完整说明",
+      "emptyConnectors": "还没有连接器。只要问——例如“连接线性”。",
+      "openInSettings": "在设置中打开",
+      "setInstruction": "将“{title}”设置为“{value}”",
+      "signedIn": "我已登录 - 请立即检查连接器",
+      "pickFolderHint": "选择计算机上的文件夹进行连接",
+      "folderPicked": "我连接了文件夹“{name}”"
+    },
+    "folders": {
+      "uploadFiles": "上传文件",
+      "connect": "连接文件夹",
+      "reconnect": "重新连接",
+      "disconnect": "断开文件夹连接",
+      "syncing": "正在同步...",
+      "progress": {
+        "scanning": "正在扫描...",
+        "hashing": "正在检查 {done}/{total}...",
+        "uploading": "正在上传{done}/{total}",
+        "downloading": "下载{done}/{total}"
+      },
+      "skipped": "{n} 已跳过（太大或系统文件）",
+      "tooLarge": "此文件夹太大，无法同步（{count, plural, one {# 个文件} other {# 个文件}}、{size}）。限制：{maxFiles, plural, one {# 个文件} other {# 个文件}} / {maxSize}。",
+      "syncedAgo": "已同步 {ago}",
+      "justNow": "刚才",
+      "conflicts": "已保留较新版本的 {n, plural, one {# 个文件} other {# 个文件}}",
+      "syncFailed": "无法同步 — 将重试",
+      "unsupportedBrowser": "实时文件夹同步需要 Chrome 或 Edge",
+      "importFolder": "导入文件夹",
+      "imported": "已从「{name}」导入 {n, plural, one {# 个文件} other {# 个文件}}",
+      "nothingImported": "没有要导入的内容 - 每个文件都被跳过（太大或不可同步）。",
+      "downloadZip": "下载为 zip 文件"
+    }
+  },
+  "projects": {
+    "title": "项目",
+    "subtitle": "使用自定义说明和模型组织您的聊天。",
+    "new": "新项目",
+    "create": "创建项目",
+    "empty": "还没有项目。创建一个来组织您的聊天。",
+    "selector": {
+      "manage": "管理项目"
+    },
+    "created": "项目已创建",
+    "updated": "项目已更新",
+    "createError": "无法创建项目。请再试一次。",
+    "updateError": "无法更新项目。请再试一次。",
+    "nameRequired": "姓名为必填项",
+    "createDesc": "创建一个新项目来组织您的聊天",
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "我的项目",
+      "description": "描述",
+      "descriptionPlaceholder": "简要说明...",
+      "systemPrompt": "系统指令",
+      "systemPromptPlaceholder": "该项目的自定义说明...",
+      "defaultModel": "默认型号",
+      "useGlobalDefault": "使用全局默认值",
+      "defaultModelHint": "覆盖此项目中聊天的全局默认设置。",
+      "internet": "互联网接入",
+      "internetHint": "让助理在处理此项目时下载文件并访问互联网。",
+      "agent": {
+        "label": "代理模式",
+        "preset": {
+          "assistant": "助理",
+          "raw": "原始提示",
+          "custom": "定制"
+        },
+        "hint": {
+          "assistant": "完全访问：文件和代码、连接器、技能、内存。",
+          "raw": "除了您的指示之外什么都没有——没有工具，没有记忆，没有内置角色。",
+          "custom": "您自己的能力组合。"
+        },
+        "rawEmpty": "系统指令为空，因此模型不会收到任何系统提示。",
+        "advanced": "高级",
+        "advancedNote": "关闭功能还会删除描述它的指令，因此模型永远不会被告知它没有的工具。",
+        "cap": {
+          "sandbox": "文件和代码",
+          "connectors": "连接器和网络数据",
+          "skills": "技能",
+          "manage": "通过聊天管理设置",
+          "memory": "长期记忆"
+        },
+        "persona": "指令取代内置角色",
+        "sessionContext": "传递您的姓名、日期和语言",
+        "hintOrg": "实例范围的上限。一个项目可以要求更少，但绝不能更多——这也包括不属于任何项目的聊天。",
+        "advancedNoteOrg": "无论单个项目设置为何，在此处关闭某项功能都会将其从每次聊天中删除。",
+        "cappedByAdmin": "某些功能受到管理员在实例范围内的限制，并且无法在此处启用。"
+      }
+    },
+    "chatCount": "{n, plural, one {# 个聊天} other {# 个聊天}}",
+    "lastChat": "最后聊天：{date}",
+    "hub": {
+      "tabsLabel": "项目部分",
+      "tabs": {
+        "overview": "概述",
+        "files": "文件",
+        "chats": "聊天记录"
+      },
+      "newChat": "新聊天",
+      "settings": "设置",
+      "recentChats": "最近的聊天记录",
+      "allChats": "所有聊天记录",
+      "untitledChat": "无题",
+      "noChats": "该项目还没有聊天记录。",
+      "emptyExplainer": "该项目中的每个聊天都使用相同的文件、内存和指令。",
+      "workspace": "工作空间",
+      "openFiles": "打开文件",
+      "fileCount": "{n, plural, one {# 个文件} other {# 个文件}}",
+      "folderCount": "{n, plural, one {# 个已连接文件夹} other {# 个已连接文件夹}}",
+      "context": "背景",
+      "hasInstructions": "有说明",
+      "noInstructions": "无说明",
+      "defaultModel": "默认型号",
+      "internetOn": "互联网开启",
+      "internetOff": "互联网关闭",
+      "memoryLabel": "助理想起了什么",
+      "memoryPlaceholder": "这就是助理对这个项目的记忆的积累。",
+      "memorySaved": "已保存",
+      "memoryError": "无法保存",
+      "dangerTitle": "删除项目",
+      "dangerHint": "工作区文件将被删除。聊天记录将被保留。",
+      "delete": "删除项目"
+    },
+    "delete": {
+      "title": "删除“{name}”？",
+      "intro": "这无法撤消。发生的情况如下：",
+      "memory": "项目内存将被删除。",
+      "connectors": "{n, plural, one {# 个连接器} other {# 个连接器}}将被删除。",
+      "skills": "{n, plural, one {# 个技能} other {# 个技能}}将被删除。",
+      "chats": "{n, plural, one {# 个聊天} other {# 个聊天}}将保留且不属于任何项目。",
+      "automations": "{n, plural, one {# 个自动化} other {# 个自动化}}将暂停。",
+      "files": "工作区文件将被删除。",
+      "downloadFirst": "首先下载文件",
+      "confirm": "删除",
+      "deleted": "项目已删除",
+      "error": "无法删除项目。请再试一次。",
+      "blockedTask": "该项目中的聊天仍在进行。等待回复完成。",
+      "blockedSync": "该项目中的一个文件夹仍在同步。稍后再试一次。"
+    },
+    "move": {
+      "title": "移至项目",
+      "subtitle": "选择将此对话移至何处。",
+      "removeFromProject": "从项目中删除",
+      "noProjects": "还没有项目。",
+      "toNone": "对话将获得一个新鲜、空旷的工作空间。",
+      "fromNone": "该聊天的文件将被复制到“{name}”的工作区中。",
+      "betweenProjects": "对话将转移到“{to}”并使用其文件和上下文。 “{from}”的共享文件保留在“{from}”中。",
+      "blockedTask": "此聊天仍然有效。等待回复完成。",
+      "error": "无法移动聊天。",
+      "moved": "聊天室已移动",
+      "moveButton": "移动"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "nav": {
+      "general": "通用",
+      "connections": "连接",
+      "integrations": "集成",
+      "billing": "关键与限制",
+      "memory": "记忆",
+      "usage": "分析",
+      "users": "用户",
+      "skills": "扩展",
+      "automations": "自动化",
+      "connectors": "连接器",
+      "marketplace": "市场",
+      "permissions": "权限",
+      "authentication": "认证",
+      "security": "安全性",
+      "sections": {
+        "personal": "个人",
+        "admin": "管理"
+      },
+      "updates": "更新",
+      "activity": "活动"
+    },
+    "usersPage": {
+      "title": "用户",
+      "subtitle": "批准、分配角色并查看每个人的支出。",
+      "searchPlaceholder": "搜索用户",
+      "colUser": "用户",
+      "colRole": "角色",
+      "colSpend": "30天消费",
+      "colActions": "",
+      "empty": "还没有用户",
+      "noMatches": "没有人符合您的搜索",
+      "adminRequired": "需要管理员权限",
+      "loadFailed": "加载用户失败",
+      "loadError": "无法加载用户。请刷新页面。",
+      "roleUpdated": "角色更新",
+      "roleUpdateFailed": "更新角色失败",
+      "roles": {
+        "admin": "管理员",
+        "user": "用户",
+        "viewer": "只读"
+      },
+      "changeRole": "改变角色",
+      "joined": "加入{date}",
+      "pendingTitle": "等待批准",
+      "requestedOn": "请求的 {date}",
+      "approve": "批准",
+      "reject": "拒绝",
+      "approved": "账户已获批准",
+      "removed": "帐户已删除",
+      "actionFailed": "出了点问题。请再试一次。",
+      "remove": "删除",
+      "removeTitle": "删除 {name}？",
+      "removeWarn": "这将永久删除他们的帐户、聊天记录和文件。这无法撤消。",
+      "cancel": "取消",
+      "spendHint": "支出是此人在过去 30 天内对组织共享密钥的使用情况。自己的密钥使用量不计算在内。",
+      "filterAll": "全部",
+      "colAccess": "访问",
+      "colUsage": "回合（30天）",
+      "colBudget": "预算",
+      "colStatus": "状态",
+      "openDetails": "{name} 的开放详细信息",
+      "activePrefix": "最后出现 {when}",
+      "exceptionsChip": "{count, plural, one {# 个例外} other {# 个例外}}",
+      "statuses": {
+        "active": "活跃",
+        "pending": "待定",
+        "suspended": "暂停",
+        "rejected": "被拒绝"
+      },
+      "drawerStatus": "状态",
+      "lastActivity": "上次会话活动",
+      "never": "从来没有",
+      "tgConnected": "已连接",
+      "tgNotConnected": "未连接",
+      "joinedLabel": "已加入",
+      "accessTitle": "访问",
+      "noExceptions": "无一例外——应用默认权限。",
+      "capType": {
+        "skill": "技能",
+        "connector": "连接器"
+      },
+      "scopeWon": {
+        "system": "组织范围内",
+        "user": "对于该用户",
+        "project": "项目"
+      },
+      "effects": {
+        "allow": "允许",
+        "deny": "被阻止",
+        "ask": "阻止直至获得批准"
+      },
+      "tierLabel": "消费等级",
+      "defaultTier": "实例默认",
+      "tierUpdated": "支出等级已更新",
+      "usageTitle": "用途",
+      "window5h": "最后 5 小时",
+      "window7d": "过去 7 天",
+      "window30d": "过去 30 天",
+      "turnsCompleted": "已完成",
+      "turnsFailed": "失败",
+      "topModels": "顶级模特",
+      "detailUnavailable": "目前尚无详细信息。",
+      "securityTitle": "安全与历史",
+      "sessionSeen": "看过 {when}",
+      "sessionUnknown": "未知设备",
+      "noSessions": "没有活动会话。",
+      "revokeAll": "到处注销",
+      "sessionsRevoked": "会话被撤销",
+      "historyTitle": "最近的变化",
+      "hSuspended": "暂停访问",
+      "hReactivated": "重新激活访问权限",
+      "hSetPending": "已移至审批队列",
+      "hStatusChanged": "状态改变",
+      "hSessionsRevoked": "已撤销的会话",
+      "hRoleChanged": "角色改变",
+      "hRemoved": "已删除帐户",
+      "hTierChanged": "更改了支出等级",
+      "suspend": "暂停访问",
+      "suspendTitle": "暂停 {name}？",
+      "suspendWarn": "他们将在任何地方都被注销，并且在您重新激活它们之前无法使用该应用程序。他们的聊天记录和文件都会被保留。",
+      "suspended": "访问暂停",
+      "reactivate": "重新激活访问权限",
+      "reactivated": "访问已重新激活"
+    },
+    "general": {
+      "account": "账户",
+      "accountDesc": "您的个人资料详细信息",
+      "name": "名称",
+      "namePlaceholder": "你的名字",
+      "email": "电子邮件",
+      "nameRequired": "名称不能为空",
+      "nameSaved": "名称已更新",
+      "nameSaveFailed": "更新名称失败",
+      "appearance": "外观",
+      "appearanceDesc": "选择 BOSS & YOUNG 在您设备上的外观",
+      "theme": "主题",
+      "registration": "注册",
+      "registrationDesc": "控制新用户是否可以创建帐户",
+      "allowRegistration": "允许注册",
+      "allowRegistrationHint": "禁用后，只有管理员可以添加新用户。现有用户仍然可以登录。",
+      "registrationEnabled": "已启用注册",
+      "registrationDisabled": "已禁用注册",
+      "shareProviders": "共享管理提供者密钥",
+      "shareProvidersHint": "启用后，没有自己的提供商密钥的用户将使用管理员的密钥（和预算）。默认关闭。",
+      "shareEnabled": "启用密钥共享",
+      "shareDisabled": "密钥共享已禁用",
+      "about": "关于",
+      "aboutDesc": "邦信阳是开源软件",
+      "openSource": "根据 <license>AGPL-3.0</license> 许可证开源。",
+      "sourceCode": "GitHub 上的源代码",
+      "version": "版本 {version}",
+      "author": "由 <author>@LyoSU</author> 构建",
+      "openSourceShort": "开源·AGPL-3.0"
+    },
+    "memory": {
+      "title": "代理记忆",
+      "subtitle": "人工智能会记住对话中的内容。它会自行维护这些注释——您也可以编辑它们。",
+      "userTitle": "关于你",
+      "userDesc": "人工智能将事实和偏好带入每次聊天中。",
+      "projectTitle": "项目记忆",
+      "projectDesc": "人工智能会记住特定项目的工作内容。",
+      "selectProject": "选择一个项目",
+      "placeholder": "当你聊天时，人工智能会填写这个内容。您也可以在此处添加或编辑注释 - 每行一个。",
+      "saved": "内存已保存",
+      "saveFailed": "保存内存失败",
+      "loadError": "无法加载内存。请刷新页面。"
+    },
+    "integrations": {
+      "title": "集成",
+      "subtitle": "将外部服务连接到 邦信阳",
+      "checking": "正在检查...",
+      "tokenConfigured": "令牌已配置",
+      "notConfigured": "未配置",
+      "enterToken": "输入机器人令牌",
+      "botConnected": "机器人@{username}已连接！",
+      "saveTokenFailed": "保存令牌失败",
+      "generateFailed": "生成链接代码失败",
+      "copied": "已复制到剪贴板",
+      "telegram": {
+        "title": "Telegram 机器人",
+        "desc": "输入来自 @BotFather 的 Telegram 机器人令牌以启用 Telegram 集成。",
+        "placeholderReplace": "输入要替换的新令牌"
+      },
+      "link": {
+        "title": "关联 Telegram 账户",
+        "desc": "连接您的 Telegram 帐户，通过 Telegram 与 B&Y AI助手 聊天。",
+        "checkingStatus": "正在检查状态...",
+        "linked": "链接",
+        "linkedAs": "链接为@{username}",
+        "connected": "已连接",
+        "changeAccount": "连接不同的帐户",
+        "unlinked": "Telegram 帐户已取消关联",
+        "unlinkFailed": "无法取消帐户关联",
+        "openBotHint": "只需轻轻一按即可连接，无需复制。",
+        "openBot": "打开@{username}并连接",
+        "scanQr": "...或从其他设备扫描此内容",
+        "orManually": "不工作？手动将其发送给机器人：",
+        "sendCommand": "将此命令发送到 Telegram 中的机器人：",
+        "codeExpires": "代码将在 5 分钟后过期",
+        "doneRefresh": "完成/刷新状态",
+        "generateCode": "生成链接代码",
+        "configureFirstAdmin": "添加机器人令牌",
+        "configureFirstAdminLink": "集成设置",
+        "configureFirstUser": "尚未设置。请您的管理员连接 Telegram。",
+        "oidcLink": "使用 Telegram 连接",
+        "oidcFailed": "无法连接到 Telegram。请再试一次。"
+      },
+      "linkMovedHint": "用户可以从“设置”→“常规”链接自己的 Telegram 帐户。"
+    },
+    "limits": {
+      "title": "你的极限",
+      "usedPct": "{pct}%",
+      "reservedPct": "+{pct}% 保留",
+      "details": "详情",
+      "hideDetails": "隐藏",
+      "reached": "达到限制",
+      "hint": "显示您已使用的共享密钥预算有多少。",
+      "window": {
+        "h5": "最后 5 小时",
+        "d7": "过去 7 天",
+        "d30": "过去 30 天"
+      }
+    },
+    "billing": {
+      "title": "关键与限制",
+      "subtitle": "控制提供商密钥的来源以及用户可以在共享密钥上花费的费用。",
+      "saveFailed": "无法保存",
+      "mode": {
+        "title": "提供商密钥模式",
+        "desc": "决定用户是使用管理员的共享密钥、自己的共享密钥还是两者都运行",
+        "shared_plus_own": {
+          "label": "共享+自己",
+          "desc": "管理密钥是每个人的默认值。用户可以添加自己的并在其上运行。"
+        },
+        "shared_only": {
+          "label": "仅限共享",
+          "desc": "每个人都使用管理密钥。用户无法添加自己的。"
+        },
+        "own_only": {
+          "label": "只属于自己",
+          "desc": "没有共享密钥，每个用户连接自己的"
+        }
+      },
+      "limits": {
+        "title": "共享密钥支出限制",
+        "desc": "三个窗口中的每用户预算。将字段留空，没有限制。自己的钥匙永远不受限制。",
+        "hint": "金额以美元为单位。当窗口耗尽时，新请求将被阻止，而正在运行的请求将完成。",
+        "ownOnlyNote": "在仅限自己的模式下，没有共享密钥，因此不适用限制。",
+        "window": {
+          "h5": "最后 5 小时",
+          "d7": "过去 7 天",
+          "d30": "过去 30 天"
+        }
+      },
+      "budget": {
+        "label": "实例每月预算",
+        "placeholder": "无预算",
+        "hint": "该组织的整个共享密钥法案。设置后，Analytics 会在每月预测超出时发出警告。不留空。"
+      },
+      "tiers": {
+        "title": "用户等级",
+        "soon": "目前，每个人的限制都是相同的（默认等级）。每用户级别稍后推出。"
+      }
+    },
+    "connections": {
+      "title": "人工智能提供商",
+      "subtitle": "管理 AI 提供商连接和 API 密钥",
+      "empty": "没有连接提供商",
+      "emptyHint": "添加 API 密钥以开始使用 AI 模型",
+      "active": "活跃的",
+      "activate": "激活",
+      "enabled": "已启用",
+      "enable": "启用",
+      "disable": "禁用",
+      "enabledToast": "提供商已启用",
+      "disabledToast": "提供商已禁用",
+      "toggleError": "无法更改状态。请再试一次。",
+      "connectionName": "连接名称",
+      "connectionNamePlaceholder": "e.g. Z.AI 或本地代理",
+      "connectionIcon": "图标",
+      "shareWithUsers": "可供用户使用",
+      "shareWithUsersHint": "该密钥加入共享池。关闭以确保其私密性。",
+      "defaultModel": "默认型号",
+      "pickModel": "选择型号",
+      "providerField": "提供者",
+      "recommended": "推荐",
+      "apiKey": "API密钥",
+      "showKey": "显示 API 密钥",
+      "hideKey": "隐藏 API 密钥",
+      "baseUrl": "基本网址",
+      "model": "型号",
+      "enterKeyFirst": "首先输入您的 API 密钥",
+      "testSave": "测试并保存",
+      "addProvider": "添加提供商",
+      "confirmRemoveTitle": "删除提供商？",
+      "confirmRemoveDesc": "这将断开提供者的连接并删除其 API 密钥。",
+      "loadError": "无法加载提供程序。请刷新页面。",
+      "activated": "提供商已激活",
+      "activateError": "无法激活提供商。请再试一次。",
+      "removed": "提供商已删除",
+      "removeError": "无法删除提供商。请再试一次。",
+      "modelUpdated": "默认模型已更新",
+      "modelUpdateError": "无法更新默认模型。请再试一次。",
+      "keyRequired": "需要 API 密钥",
+      "baseUrlRequired": "基本 URL 为必填项",
+      "pickModelError": "请选择型号",
+      "connectionFailed": "连接失败：{error}",
+      "saved": "提供商已保存并设置为活动状态",
+      "saveError": "无法保存提供商设置。请检查您的 API 密钥并重试。",
+      "modelFilter": "型号过滤器",
+      "modelFilterDesc": "用户对共享密钥的限制。您自己的访问不受影响。",
+      "minContext": "最小上下文窗口",
+      "minContextHint": "具有较小上下文窗口的模型不会向用户显示。",
+      "tokensK": "{value}k Token",
+      "tokensM": "{value}M Token",
+      "minContextSaveFailed": "保存模型过滤器失败",
+      "maxPrice": "最高型号价格",
+      "maxPriceHint": "共享密钥上不提供价格较高的型号",
+      "perMillion": "每百万 Token ${value}",
+      "noPriceCap": "没有上限",
+      "maxPriceSaveFailed": "未能保存价格过滤器",
+      "maxContextTokens": "每个对话的上下文上限",
+      "maxContextTokensHint": "对话在压缩之前可以占据多少窗口。限制共享密钥成本。",
+      "noContextCap": "模型的完整窗口",
+      "maxContextTokensSaveFailed": "无法保存上下文上限",
+      "resyncModels": "型号目录",
+      "resyncModelsHint": "从 OpenRouter 刷新模型列表和元数据（价格、上下文、功能）。每 12 小时自动运行一次 — 现在就用它来提取更新。",
+      "resyncModelsButton": "立即重新同步",
+      "resyncDone": "目录已更新 — 来自 OpenRouter 的 {count, plural, one {# 个模型} other {# 个模型}}。",
+      "resyncFailed": "无法重新同步模型目录",
+      "chatCompletions": "使用聊天完成 API",
+      "chatCompletionsHint": "OpenAI 默认使用其 Responses API。仅当您的设置需要经典聊天完成端点时才打开此选项。",
+      "reorder": "重新排序",
+      "shared": "共享",
+      "disabled": "残疾人",
+      "default": "默认",
+      "noModel": "没有模型集",
+      "defaultModelHint": "使用此模型打开新的聊天。将另一个连接拖到顶部进行更改。",
+      "reorderError": "无法保存订单",
+      "changeIcon": "更改图标"
+    },
+    "usage": {
+      "title": "分析",
+      "subtitleShared": "该组织在共享 AI 密钥上的支出。",
+      "subtitleOwn": "成员如何使用自己的提供商密钥——他们自己的支出，而不是组织的支出。",
+      "scopeShared": "共享密钥",
+      "scopeOwn": "自己的钥匙",
+      "rangeDays": "{days, plural, one {# 天} other {# 天}}",
+      "filters": "过滤器",
+      "filterAll": "全部",
+      "filterMember": "会员",
+      "filterModel": "型号",
+      "filterProject": "项目",
+      "filterChannel": "频道",
+      "clearFilters": "全部清除",
+      "channel": {
+        "web": "网络",
+        "telegram": "Telegram",
+        "automation": "自动化"
+      },
+      "spend": "花费",
+      "projectedMonthly": "预计 {cost}/月",
+      "projectedOfBudget": "预计 {cost}/月 · 预算 {pct}",
+      "completedTurns": "已完成转弯",
+      "completedTurnsSub": "技术上已完成 · {rate} 失败",
+      "activeMembers": "活跃会员",
+      "ofWithAccess": "{n} 的访问权限",
+      "costPerTurn": "成本/完成回合",
+      "costPerTurnHint": "全部支出 ÷ 已完成",
+      "tab": {
+        "overview": "概述",
+        "models": "型号",
+        "people": "人"
+      },
+      "byModel": "按型号",
+      "byUser": "按会员",
+      "byProject": "按项目",
+      "byProjectHint": "通过聊天当前的项目。",
+      "noProject": "没有项目",
+      "byChannel": "按渠道",
+      "callsN": "{count, plural, one {# 次请求} other {# 次请求}}",
+      "userTurns": "{count, plural, one {# 次对话} other {# 次对话}}",
+      "lastActive": "最后活跃的 {ago}",
+      "unknownUser": "未知用户",
+      "empty": "尚未记录使用情况",
+      "emptyFiltered": "没有活动与这些过滤器匹配",
+      "totalTokens": "Token 总数",
+      "tokenSplit": "{input} 输入 · {output} 输出",
+      "cacheRate": "缓存命中率",
+      "cachedTokens": "来自缓存的 {tokens}",
+      "tokensN": "{tokens} Token",
+      "vsPrevious": "与上一时期相比",
+      "dailyTrend": "每日费用",
+      "peakDay": "峰值 {cost}/天",
+      "recentActivity": "最近的活动",
+      "blendedRate": "混合率",
+      "perMillionTokens": "每百万 Token",
+      "avgLine": "平均 {cost}/天",
+      "modelMeta": "{rate}/1M · {tokens} token",
+      "userMeta": "平均 {cost}/请求",
+      "technicalDetails": "技术细节",
+      "tokensSummary": "{tokens} Token",
+      "searchUser": "搜索会员",
+      "noRecentForUser": "该会员最近没有活动",
+      "noMatches": "没有人符合您的搜索",
+      "attn": {
+        "title": "需要注意",
+        "budgetOverrun": "按照目前的速度，每月支出预计为 {projected}，超过 {budget} 预算。",
+        "memberNearBudget": "{name} 已使用其 {cap} 每月限额的 {used} — {pct}。",
+        "failureSpike": "在此期间，{turns} 转弯中的转弯故障上升至 {rate}（原为 {prev}）。",
+        "idleSeats": "{count, plural, one {# 位活跃成员两周未发起对话} other {# 位活跃成员两周未发起对话}}"
+      }
+    },
+    "skills": {
+      "title": "扩展",
+      "subtitle": "扩展助手功能的一切：技能、连接器和插件。",
+      "tab": {
+        "library": "技能",
+        "marketplace": "市场",
+        "connectors": "连接器",
+        "installed": "插件"
+      },
+      "loadError": "无法加载技能",
+      "toggleFailed": "无法更新技能",
+      "toggleAria": "切换 {name}",
+      "add": "添加",
+      "addPersonal": "个人技能",
+      "addShared": "共享技能",
+      "addSuccess": "添加了“{name}”",
+      "addFailed": "无法添加技能",
+      "searchPlaceholder": "搜索技巧...",
+      "sortAria": "排序技巧",
+      "sort": {
+        "name": "名称",
+        "status": "首先"
+      },
+      "group": {
+        "personal": "你的技能",
+        "team": "由您的团队添加",
+        "teamHint": "已上传给组织中的每个人"
+      },
+      "reach": {
+        "personal": "只有你",
+        "shared": "所有人"
+      },
+      "by": "通过 {author}",
+      "noMatches": "没有任何内容与“{query}”匹配",
+      "emptyTitle": "还没有自己的技能",
+      "emptyHint": "技能是助手在完成任务时加载的可重复使用的指令。在这里上传您自己的 - 插件附带的技能在“插件”选项卡上进行管理。",
+      "browseMarketplace": "浏览市场",
+      "summary": "{total} 的 {enabled} 已启用",
+      "noDescription": "无描述",
+      "noDescriptionHint": "没有描述。添加一个，以便助手知道何时使用它。",
+      "deleted": "删除“{name}”",
+      "deleteFailed": "无法删除技能",
+      "deleteAria": "删除 {name}",
+      "deleteTitle": "删除“{name}”？",
+      "deleteWarn": "这消除了每个人都可以使用的技能。这无法撤消。",
+      "deletePluginWarn": "该技能来自“{plugin}”插件，可能会在下次安装或更新该插件时返回。要永久删除它，请卸载该插件。",
+      "cancel": "取消",
+      "delete": "删除",
+      "installed": {
+        "loadError": "无法加载已安装的插件",
+        "actionFailed": "出了点问题。再试一次。",
+        "empty": "尚未安装任何插件。打开 Marketplace 添加一个。",
+        "counts": "{skills, plural, one {# 个技能} other {# 个技能}} · {connectors, plural, one {# 个连接器} other {# 个连接器}}",
+        "by": "通过 {author}",
+        "enable": "启用",
+        "disable": "禁用",
+        "update": "更新",
+        "uninstall": "卸载",
+        "cancel": "取消",
+        "uninstallConfirm": "卸载“{name}”？这消除了它的所有技能和连接器。",
+        "updated": "插件更新",
+        "uninstalled": "插件已卸载",
+        "state": {
+          "on": "开",
+          "off": "关闭",
+          "mixed": "部分开启"
+        },
+        "status": {
+          "disabled": "残疾人",
+          "enabled": "启用",
+          "active": "已启用 · {count, plural, one {# 个工具} other {# 个工具}}",
+          "needsLogin": "需要登录",
+          "unauthorized": "验证失败",
+          "error": "连接错误"
+        },
+        "signIn": "登录",
+        "memberInstallTitle": "让会员安装插件",
+        "memberInstallHint": "启用后，会员可以从您的市场为自己安装插件。关闭后，只有管理员可以为组织安装插件。",
+        "shown": "如图所示",
+        "hidden": "隐藏",
+        "hideForMe": "为我隐藏这个插件",
+        "upToDate": "已经是最新的了",
+        "previewFailed": "无法检查更新",
+        "reviewTitle": "查看更新",
+        "reviewDesc": "更新“{name}”将其从 {from} 移动到 {to}。",
+        "reviewChanges": "添加了 {added} · 删除了 {removed} · 更改了 {modified}",
+        "reviewConnectorsWarning": "此更新更改了连接器定义——可能引入在沙箱中运行的代码。应用前请先检查。",
+        "reviewApply": "应用更新"
+      },
+      "pluginsView": {
+        "installed": "已安装",
+        "browse": "浏览"
+      },
+      "chatHint": "您还可以通过在聊天中询问助手来添加和管理扩展程序。"
+    },
+    "automations": {
+      "title": "自动化",
+      "subtitle": "按计划自动运行，无需打开聊天。",
+      "chatHint": "可在聊天中让助手帮你创建，例如：「每周一上午 9 点，准备每周总结。」",
+      "loadError": "无法加载自动化",
+      "emptyTitle": "还没有自动化",
+      "emptyHint": "自动化按计划或在设定时间运行保存的指令。可在聊天中让助手帮你创建。",
+      "status": {
+        "active": "活跃",
+        "paused": "已暂停",
+        "autoPaused": "失败后自动暂停",
+        "overdue": "未运行"
+      },
+      "nextRun": "下次运行：{when}",
+      "overdueHint": "此运行已过期 - 后台工作程序可能未运行。 Contact your admin if it doesn't recover.",
+      "lastRun": "最后运行 {when}",
+      "openLastRun": "打开上次运行",
+      "toggleAria": "切换 {name}",
+      "toggleFailed": "无法更新自动化",
+      "deleteAria": "删除 {name}",
+      "deleteTitle": "删除“{name}”？",
+      "deleteWarn": "这会停止未来的运行并删除自动化。这无法撤消。",
+      "deleted": "删除“{name}”",
+      "deleteFailed": "无法删除自动化",
+      "cancel": "取消",
+      "delete": "删除"
+    },
+    "connectors": {
+      "title": "连接器",
+      "subtitle": "连接助手可用的外部服务（Notion、Linear、GitHub…）。",
+      "add": "添加连接器",
+      "save": "保存",
+      "cancel": "取消",
+      "namePlaceholder": "名称（例如 Notion）",
+      "tokenPlaceholder": "访问令牌 / API Key",
+      "nameHint": "将保存为：{slug}",
+      "nameRequired": "为连接器命名",
+      "inspecting": "正在检测设置...",
+      "saveAndSignIn": "保存并登录",
+      "method": {
+        "label": "认证",
+        "none": "无需鉴权",
+        "token": "访问令牌",
+        "oauth": "登录（OAuth）",
+        "noneHint": "此服务无需访问密钥——直接保存即可",
+        "oauthHint": "保存后将打开该服务的页面完成授权。"
+      },
+      "shareWithUsers": "可供用户使用",
+      "shareWithUsersHint": "适合所有人的共享连接器。关闭以保持私密。",
+      "tokenHint": "若服务需要访问密钥，请粘贴到此处。将加密存储。",
+      "advanced": "高级设置",
+      "advancedHint": "OAuth Client ID / Secret 仅用于需要预注册客户端的服务。普通登录可留空。",
+      "clientIdPlaceholder": "OAuth 客户端 ID（可选）",
+      "clientSecretPlaceholder": "OAuth 客户端密钥（可选）",
+      "test": "测试",
+      "testOk": "正常 · {count, plural, one {# 个工具} other {# 个工具}}",
+      "testOauth": "此连接器需要登录。保存后点击「登录」。",
+      "signIn": "登录",
+      "signOut": "退出",
+      "signedIn": "连接到 {name}",
+      "signInFailed": "登录失败，请再试一次。",
+      "signedOut": "已退出",
+      "signOutFailed": "无法退出",
+      "added": "添加连接器",
+      "addFailed": "无法添加连接器",
+      "toggleFailed": "无法更新连接器",
+      "deleted": "连接器已移除",
+      "deleteFailed": "无法移除连接器",
+      "empty": "还没有连接器",
+      "toggleAria": "切换 {name}",
+      "delete": "移除连接器",
+      "health": {
+        "checking": "正在检查连接...",
+        "ok": "已连接 · {count, plural, one {# 个工具} other {# 个工具}}",
+        "needsLogin": "需要登录",
+        "unauthorized": "令牌被拒绝，请检查访问密钥",
+        "unreachable": "无法连接，请检查地址",
+        "problem": "连接异常"
+      },
+      "scope": {
+        "system": "共享",
+        "user": "个人",
+        "project": "项目"
+      },
+      "kind": {
+        "remote": "远程",
+        "local": "本地"
+      },
+      "commandPlaceholder": "npx -y @playwright/mcp",
+      "commandHint": "在沙箱中运行。软件包会在首次使用时自行安装（例如 npx、uvx）。",
+      "envPlaceholder": "KEY=值（每行一个）",
+      "envHint": "环境变量（例如访问密钥），如包需要可填写。可选。",
+      "localBadge": "本地",
+      "sseBadge": "SSE",
+      "localRuns": "在沙箱中运行",
+      "updateToken": "更新令牌",
+      "updateTokenHint": "粘贴新的访问令牌；将加密保存并覆盖旧令牌。",
+      "tokenUpdated": "令牌已更新",
+      "tokenUpdateFailed": "无法更新令牌",
+      "authRequiredHint": "检测到需要鉴权。请选择「访问令牌」并填写密钥后再保存。"
+    },
+    "marketplace": {
+      "title": "市场",
+      "subtitle": "添加插件市场，然后一键为整个组织安装技能和连接器。",
+      "adminOnly": "只有管理员可以管理市场",
+      "urlPlaceholder": "GitHub 市场 URL（例如 anthropics/claude-plugins）",
+      "add": "添加",
+      "added": "添加了市场",
+      "addFailed": "无法添加该市场",
+      "empty": "还没有市场。请在上方添加以浏览插件。",
+      "refresh": "刷新",
+      "refreshed": "市场已刷新",
+      "refreshFailed": "无法刷新",
+      "remove": "删除",
+      "removed": "市场已删除",
+      "removeFailed": "无法删除",
+      "by": "通过 {author}",
+      "install": "安装",
+      "installed": "已安装 · {skills, plural, one {# 个技能} other {# 个技能}}、{connectors, plural, one {# 个连接器} other {# 个连接器}}",
+      "installedLabel": "已安装",
+      "installFailed": "无法安装该插件",
+      "uninstall": "卸载",
+      "uninstallConfirm": "卸载“{name}”？这消除了它的所有技能和连接器。",
+      "cancel": "取消",
+      "uninstalled": "已卸载",
+      "uninstallFailed": "无法卸载",
+      "unsupportedSource": "该插件的源代码尚未安装",
+      "searchPlaceholder": "搜索插件...",
+      "uncategorized": "其他",
+      "noMatches": "没有任何内容与“{query}”匹配",
+      "update": "更新",
+      "updated": "已更新 · {skills, plural, one {# 个技能} other {# 个技能}}、{connectors, plural, one {# 个连接器} other {# 个连接器}}",
+      "updateFailed": "无法更新该插件",
+      "tokenTitle": "GitHub 访问令牌",
+      "tokenHint": "已加密存储，之后不会再次显示。",
+      "tokenConfigured": "已保存",
+      "tokenPlaceholder": "粘贴要设置或替换的令牌",
+      "tokenSave": "保存",
+      "tokenSaved": "令牌已保存",
+      "tokenSaveFailed": "无法保存令牌",
+      "tokenClear": "清除",
+      "tokenCleared": "令牌已删除",
+      "tokenClearFailed": "无法删除令牌"
+    },
+    "permissions": {
+      "title": "权限",
+      "subtitle": "控制助理可以为组织中的每个人使用的内容。",
+      "adminOnly": "只有管理员可以管理权限",
+      "empty": "还没有什么可以治理的。首先添加技能或连接器。",
+      "skills": "技能",
+      "connectors": "连接器",
+      "bannerTitle": "默认情况下一切都是允许的",
+      "bannerBody": "仅为您想要保留的技能或连接器添加例外。",
+      "typeSkill": "技能",
+      "typeConnector": "连接器",
+      "exceptions": "{count, plural, one {# 个例外} other {# 个例外}}",
+      "effect": {
+        "allow": "允许",
+        "ask": "阻止直至获得批准",
+        "deny": "拒绝"
+      },
+      "scope": {
+        "system": "所有人",
+        "user": "指定用户",
+        "project": "一个项目"
+      },
+      "verb": {
+        "allow": "允许",
+        "ask": "需批准后才允许",
+        "deny": "被拒绝"
+      },
+      "globalRule": "全局规则",
+      "globalRuleHint": "适用于所有人，除非下面的异常覆盖它。",
+      "userExceptions": "每人例外",
+      "projectExceptions": "每个项目的例外情况",
+      "noExceptions": "没有例外。",
+      "pickMember": "选择成员",
+      "pickProject": "选择一个项目",
+      "pickProjectOptional": "任何项目（可选）",
+      "removeException": "移除异常",
+      "checkAccess": "检查访问权限",
+      "checkAccessHint": "查看允许特定人员使用什么。",
+      "checkDefault": "默认允许 - 不适用任何规则。",
+      "checkBySystem": "{verb} 按全局规则。",
+      "checkByUser": "{verb} 按 {name} 的规则。",
+      "checkByProject": "{verb} 根据项目 {name} 的规则。",
+      "history": "变更历史记录",
+      "noHistory": "尚未记录任何更改。",
+      "histSet": "对于 {scope} 设置为 {effect}",
+      "histClear": "删除了 {scope} 的 {effect} 规则",
+      "add": "添加",
+      "saveFailed": "无法保存该更改"
+    },
+    "authentication": {
+      "title": "认证",
+      "subtitle": "人们如何登录以及谁可以创建帐户",
+      "save": "保存更改",
+      "saved": "已保存",
+      "saveFailed": "无法保存，请再试一次。",
+      "copied": "已复制",
+      "copyRedirect": "复制重定向 URI",
+      "telegram": {
+        "title": "使用 Telegram 登录",
+        "desc": "让人们使用 Telegram 帐户一键登录。",
+        "active": "活跃",
+        "incomplete": "需要凭证",
+        "toggleAria": "切换 Telegram 登录",
+        "botFatherHint": "在 @BotFather 中打开您的机器人 → 机器人设置 → Web 登录。将下面的重定向 URI 添加到允许的 URL，然后在此处复制客户端 ID 和密钥。",
+        "clientId": "客户端 ID",
+        "clientSecret": "客户端密钥",
+        "secretStored": "•••••••（已存储，留空保留）",
+        "secretPlaceholder": "粘贴 BotFather 的秘密",
+        "redirectUri": "重定向URI",
+        "redirectHint": "将其粘贴到 BotFather → Web 登录 → 允许的 URL 中。"
+      },
+      "mode": {
+        "title": "谁可以注册",
+        "desc": "当有人首次通过电子邮件或 Telegram 创建帐户时会发生什么。",
+        "open": {
+          "label": "打开",
+          "desc": "任何人都可以登录并立即开始使用该应用程序"
+        },
+        "approval": {
+          "label": "经批准",
+          "desc": "任何人都可以登录，但管理员必须批准他们才能访问。"
+        },
+        "closed": {
+          "label": "关闭",
+          "desc": "只有现有帐户可以登录。不允许新注册。"
+        }
+      },
+      "email": {
+        "title": "电子邮件注册",
+        "desc": "允许使用电子邮件和密码创建帐户。关闭以将 Telegram 保留为唯一的登录方式。现有的电子邮件帐户将继续登录。",
+        "toggleAria": "允许电子邮件注册",
+        "deadEndWarning": "电子邮件注册已关闭，Telegram 登录未配置 - 新用户将根本无法注册。"
+      },
+      "pending": {
+        "moved": "在“用户”页面上批准或删除人员 →"
+      },
+      "feishu": {
+        "title": "飞书登录",
+        "desc": "允许成员使用飞书 / Lark 企业账号登录。",
+        "active": "已启用",
+        "incomplete": "缺少凭证",
+        "toggleAria": "开关飞书登录",
+        "hint": "在飞书开放平台创建企业自建应用，添加下方重定向 URL，然后将 App ID 与 App Secret 填到此处。需要权限：contact:user.base:readonly、contact:user.email:readonly。",
+        "clientId": "App ID",
+        "clientSecret": "App Secret",
+        "secretStored": "••••••••（已保存，留空表示不改）",
+        "secretPlaceholder": "粘贴 App Secret",
+        "redirectUri": "重定向 URL",
+        "redirectHint": "粘贴到飞书开放平台 → 安全设置 → 重定向 URL。"
+      }
+    },
+    "security": {
+      "title": "安全性",
+      "subtitle": "保护提供程序密钥、隔离代码执行并限制出站连接。",
+      "adminOnly": "只有管​​理员可以管理安全设置",
+      "encryptionKey": "加密密钥",
+      "encryptionKeyDesc": "保护存储在数据库中的 AI 提供商 API 密钥。",
+      "masterKey": {
+        "insecureTitle": "保护您的提供商密钥",
+        "insecureBody": "加密您的 AI 提供商密钥的密钥存储在数据库中。任何可以读取数据库的人都可以读取这些密钥。将此行复制到服务器的环境文件中，然后重新启动 邦信阳：",
+        "restartHint": "重启后此警告消失",
+        "secureLeftover": "Protected by an environment key.旧副本仍在数据库中。 Remove it to finish.",
+        "removeDbCopy": "删除数据库副本",
+        "removed": "数据库副本已删除",
+        "removeFailed": "无法删除数据库副本",
+        "secureClean": "提供者密钥受环​​境密钥保护"
+      },
+      "sandbox": "沙盒",
+      "sandboxDesc": "通过 Python、Node.js 和开发工具，让 AI 完全访问沙盒 Linux 环境。",
+      "enableSandbox": "启用沙箱",
+      "enableSandboxHint": "AI 可以在每个聊天的隔离容器中执行命令、读/写文件以及运行代码。",
+      "sandboxEnabled": "启用沙箱",
+      "sandboxDisabled": "沙盒已禁用",
+      "network": "网络",
+      "networkDesc": "控制提供者连接的限制程度。",
+      "blockPrivate": "阻止内部网络地址",
+      "blockPrivateHint": "防止提供商 URL（LiteLLM、Ollama）指向私有或环回地址。如果您在本地网络上自行托管网关，请关闭此功能。云元数据地址始终被阻止。",
+      "strictEnabled": "启用严格模式",
+      "strictDisabled": "严格模式已禁用",
+      "updateFailed": "更新失败",
+      "sandboxNet": "互联网接入",
+      "sandboxNetHint": "让沙盒代码和本地 (stdio) 连接器到达公共互联网。首次使用时自动安装的工具（例如 npx）需要这个。私有/内部范围和云元数据保持阻塞状态。",
+      "netEnabled": "已开启沙箱互联网。请再发一条消息，沙箱会按新设置重建。",
+      "netDisabled": "已关闭沙箱互联网。请再发一条消息，沙箱会按新设置重建。",
+      "sandboxNetBlocked": "在部署级别阻止 — 设置 SANDBOX_ALLOW_NETWORK=true 并重新启动沙箱控制器以启用此功能。",
+      "updated": "设置已更新",
+      "hostFolders": "服务器文件夹",
+      "hostFoldersHint": "允许管理员将服务器（运行邦信阳的机器）上的文件夹挂载到会话沙箱的 /folders/[name]，默认只读。默认关闭。",
+      "hostFoldersEnabled": "服务器文件夹打开 — 管理员可以附加主机文件夹。",
+      "hostFoldersDisabled": "服务器文件夹关闭",
+      "pcFolders": "个人文件夹",
+      "pcFoldersHint": "让用户从自己的计算机连接文件夹（通过浏览器同步到聊天工作区）。 Chrome 或 Edge 仅用于实时同步。",
+      "folder_off": "关闭",
+      "folder_admins": "仅限管理员",
+      "folder_everyone": "所有人",
+      "agent": "代理",
+      "agentDesc": "助手可以通过聊天自行改变多少。",
+      "autonomousMode": "自主模式",
+      "autonomousModeHint": "启用后，代理会应用设置更改并直接安装技能，而无需每次进行确认 - 它仍然会在安装运行第三方代码的连接器之前进行询问。关闭时，它会要求您确认每个有风险的更改。",
+      "autonomousEnabled": "自主模式开启——代理无需询问即可采取行动。",
+      "autonomousDisabled": "自主模式关闭 - 代理确认有风险的更改。"
+    },
+    "updates": {
+      "title": "更新",
+      "subtitle": "让 邦信阳 及时了解最新版本。",
+      "adminOnly": "只有管理员可以管理更新",
+      "running": "运行版本",
+      "devBuild": "开发构建",
+      "updateAvailable": "{version} 可用",
+      "checksOff": "检查关闭",
+      "checkFailed": "无法检查",
+      "upToDate": "最新",
+      "viewChangelog": "查看变更日志",
+      "howTo": "如何更新",
+      "howToHint": "在安装了 邦信阳 的主机上运行它——您的数据和设置将被保留。",
+      "copy": "复制",
+      "copied": "已复制",
+      "copyFailed": "无法复制",
+      "autoCheck": "自动检查更新",
+      "autoCheckHint": "定期向 GitHub 询问最新版本。关闭以禁止拨出电话。",
+      "checkEnabled": "更新检查",
+      "checkDisabled": "更新检查关闭",
+      "updateFailed": "无法保存更改"
+    },
+    "activity": {
+      "title": "活动",
+      "subtitle": "整个组织的管理和配置更改的记录。",
+      "adminOnly": "只有管理员可以查看活动",
+      "empty": "还什么都没发生",
+      "systemActor": "系统",
+      "today": "今天",
+      "yesterday": "昨天",
+      "loadMore": "加载更多",
+      "category": {
+        "all": "全部",
+        "people": "人",
+        "extensions": "扩展",
+        "settings": "设置",
+        "security": "安全性"
+      },
+      "role": {
+        "admin": "管理员",
+        "user": "用户",
+        "viewer": "只读"
+      },
+      "status": {
+        "active": "活跃",
+        "pending": "待定"
+      },
+      "mode": {
+        "shared_plus_own": "共享+自己的密钥",
+        "shared_only": "仅共享密钥",
+        "own_only": "仅限自己的钥匙"
+      },
+      "field": {
+        "keyMode": "提供商密钥",
+        "limits": "支出限额",
+        "tier": "等级"
+      },
+      "actions": {
+        "plugin": {
+          "install": "已安装的插件",
+          "uninstall": "删除了插件",
+          "update": "更新了插件",
+          "enable": "启用插件",
+          "disable": "禁用插件"
+        },
+        "connector": {
+          "add": "添加连接器",
+          "remove": "移除连接器",
+          "enable": "启用连接器",
+          "disable": "禁用连接器"
+        },
+        "skill": {
+          "add": "新增技能",
+          "remove": "删除了技能",
+          "enable": "启用技能",
+          "disable": "残疾技能"
+        },
+        "automation": {
+          "add": "增加自动化",
+          "remove": "删除了自动化",
+          "enable": "启用自动化",
+          "disable": "禁用自动化"
+        },
+        "folder": {
+          "add": "添加文件夹",
+          "remove": "已删除的文件夹"
+        },
+        "policy": {
+          "set": "更改了权限",
+          "clear": "重置权限"
+        },
+        "settings": {
+          "update": "更新设置",
+          "undo": "恢复更改"
+        },
+        "user": {
+          "role_change": "改变了角色",
+          "status_change": "更改了状态",
+          "remove": "已删除用户",
+          "suspend": "暂停访问",
+          "reactivate": "已恢复访问权限",
+          "sessions_revoke": "注销所有会话",
+          "tier_change": "更改了支出等级"
+        },
+        "auth_config": {
+          "update": "更新了登录设置"
+        },
+        "master_key": {
+          "view": "查看了主密钥",
+          "remove": "删除了主密钥"
+        },
+        "billing": {
+          "update": "更新帐单"
+        }
+      }
+    }
+  },
+  "setup": {
+    "back": "返回",
+    "brand": {
+      "wordmark": "BOSS & YOUNG",
+      "footnote": "设置大约需要一分钟",
+      "headline": "为整个团队打造的 AI 工作空间",
+      "sub": "Connect a provider once.然后每个人都可以在浏览器或 Telegram 中打开聊天并开始工作。",
+      "point1": "全公司共用一把钥匙",
+      "point2": "您选择可用的型号",
+      "point3": "浏览器和 Telegram 中的同一个助手"
+    },
+    "steps": {
+      "account": "账户",
+      "provider": "提供者",
+      "telegram": "Telegram"
+    },
+    "account": {
+      "title": "创建您的帐户",
+      "subtitle": "设置您的管理员帐户以开始使用",
+      "name": "名称",
+      "namePlaceholder": "你的名字",
+      "email": "电子邮件",
+      "emailPlaceholder": "admin@example.com",
+      "password": "密码",
+      "passwordPlaceholder": "最少 8 个字符",
+      "submit": "创建帐户",
+      "submitting": "创建中…",
+      "allFieldsRequired": "请填写所有字段",
+      "passwordTooShort": "密码必须至少为 8 个字符",
+      "error": "无法创建帐户。请再试一次。",
+      "claimTitle": "索取管理员帐户",
+      "claimSubtitle": "完成成为管理员",
+      "setupToken": "设置令牌",
+      "setupTokenPlaceholder": "粘贴安装中的令牌",
+      "setupTokenHint": "打开安装服务器时提供的设置链接，该链接会自行填充 - 否则粘贴该链接中的设置令牌，或询问设置服务器的人员。",
+      "setupTokenRequired": "输入设置令牌"
+    },
+    "provider": {
+      "title": "配置AI提供商",
+      "subtitle": "连接 AI 提供商来为您的助手提供支持",
+      "field": "提供者",
+      "recommended": "推荐",
+      "apiKey": "API密钥",
+      "showKey": "显示 API 密钥",
+      "hideKey": "隐藏 API 密钥",
+      "baseUrl": "基本网址",
+      "model": "型号",
+      "enterKeyFirst": "首先输入您的 API 密钥",
+      "pickModel": "选择型号",
+      "selectProvider": "选择提供商",
+      "keyRequired": "需要 API 密钥",
+      "baseUrlRequired": "基本 URL 为必填项",
+      "pickModelError": "请选择型号",
+      "testError": "无法验证连接。 Please check your details and try again.",
+      "saveError": "无法保存提供商设置。请再试一次。",
+      "verifyError": "Could not verify API key.请检查密钥并重试。",
+      "submit": "测试并保存",
+      "submitting": "测试..."
+    },
+    "telegram": {
+      "title": "Telegram 集成",
+      "subtitle": "可选择连接 Telegram 机器人",
+      "botToken": "机器人令牌",
+      "hint": "Get a token from @BotFather on Telegram.您可以跳过此步骤并稍后进行设置。",
+      "saveTokenError": "无法保存 Telegram 令牌",
+      "completeError": "无法完成设置",
+      "finishError": "无法完成设置。请再试一次。",
+      "skip": "跳过",
+      "submit": "保存并完成",
+      "submitting": "保存…"
+    }
+  },
+  "commandPalette": {
+    "search": "输入命令或搜索...",
+    "noResults": "没有找到结果",
+    "groups": {
+      "chat": "聊天",
+      "navigation": "导航",
+      "preferences": "偏好设置",
+      "shortcuts": "键盘快捷键"
+    },
+    "newChat": "新聊天",
+    "projects": "项目",
+    "settings": "设置",
+    "memory": "记忆",
+    "connections": "连接",
+    "integrations": "集成",
+    "toggleSidebar": "切换侧边栏",
+    "toggleTheme": "切换主题",
+    "commandPalette": "命令面板",
+    "searchChats": "搜索聊天记录"
+  },
+  "auth": {
+    "emailLabel": "电子邮件",
+    "passwordLabel": "密码",
+    "login": {
+      "title": "登录",
+      "description": "输入您的凭据以访问 邦信阳",
+      "submit": "登录",
+      "submitting": "正在登录...",
+      "invalidCredentials": "电子邮件或密码无效。请重试",
+      "noAccount": "没有帐户？",
+      "createOne": "创建一个"
+    },
+    "register": {
+      "title": "创建帐户",
+      "description": "注册并开始使用 邦信阳",
+      "nameLabel": "名称",
+      "namePlaceholder": "你的名字",
+      "nameRequired": "姓名为必填项",
+      "failed": "注册失败",
+      "submit": "创建帐户",
+      "submitting": "正在创建帐户...",
+      "haveAccount": "已经有帐户？",
+      "signIn": "登录",
+      "disabledTitle": "已禁用注册",
+      "disabledDescription": "管理员当前已禁用新帐户注册。",
+      "backToSignIn": "返回登录"
+    },
+    "orContinueWithEmail": "或继续使用电子邮件",
+    "telegram": {
+      "signIn": "使用 Telegram 登录",
+      "failed": "Telegram sign-in didn't go through.请再试一次。",
+      "registerHint": "使用您的 Telegram 帐户登录即可开始。"
+    },
+    "errors": {
+      "invalidCredentials": "电子邮件或密码无效",
+      "userExists": "使用此电子邮件的帐户已存在",
+      "passwordTooShort": "密码太短",
+      "passwordTooLong": "密码太长",
+      "invalidEmail": "输入有效的电子邮件地址",
+      "emailNotVerified": "登录前确认您的电子邮件"
+    },
+    "pending": {
+      "title": "快到了",
+      "description": "您的帐户已创建，正在等待批准",
+      "hint": "管理员需要先批准您的帐户，然后您才能开始。 You'll be able to sign in as soon as they do.",
+      "recheck": "再次检查",
+      "signOut": "退出"
+    },
+    "suspended": {
+      "title": "您的访问已被暂停",
+      "description": "管理员已暂停您对此工作区的访问",
+      "hint": "您的聊天记录和文件都会被保留。请联系您的管理员以恢复您的访问权限 - 一旦他们恢复，您就可以再次登录。",
+      "recheck": "再次检查",
+      "signOut": "退出"
+    },
+    "feishu": {
+      "signIn": "使用飞书登录",
+      "failed": "飞书登录失败，请重试。",
+      "accountNotLinked": "飞书邮箱与已有账号相同，但尚未关联。请先用邮箱登录一次，或请管理员协助关联后再试。",
+      "name": "飞书"
+    },
+    "otherSignIn": "其他登录方式"
+  },
+  "telegram": {
+    "start": "👋 **欢迎来到 邦信阳！**\n\n我是 B&Y AI助手 — 在 Telegram 中回答问题并处理文本、照片和文件。\n\n只需向我发送消息，我就会开始。/new 开启新对话。\n\n已有 邦信阳 账号？打开 邦信阳，在设置中连接 Telegram。",
+    "startLinked": "👋 **欢迎回来！** 您的帐户已连接。\n\n只需给我发消息，我就会出发。您可以发送文本、照片和文件，然后 /new 打开新的聊天。",
+    "openApp": "打开邦信阳",
+    "openInBrowser": "💬 在浏览器中打开",
+    "tooManyAttempts": "⏳ Too many attempts.请稍等一下，然后重试。",
+    "linkUsage": "在命令之后立即发送代码：`/link CODE`\n\n您可以在 邦信阳 的设置中找到您的连接代码。",
+    "invalidCode": "🤔 该代码无效或已过期。在 邦信阳 中生成一个新的，然后重试。",
+    "linked": "✅ **帐户已关联！**\n\n只需给我发消息，我就会出发。您可以发送文本、照片和文件。",
+    "newChat": "🆕 **新聊天**\n\n您之前的对话已保存。继续吧——我们重新开始。",
+    "notLinked": "为了让我回复，请先连接您的帐户。\n\n打开 邦信阳 并使用 Telegram 登录 - 这需要几秒钟的时间并自动链接。",
+    "tooFast": "⏳ 稍等一下 - 您发送消息的速度太快了。",
+    "budgetReached": "💳 已达到消费限额。 Please contact your admin to raise it.",
+    "fileTooBig": "📎 `{name}` 大于 20 MB，所以 Telegram 不允许我获取它。",
+    "unsupported": "🤔 现在我处理文本、照片和文件。 Send me one of those and I'll get going.",
+    "startError": "⚠️ 无法启动助手。请稍后重试。\n\n`{error}`",
+    "statusThinking": "思维…",
+    "reasoningLog": "💭 推理",
+    "noText": "（助理没有回信息）",
+    "genericError": "出了点问题。请再试一次。",
+    "technicalDetails": "技术细节",
+    "doneLog": "✅ {count, plural, one {# 个工具} other {# 个工具}} · {secs} 秒",
+    "pendingApproval": "⏳ **Account awaiting approval**\n\nAn administrator needs to approve your account.他们一说话你就可以聊天了。",
+    "registrationClosed": "注册目前已关闭。 Ask your administrator for access.",
+    "setupIncomplete": "邦信阳 尚未设置。请您的管理员完成初始设置，然后再次给我发消息。",
+    "accountNotActive": "您的帐户未激活。 If you think this is a mistake, ask your administrator.",
+    "capabilityNotice": "⚠️ 当前型号无法处理此附件（{modalities}）。使用 /model 选择一个支持它的模型。",
+    "modality": {
+      "audio": "音频",
+      "video": "视频",
+      "image": "图片",
+      "pdf": "PDF"
+    },
+    "modelPrompt": "🧠为此聊天选择一个模型：",
+    "modelSet": "✅ 现在在此聊天中使用 *{model}*。",
+    "modelEmpty": "No models available yet.在 邦信阳 设置中添加提供商。",
+    "modelStale": "该列表已过时 - 请再次发送 /model。",
+    "confirmApply": "✓ 确认",
+    "confirmCancel": "取消",
+    "confirmApplied": "✓ 完成。",
+    "confirmCancelled": "已取消。",
+    "confirmExpired": "此确认已过期 - 请再次询问。",
+    "confirmFailed": "无法应用 - 请重试。",
+    "confirmDetails": "详情"
+  },
+  "updateBanner": {
+    "message": "邦信阳 {version} 现已上市",
+    "action": "更新",
+    "dismiss": "解雇"
+  },
+  "manage": {
+    "folder": {
+      "addTitle": "附加服务器文件夹",
+      "addPcTitle": "从您的计算机连接文件夹",
+      "restartImpact": "The sandbox will restart to attach the folder;任何正在运行的命令都会停止。",
+      "pick": "选择一个文件夹",
+      "fromComputer": "从您的计算机",
+      "readOnly": "只读",
+      "readWrite": "读写"
+    },
+    "mcp": {
+      "probeOk": "可连通 — {n, plural, one {# 个工具可用} other {# 个工具可用}}",
+      "probeUnreachable": "刚才无法访问它 - 您仍然可以添加它并稍后修复。",
+      "probeNeedsAuth": "可以访问，但需要登录或令牌（在设置页面上设置）。",
+      "probeOauth": "添加后，您将通过浏览器登录。"
+    },
+    "skill": {
+      "addRepoTitle": "来自 {repo} 的安装技巧",
+      "repoEmpty": "在该存储库中找不到匹配的技能",
+      "repoUnreachable": "刚才无法读取存储库 - 您仍然可以安装；它会拉上确认。",
+      "repoInstalled": "已从 {repo} 安装 {n, plural, one {# 个技能} other {# 个技能}}",
+      "addPathTitle": "来自 {path} 的安装技巧",
+      "pathEmpty": "在该路径中找不到 SKILL.md。",
+      "pathUnreachable": "刚才无法读取该路径 - 您仍然可以安装；确认后将被读取。",
+      "pathInstalled": "已从 {path} 安装 {n, plural, one {# 个技能} other {# 个技能}}",
+      "editReady": "“{name}”被检出到 {path}/SKILL.md — 编辑那里的文件，然后使用技能添加 {path} 保存。"
+    },
+    "control": {
+      "org_agent_autonomy": {
+        "title": "智能体自主程度"
+      },
+      "user_locale": {
+        "title": "界面语言"
+      },
+      "user_timezone": {
+        "title": "时区"
+      },
+      "org_platform_name": {
+        "title": "产品名称"
+      },
+      "org_sandbox_network": {
+        "title": "沙箱网络"
+      },
+      "org_block_private_provider_urls": {
+        "title": "阻止私有提供商地址"
+      },
+      "org_share_admin_providers": {
+        "title": "共享管理员提供商"
+      },
+      "org_members_can_install_plugins": {
+        "title": "成员可安装插件"
+      },
+      "org_update_check_enabled": {
+        "title": "检查更新"
+      },
+      "org_model_min_context": {
+        "title": "模型最小上下文"
+      },
+      "org_max_context_tokens": {
+        "title": "最大上下文令牌"
+      },
+      "org_model_max_price": {
+        "title": "模型最高价格"
+      },
+      "org_host_folder_access": {
+        "title": "主机文件夹访问"
+      },
+      "org_pc_folder_access": {
+        "title": "电脑文件夹访问"
+      },
+      "org_automations_enabled": {
+        "title": "启用自动化"
+      },
+      "org_automations_per_user": {
+        "title": "每用户自动化数量"
+      },
+      "org_automations_min_interval_minutes": {
+        "title": "自动化最小间隔（分钟）"
+      },
+      "org_agent_sandbox": {
+        "title": "智能体沙箱"
+      },
+      "org_agent_connectors": {
+        "title": "智能体连接器"
+      },
+      "org_agent_skills": {
+        "title": "智能体技能"
+      },
+      "org_agent_manage": {
+        "title": "智能体管理"
+      },
+      "org_agent_memory": {
+        "title": "智能体记忆"
+      },
+      "org_agent_persona": {
+        "title": "智能体人设"
+      },
+      "org_agent_session_context": {
+        "title": "会话上下文"
+      }
+    },
+    "collection": {
+      "mcp": "连接器（MCP）",
+      "skill": "技能",
+      "automations": "自动化",
+      "folder": "文件夹"
+    },
+    "value": {
+      "bool": {
+        "true": "开",
+        "false": "关"
+      },
+      "org_sandbox_network": {
+        "none": "无网络",
+        "bridge": "可访问网络"
+      },
+      "org_agent_autonomy": {
+        "supervised": "需确认",
+        "autonomous": "自主"
+      },
+      "org_pc_folder_access": {
+        "off": "关闭",
+        "admins": "仅管理员",
+        "everyone": "所有人"
+      },
+      "user_locale": {
+        "en": "English",
+        "zh-CN": "简体中文"
+      },
+      "org_max_context_tokens": {
+        "0": "自动（按模型）"
+      },
+      "org_model_max_price": {
+        "0": "不限制"
+      }
+    }
+  },
+  "orgChangeBanner": {
+    "message": "{actor} 将“{title}”更改为“{value}”",
+    "dismiss": "解雇"
+  }
+}

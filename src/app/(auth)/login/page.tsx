@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell, AUTH_FIELD } from "@/components/auth/auth-shell";
 import { TelegramSignIn, AuthDivider } from "@/components/auth/telegram-sign-in";
+import { FeishuSignIn } from "@/components/auth/feishu-sign-in";
 import { authErrorKey } from "@/lib/auth/client-error";
 import { toast } from "sonner";
 
@@ -20,24 +21,49 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [telegramEnabled, setTelegramEnabled] = useState<boolean | null>(null);
+  const [feishuEnabled, setFeishuEnabled] = useState<boolean | null>(null);
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
+  // Keep OAuth failures visible even when the toast host mounts late / is missed.
+  const [ssoError, setSsoError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/registration-status")
       .then((r) => r.json())
       .then((d) => {
         setTelegramEnabled(!!d.telegram?.enabled);
+        setFeishuEnabled(!!d.feishu?.enabled);
         setRegistrationEnabled(d.enabled !== false);
       })
-      .catch(() => setTelegramEnabled(false));
-    // Surface a failed Telegram round-trip (the error callback redirects here).
+      .catch(() => {
+        setTelegramEnabled(false);
+        setFeishuEnabled(false);
+      });
+    // Surface a failed SSO round-trip (the error callback redirects here).
+    // better-auth may send error=feishu, or only a technical code
+    // (state_mismatch / unable_to_get_user_info / account_not_linked / …).
     const p = new URLSearchParams(window.location.search);
-    if (p.get("error") === "telegram") {
-      toast.error(t("telegram.failed"));
-      window.history.replaceState({}, "", "/login");
-    }
+    const errs = p.getAll("error").filter(Boolean);
+    const detail =
+      errs.find((e) => e !== "feishu" && e !== "telegram") ||
+      p.get("error_description") ||
+      null;
+    if (errs.length === 0) return;
+    const isTelegram = errs.includes("telegram") || errs[0] === "telegram";
+    const message = isTelegram
+      ? detail
+        ? `${t("telegram.failed")} (${detail})`
+        : t("telegram.failed")
+      : detail === "account_not_linked"
+        ? t("feishu.accountNotLinked")
+        : detail
+          ? `${t("feishu.failed")} (${detail})`
+          : errs.includes("feishu")
+            ? t("feishu.failed")
+            : `${t("feishu.failed")} (${errs.join(", ")})`;
+    setSsoError(message);
+    toast.error(message);
+    window.history.replaceState({}, "", "/login");
   }, [t]);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -72,10 +98,12 @@ export default function LoginPage() {
         ) : undefined
       }
     >
-      {telegramEnabled && (
-        <div className="mb-4 space-y-4">
-          <TelegramSignIn enabled={telegramEnabled} />
-          <AuthDivider label={t("orContinueWithEmail")} />
+      {ssoError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-3 text-sm text-destructive"
+        >
+          {ssoError}
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,6 +139,17 @@ export default function LoginPage() {
           {loading ? t("login.submitting") : t("login.submit")}
         </Button>
       </form>
+      {/* SSO is the alternative, not the headline: credentials first, then the
+          usual small brand marks underneath. */}
+      {(telegramEnabled || feishuEnabled) && (
+        <div className="mt-6 space-y-4">
+          <AuthDivider label={t("otherSignIn")} />
+          <div className="flex items-start justify-center gap-6">
+            <FeishuSignIn enabled={feishuEnabled} />
+            <TelegramSignIn enabled={telegramEnabled} />
+          </div>
+        </div>
+      )}
     </AuthShell>
   );
 }
