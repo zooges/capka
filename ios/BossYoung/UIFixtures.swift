@@ -36,10 +36,13 @@ enum CapkaFixtures {
     if ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_HOME"] == "1" { return }
     chat.chatId = "c_1"
     chat.title = "股权转让协议审查"
-    chat.messages =
-      ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_SCREEN"] == "chattail"
-      ? tailMessages
-      : messages
+    switch ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_SCREEN"] {
+    case "chattail": chat.messages = tailMessages
+    // Just the in-flight turn, so the activity rail and artifacts are on screen
+    // without having to scroll a long transcript.
+    case "live": chat.messages = tailMessages.filter { $0.id == "t_live" }
+    default: chat.messages = messages
+    }
   }
 
   /// Blocks the main transcript scrolls past: a table, fenced code, a compaction
@@ -158,9 +161,16 @@ enum CapkaFixtures {
             MessageStep(id: "l1", kind: .tool, state: .done, label: "读取了文件", icon: "doc.text", detail: nil),
             MessageStep(id: "l2", kind: .reasoning, state: .done, label: "推理", icon: "lightbulb", detail: "列名有空格，先规范化。"),
           ]),
-          .text("三列里有两列的表头带了空格，我先清理再统计。"),
+          .text("三列里有两列的表头带了空格，我先清理再统计。已经先存了一份：/workspace/输出/差旅报销-按部门.xlsx"),
           .activity([
-            MessageStep(id: "l3", kind: .tool, state: .running, label: "正在运行命令…", icon: "terminal", detail: nil),
+            MessageStep(
+              id: "l3",
+              kind: .tool,
+              state: .running,
+              label: "正在运行命令…",
+              icon: "terminal",
+              detail: "python3 clean.py --in 差旅报销.xlsx --group 部门"
+            ),
           ]),
         ]
       ),

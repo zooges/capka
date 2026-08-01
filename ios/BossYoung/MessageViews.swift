@@ -211,7 +211,7 @@ struct CapkaMessageRow: View {
         ErrorNotice(text: err)
       }
 
-      if !message.isStreaming, !artifactPaths.isEmpty {
+      if !artifactPaths.isEmpty {
         artifactRow
       }
 
@@ -233,7 +233,14 @@ struct CapkaMessageRow: View {
 
   /// Files this reply produced, surfaced as tiles so the user doesn't have to go
   /// hunting in the workspace browser for what the agent just made.
-  private var artifactPaths: [String] { WorkspaceLinks.paths(in: message.text) }
+  private var artifactPaths: [String] {
+    // Groups are the source of truth while a turn streams; `text` only catches
+    // up on the next rebuild, so read the prose out of the groups when present.
+    let prose = message.groups.isEmpty
+      ? message.text
+      : message.groups.compactMap { if case .text(let c) = $0 { return c } else { return nil } }.joined(separator: "\n")
+    return WorkspaceLinks.paths(in: prose)
+  }
 
   private var artifactRow: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -399,7 +406,7 @@ struct ActivityRail: View {
           Text(summary)
             .font(.system(size: 13))
             .foregroundStyle(Brand.muted)
-            .opacity(streaming ? 0.6 : 1)
+            .modifier(PulseWhile(active: streaming))
           Image(systemName: "chevron.right")
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(Brand.muted.opacity(0.4))
@@ -422,6 +429,9 @@ struct ActivityRail: View {
           ForEach(steps) { step in
             stepRow(step).capkaEntrance(.step)
           }
+          if !streaming, !steps.isEmpty {
+            doneRow.capkaEntrance(.step)
+          }
         }
         .padding(.top, 6)
         .overlay(alignment: .topLeading) {
@@ -433,6 +443,25 @@ struct ActivityRail: View {
         }
       }
     }
+  }
+
+  private var doneRow: some View {
+    HStack(spacing: 10) {
+      ZStack {
+        Circle()
+          .fill(Brand.cream)
+          .frame(width: 27, height: 27)
+          .overlay(Circle().stroke(Brand.line, lineWidth: 1))
+        Image(systemName: "checkmark")
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundStyle(Brand.muted)
+      }
+      Text("完成")
+        .font(.system(size: 13))
+        .foregroundStyle(Brand.muted)
+      Spacer()
+    }
+    .padding(.vertical, 4)
   }
 
   private func stepRow(_ step: MessageStep) -> some View {
@@ -461,9 +490,24 @@ struct ActivityRail: View {
           Text(step.label)
             .font(.system(size: 13))
             .italic(step.kind == .reasoning)
-            .foregroundStyle(step.state == .failed ? Brand.dangerText : Brand.ink.opacity(0.85))
+            .foregroundStyle(
+              step.state == .failed ? Brand.dangerText
+                : step.state == .running ? Brand.ink
+                : Brand.ink.opacity(0.7)
+            )
             .lineLimit(2)
             .multilineTextAlignment(.leading)
+            .layoutPriority(1)
+
+          // One line of the command / path, so a collapsed rail still says what
+          // the step is doing rather than only that it is doing something.
+          if step.kind == .tool, let detail = step.detail, !detail.isEmpty {
+            Text(detail.replacingOccurrences(of: "\n", with: " "))
+              .font(.system(size: 11, design: .monospaced))
+              .foregroundStyle(Brand.muted.opacity(0.85))
+              .lineLimit(1)
+              .truncationMode(.middle)
+          }
 
           if step.detail != nil || !step.imagePaths.isEmpty {
             Image(systemName: "chevron.right")
@@ -1457,5 +1501,28 @@ struct ApprovalCardView: View {
     guard !submitting else { return }
     submitting = true
     onDecide?(card, approved)
+  }
+}
+
+
+/// The web's `animate-pulse` on a live activity header. Honours reduced motion,
+/// where a steady dimmed state stands in for the throb.
+private struct PulseWhile: ViewModifier {
+  let active: Bool
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var dim = false
+
+  func body(content: Content) -> some View {
+    if !active {
+      content
+    } else if reduceMotion {
+      content.opacity(0.6)
+    } else {
+      content
+        .opacity(dim ? 0.45 : 0.95)
+        .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: dim)
+        .onAppear { dim = true }
+        .onDisappear { dim = false }
+    }
   }
 }
