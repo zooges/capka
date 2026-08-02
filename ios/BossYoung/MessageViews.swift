@@ -20,6 +20,8 @@ struct CapkaMessageRow: View {
   var onAnswerAsk: ((AskCardData, String, [String: [String]]) -> Void)?
   /// Approves or denies a suspended `manage` call.
   var onDecideApproval: ((ApprovalCardData, Bool) -> Void)?
+  /// Sends text on the user's behalf — how a tapped choice becomes the next turn.
+  var onSendText: ((String) -> Void)?
   /// Rewrite this user turn and re-run from it.
   var onEdit: ((String) -> Void)?
   /// Flip to the previous/next version of this message ("prev" / "next").
@@ -206,6 +208,8 @@ struct CapkaMessageRow: View {
             AskCardView(card: card, messageId: message.id, onAnswer: onAnswerAsk)
           case .approval(let card):
             ApprovalCardView(card: card, onDecide: onDecideApproval)
+          case .manage(let card):
+            ManageCardView(card: card, onChoose: onSendText)
           }
         }
       }
@@ -1580,5 +1584,105 @@ private struct StreamingCaret: View {
       )
       .onAppear { on = false }
       .accessibilityHidden(true)
+  }
+}
+
+
+/// A `manage` result the user still has to act on. The point of the choice
+/// variant is that the answer is a *message*: tapping an option sends it as the
+/// user's next turn, so the transcript records what they chose in their own
+/// voice rather than hiding it in a control's state.
+struct ManageCardView: View {
+  let card: ManageCardData
+  var onChoose: ((String) -> Void)?
+
+  @State private var sent: String?
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(spacing: 8) {
+        Image(systemName: icon)
+          .font(.system(size: 14))
+          .foregroundStyle(Brand.muted)
+        Text(card.title)
+          .font(.system(size: 14, weight: .medium))
+          .foregroundStyle(Brand.ink)
+          .fixedSize(horizontal: false, vertical: true)
+        Spacer(minLength: 0)
+      }
+
+      if let summary = card.summary, !summary.isEmpty, summary != card.title {
+        Text(summary)
+          .font(.system(size: 12))
+          .foregroundStyle(Brand.muted)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+
+      if card.render == "confirm", let before = card.before, let after = card.after {
+        HStack(spacing: 8) {
+          Text(before)
+            .font(.system(size: 12))
+            .foregroundStyle(Brand.muted)
+            .strikethrough()
+          Image(systemName: "arrow.right").font(.system(size: 10)).foregroundStyle(Brand.muted)
+          Text(after)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(Brand.ink)
+        }
+        if let impact = card.impact, !impact.isEmpty {
+          Text(impact)
+            .font(.system(size: 11))
+            .foregroundStyle(Brand.warningText)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }
+
+      if !card.options.isEmpty {
+        ScrollView(.horizontal, showsIndicators: false) {
+          HStack(spacing: 8) {
+            ForEach(card.options, id: \.value) { option in
+              let isCurrent = option.value == card.current
+              Button {
+                guard sent == nil, !isCurrent else { return }
+                sent = option.value
+                onChoose?("把「\(card.title)」设为\(option.label)")
+              } label: {
+                Text(option.label)
+                  .font(.system(size: 13, weight: isCurrent ? .semibold : .regular))
+                  .foregroundStyle(isCurrent ? Brand.ink : Brand.muted)
+                  .padding(.horizontal, 14)
+                  .padding(.vertical, 7)
+                  .background(isCurrent ? Brand.accent : Color.clear)
+                  .clipShape(Capsule())
+                  .overlay(Capsule().stroke(Brand.line, lineWidth: isCurrent ? 0 : 1))
+              }
+              .buttonStyle(CapkaPressStyle())
+              // Current value and an already-tapped option are both inert: the
+              // answer is a message, and sending it twice would ask twice.
+              .disabled(isCurrent || sent != nil)
+              .opacity(sent != nil && sent != option.value ? 0.4 : 1)
+            }
+          }
+          .padding(.vertical, 1)
+        }
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(12)
+    .background(Brand.accent.opacity(0.45))
+    .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: Brand.Radius.lg, style: .continuous)
+        .stroke(Brand.line, lineWidth: 1)
+    )
+    .capkaEntrance(.blurRise)
+  }
+
+  private var icon: String {
+    switch card.render {
+    case "choice": return "slider.horizontal.3"
+    case "action_required": return "arrow.up.forward.app"
+    default: return "checkmark.seal"
+    }
   }
 }

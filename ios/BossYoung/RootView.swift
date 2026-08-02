@@ -685,6 +685,10 @@ struct MainShellView: View {
               onDecideApproval: { card, approved in
                 Task { await chat.decideApproval(card, messageId: msg.id, approved: approved) }
               },
+              onSendText: { text in
+                chat.draft = text
+                Task { await chat.send() }
+              },
               onEdit: editHandler(chat: chat, message: msg),
               onSwitchBranch: branchHandler(chat: chat, message: msg)
             )

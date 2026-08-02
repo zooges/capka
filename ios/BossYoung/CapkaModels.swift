@@ -370,6 +370,30 @@ struct ApprovalCardData: Equatable {
 /// reasoning + tool calls into one activity rail and leaves answer text on its
 /// own, so prose and actions interleave as a single timeline; rendering all
 /// steps first and all text after (what this app used to do) reorders the reply.
+/// A `manage` result the user must still act on, rather than a log line about
+/// something the agent already did. Mirrors `isManageCard` on the web: only
+/// confirm / choice / action_required are promoted to a card; everything the
+/// agent merely *did* stays a quiet step on the activity rail.
+struct ManageCardData: Equatable {
+  /// confirm / choice / action_required
+  var render: String
+  var title: String
+  var summary: String?
+  /// choice: the options and which one is current.
+  var options: [(value: String, label: String)] = []
+  var current: String?
+  /// confirm: what would change.
+  var before: String?
+  var after: String?
+  var impact: String?
+
+  static func == (lhs: ManageCardData, rhs: ManageCardData) -> Bool {
+    lhs.render == rhs.render && lhs.title == rhs.title && lhs.summary == rhs.summary
+      && lhs.current == rhs.current && lhs.before == rhs.before && lhs.after == rhs.after
+      && lhs.impact == rhs.impact && lhs.options.map(\.value) == rhs.options.map(\.value)
+  }
+}
+
 /// Deliberately NOT `Identifiable`. Any id derived from the contents changes on
 /// every delta — a text group's on each character, an activity group's on each
 /// new step — which makes SwiftUI treat the updated group as a *different* view,
@@ -383,6 +407,7 @@ enum MessageGroup: Equatable {
   case activity([MessageStep])
   case ask(AskCardData)
   case approval(ApprovalCardData)
+  case manage(ManageCardData)
 }
 
 struct MessageAttachment: Identifiable, Equatable {
@@ -890,7 +915,7 @@ extension ChatUIMessage {
       switch group {
       case .text(let chunk): joined += chunk
       case .activity(let run): flatSteps.append(contentsOf: run)
-      case .ask, .approval: break
+      case .ask, .approval, .manage: break
       }
     }
     text = joined

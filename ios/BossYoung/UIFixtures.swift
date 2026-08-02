@@ -56,6 +56,21 @@ enum CapkaFixtures {
               MessageStep(id: "m_s2", kind: .reasoning, state: .done, label: "推理", icon: "lightbulb", detail: "第二步推理。"),
             ]),
             .text("第二段文字。"),
+            .manage(ManageCardData(
+              render: "choice",
+              title: "界面语言",
+              summary: "改完立即生效。",
+              options: [(value: "zh-CN", label: "简体中文"), (value: "en", label: "English")],
+              current: "zh-CN"
+            )),
+            .manage(ManageCardData(
+              render: "confirm",
+              title: "沙箱出站网络",
+              summary: "需要你确认后才会生效。",
+              before: "禁止出站",
+              after: "允许出站",
+              impact: "沙箱将能访问互联网。"
+            )),
             .activity([
               MessageStep(id: "m_s3", kind: .tool, state: .running, label: "正在运行命令…", icon: "terminal", detail: nil)
             ]),

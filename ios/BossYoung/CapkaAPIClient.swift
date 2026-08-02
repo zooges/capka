@@ -1847,6 +1847,30 @@ final class CapkaAPIClient: @unchecked Sendable {
     parseAskCard(part: ["toolCallId": toolCallId as Any, "state": "input-available"], form: form)
   }
 
+  /// Promote a `manage` result to a card only when the user must still act on
+  /// it — the same rule as the web's `isManageCard`. Anything else falls through
+  /// to the activity rail as a one-line step.
+  static func manageCard(from output: [String: Any]) -> ManageCardData? {
+    guard let render = output["render"] as? String else { return nil }
+    guard ["confirm", "choice", "action_required"].contains(render) else { return nil }
+    let data = output["data"] as? [String: Any]
+    let preview = output["preview"] as? [String: Any]
+    let options = (data?["options"] as? [[String: Any]] ?? []).compactMap { o -> (value: String, label: String)? in
+      guard let v = o["value"] as? String else { return nil }
+      return (v, (o["label"] as? String) ?? v)
+    }
+    return ManageCardData(
+      render: render,
+      title: (data?["title"] as? String) ?? (preview?["title"] as? String) ?? "需要你确认",
+      summary: output["summary"] as? String,
+      options: options,
+      current: data?["value"] as? String,
+      before: preview?["before"] as? String,
+      after: preview?["after"] as? String,
+      impact: preview?["impact"] as? String
+    )
+  }
+
   static func mapUIMessage(_ raw: [String: Any]) -> ChatUIMessage {
     let id = raw["id"] as? String ?? UUID().uuidString
     let role = raw["role"] as? String ?? "assistant"
@@ -1910,6 +1934,15 @@ final class CapkaAPIClient: @unchecked Sendable {
           if name == "ask", let form = p["askForm"] as? [String: Any] {
             flushActivity()
             groups.append(.ask(parseAskCard(part: p, form: form)))
+            continue
+          }
+          // A completed `manage` result the user must still act on is a card,
+          // not a rail row.
+          if name == "manage",
+             let output = p["output"] as? [String: Any],
+             let card = manageCard(from: output) {
+            flushActivity()
+            groups.append(.manage(card))
             continue
           }
           // A `manage` call staged for approval owns its whole lifecycle as a
