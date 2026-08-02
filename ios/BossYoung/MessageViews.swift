@@ -900,7 +900,7 @@ struct MarkdownBody: View {
     weight: Font.Weight = .regular,
     color: Color = Brand.ink
   ) -> Text {
-    Text(MarkdownInline.attributed(raw, size: size, color: color))
+    MarkdownInline.composed(raw, size: size, color: color)
       .font(.system(size: size, weight: weight))
       .foregroundColor(color)
   }
@@ -1150,18 +1150,59 @@ enum MarkdownInline {
         string[run.range].foregroundColor = color
       }
       if let link = run.link {
-        // A workspace file reads as a file, not as a web link: same accent, but
-        // medium weight and underlined so it looks like something to open.
         if link.scheme == WorkspaceLinks.scheme {
-          string[run.range].font = .system(size: size, weight: .medium)
-          string[run.range].underlineStyle = .single
+          // A produced file is a file, not a web link. Matches the web's inline
+          // chip: type icon, file name, tinted plate, medium weight, and
+          // explicitly NO underline — underlining says "navigate away", which is
+          // the opposite of what tapping this does.
+          string[run.range].font = .system(size: size * 0.92, weight: .medium)
+          string[run.range].underlineStyle = nil
+          string[run.range].foregroundColor = Brand.ink
+          string[run.range].backgroundColor = Brand.accent
         } else {
           string[run.range].underlineStyle = nil
+          string[run.range].foregroundColor = Brand.link
         }
-        string[run.range].foregroundColor = Brand.link
       }
     }
     return string
+  }
+
+  /// SwiftUI's `Text(AttributedString)` ignores `NSTextAttachment`, so the chip's
+  /// icon can't live in the attributed string. Compose the line out of `Text`
+  /// segments instead — concatenated `Text` still flows and wraps as one
+  /// paragraph, and `Text(Image(...))` puts the symbol inline.
+  static func composed(_ raw: String, size: CGFloat, color: Color) -> Text {
+    let string = attributed(raw, size: size, color: color)
+    var out = Text("")
+    var pending = AttributedString()
+
+    func flushPending() {
+      if !pending.characters.isEmpty {
+        out = out + Text(pending)
+        pending = AttributedString()
+      }
+    }
+
+    for run in string.runs {
+      let slice = AttributedString(string[run.range])
+      guard let link = run.link, link.scheme == WorkspaceLinks.scheme,
+            let rel = WorkspaceLinks.path(from: link)
+      else {
+        pending += slice
+        continue
+      }
+      flushPending()
+      let kind = FileKind.of((rel as NSString).lastPathComponent)
+      out = out
+        + Text(Image(systemName: kind.icon))
+          .font(.system(size: size * 0.78, weight: .medium))
+          .foregroundColor(kind.color)
+        + Text(" ").font(.system(size: size * 0.4))
+        + Text(slice)
+    }
+    flushPending()
+    return out
   }
 }
 
