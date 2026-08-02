@@ -41,6 +41,42 @@ enum CapkaFixtures {
     // Just the in-flight turn, so the activity rail and artifacts are on screen
     // without having to scroll a long transcript.
     case "live": chat.messages = tailMessages.filter { $0.id == "t_live" }
+    // Drives real deltas so streaming layout can be measured, not guessed at.
+    case "stream":
+      // Enough history to overflow the viewport, so the autoscroll is actually
+      // in play — that is the condition the jitter was reported under.
+      chat.messages = (0..<8).map { i in
+        ChatUIMessage(
+          id: "s_pad\(i)",
+          role: i % 2 == 0 ? "user" : "assistant",
+          text: "第 \(i + 1) 条历史消息，用来把可视区撑满，让流式追加时滚动真正参与进来。",
+          isStreaming: false
+        )
+      } + [
+        ChatUIMessage(
+          id: "s_1",
+          role: "assistant",
+          text: "",
+          isStreaming: true,
+          groups: [
+            .activity([
+              MessageStep(id: "s_t1", kind: .tool, state: .done, label: "读取了文件", icon: "doc.text", detail: nil)
+            ]),
+            .text("我读完了这份表格，"),
+          ]
+        )
+      ]
+      Task { @MainActor in
+        let words = ["我", "先", "看", "一", "下", "这", "份", "表", "格", "的", "结", "构", "，", "然", "后", "再", "统", "计", "。"]
+        for word in words {
+          try? await Task.sleep(nanoseconds: 250_000_000)
+          guard let last = chat.messages.indices.last else { return }
+          var msg = chat.messages[last]
+          msg.appendStreamedText(word)
+          chat.messages[last] = msg
+        }
+      }
+
     // Minimal repro: one text block, then one activity group.
     case "minimal":
       chat.messages = [

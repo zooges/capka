@@ -778,6 +778,9 @@ struct MarkdownBody: View {
   /// Draws a caret after the final block while text is still arriving.
   var showsCaret = false
 
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var caretOn = true
+
   private enum Block {
     case paragraph(String)
     case heading(String, Int)
@@ -795,25 +798,16 @@ struct MarkdownBody: View {
     VStack(alignment: .leading, spacing: 0) {
       let items = blocks
       ForEach(Array(items.enumerated()), id: \.offset) { index, block in
-        // Only the final block is ever wrapped, and never on a baseline: a
-        // `lastTextBaseline` HStack lifts a multi-line block by the distance
-        // between its first and last baseline, which pulled a wrapped paragraph
-        // up over whatever sat above it.
-        Group {
-          if showsCaret, index == items.count - 1 {
-            HStack(alignment: .bottom, spacing: 3) {
-              view(for: block)
-              StreamingCaret().padding(.bottom, 2)
-            }
-          } else {
-            view(for: block)
-          }
-        }
-        .padding(.top, topGap(at: index, in: items))
+        view(for: block, caret: showsCaret && index == items.count - 1)
+          .padding(.top, topGap(at: index, in: items))
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .tint(Brand.link)
+    .onReceive(Timer.publish(every: 0.55, on: .main, in: .common).autoconnect()) { _ in
+      guard showsCaret, !reduceMotion else { return }
+      caretOn.toggle()
+    }
   }
 
   private func topGap(at index: Int, in items: [Block]) -> CGFloat {
@@ -833,10 +827,10 @@ struct MarkdownBody: View {
   }
 
   @ViewBuilder
-  private func view(for block: Block) -> some View {
+  private func view(for block: Block, caret: Bool = false) -> some View {
     switch block {
     case .paragraph(let s):
-      inline(s, size: 16)
+      inline(s, size: 16, caret: caret)
         .lineSpacing(5)
         .textSelection(.enabled)
     case .heading(let s, let level):
@@ -898,9 +892,17 @@ struct MarkdownBody: View {
     _ raw: String,
     size: CGFloat,
     weight: Font.Weight = .regular,
-    color: Color = Brand.ink
+    color: Color = Brand.ink,
+    caret: Bool = false
   ) -> Text {
-    MarkdownInline.composed(raw, size: size, color: color)
+    var text = MarkdownInline.composed(raw, size: size, color: color)
+    if caret {
+      // Part of the paragraph, so it wraps with the text and always trails the
+      // final character. Blinking is a colour change on this one run, which is
+      // why the whole line is rebuilt on the tick rather than animated.
+      text = text + Text("▌").foregroundColor(caretOn ? Brand.ink.opacity(0.75) : .clear)
+    }
+    return text
       .font(.system(size: size, weight: weight))
       .foregroundColor(color)
   }
@@ -1603,28 +1605,6 @@ private struct PulseWhile: ViewModifier {
         .onAppear { dim = true }
         .onDisappear { dim = false }
     }
-  }
-}
-
-
-/// The blinking block that says text is still arriving. A pause between deltas
-/// otherwise reads as a finished answer — this is the cheapest possible signal
-/// that the turn is alive, and the one every chat client converges on.
-private struct StreamingCaret: View {
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var on = true
-
-  var body: some View {
-    RoundedRectangle(cornerRadius: 1, style: .continuous)
-      .fill(Brand.ink)
-      .frame(width: 7, height: 15)
-      .opacity(reduceMotion ? 0.7 : (on ? 1 : 0.12))
-      .animation(
-        reduceMotion ? nil : .easeInOut(duration: 0.55).repeatForever(autoreverses: true),
-        value: on
-      )
-      .onAppear { on = false }
-      .accessibilityHidden(true)
   }
 }
 
