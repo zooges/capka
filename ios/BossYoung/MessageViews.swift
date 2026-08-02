@@ -102,7 +102,7 @@ struct CapkaMessageRow: View {
     .padding(.vertical, 8)
     .contextMenu {
       Button {
-        UIPasteboard.general.string = message.text
+        Platform.copyToPasteboard(message.text)
       } label: {
         Label("复制", systemImage: "doc.on.doc")
       }
@@ -240,7 +240,7 @@ struct CapkaMessageRow: View {
     .padding(.vertical, 8)
     .contextMenu {
       Button {
-        UIPasteboard.general.string = message.text
+        Platform.copyToPasteboard(message.text)
       } label: {
         Label("复制", systemImage: "doc.on.doc")
       }
@@ -290,7 +290,7 @@ struct CapkaMessageRow: View {
   private var footer: some View {
     HStack(spacing: 0) {
       Button {
-        UIPasteboard.general.string = message.text
+        Platform.copyToPasteboard(message.text)
         copied = true
         Task {
           try? await Task.sleep(nanoseconds: 1_400_000_000)
@@ -1226,7 +1226,7 @@ private struct CodeBlock: View {
           .foregroundStyle(Brand.muted)
         Spacer(minLength: 8)
         Button {
-          UIPasteboard.general.string = code
+          Platform.copyToPasteboard(code)
           copied = true
           Task {
             try? await Task.sleep(nanoseconds: 1_400_000_000)

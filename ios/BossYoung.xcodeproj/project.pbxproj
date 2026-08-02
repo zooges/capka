@@ -42,6 +42,7 @@
 		A10000000000000000000039 /* OutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000039 /* OutboxStore.swift */; };
 		A1000000000000000000003A /* MarkupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003A /* MarkupView.swift */; };
 		A1000000000000000000003B /* ProjectContextViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003B /* ProjectContextViews.swift */; };
+		A1000000000000000000003C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003C /* Platform.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -95,6 +96,7 @@
 		A20000000000000000000039 /* OutboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutboxStore.swift; sourceTree = "<group>"; };
 		A2000000000000000000003A /* MarkupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupView.swift; sourceTree = "<group>"; };
 		A2000000000000000000003B /* ProjectContextViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectContextViews.swift; sourceTree = "<group>"; };
+		A2000000000000000000003C /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +128,7 @@
 				A20000000000000000000002 /* RootView.swift */,
 				A20000000000000000000003 /* AppConfig.swift */,
 				A20000000000000000000010 /* BrandTheme.swift */,
+				A2000000000000000000003C /* Platform.swift */,
 				A20000000000000000000011 /* CapkaModels.swift */,
 				A20000000000000000000012 /* CapkaAPIClient.swift */,
 				A20000000000000000000013 /* SSEClient.swift */,
@@ -243,6 +246,7 @@
 				A10000000000000000000002 /* RootView.swift in Sources */,
 				A10000000000000000000003 /* AppConfig.swift in Sources */,
 				A10000000000000000000010 /* BrandTheme.swift in Sources */,
+				A1000000000000000000003C /* Platform.swift in Sources */,
 				A10000000000000000000011 /* CapkaModels.swift in Sources */,
 				A10000000000000000000012 /* CapkaAPIClient.swift in Sources */,
 				A10000000000000000000013 /* SSEClient.swift in Sources */,

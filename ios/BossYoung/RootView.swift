@@ -522,7 +522,7 @@ struct MainShellView: View {
           .onTapGesture { dismissComposer() }
       }
       .frame(maxWidth: .infinity)
-      .frame(minHeight: UIScreen.main.bounds.height * 0.68)
+      .frame(minHeight: Platform.referenceHeight * 0.68)
       .animation(Motion.easeOut(0.32), value: composerFocused)
     }
     .scrollDismissesKeyboard(.interactively)

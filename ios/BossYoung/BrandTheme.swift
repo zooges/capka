@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// Appearance preference mirrored from the web account menu (system / light / dark).
 enum ThemePreference: String, CaseIterable, Identifiable {
@@ -40,25 +39,20 @@ enum ThemePreference: String, CaseIterable, Identifiable {
 /// hue 75). Light and dark variants track the web `.dark` block so SwiftUI’s
 /// `preferredColorScheme` / system appearance stay in sync with the account menu.
 enum Brand {
-  private static func hex(_ value: UInt32) -> UIColor {
-    UIColor(
-      red: CGFloat((value >> 16) & 0xFF) / 255,
-      green: CGFloat((value >> 8) & 0xFF) / 255,
-      blue: CGFloat(value & 0xFF) / 255,
-      alpha: 1
+  private static func hex(_ value: UInt32) -> PlatformColor {
+    Platform.color(
+      red: Double((value >> 16) & 0xFF) / 255,
+      green: Double((value >> 8) & 0xFF) / 255,
+      blue: Double(value & 0xFF) / 255
     )
   }
 
   private static func adaptive(light: UInt32, dark: UInt32) -> Color {
-    Color(uiColor: UIColor { traits in
-      traits.userInterfaceStyle == .dark ? hex(dark) : hex(light)
-    })
+    Platform.adaptiveColor(light: hex(light), dark: hex(dark))
   }
 
-  private static func adaptiveAlpha(light: UIColor, dark: UIColor) -> Color {
-    Color(uiColor: UIColor { traits in
-      traits.userInterfaceStyle == .dark ? dark : light
-    })
+  private static func adaptiveAlpha(light: PlatformColor, dark: PlatformColor) -> Color {
+    Platform.adaptiveColor(light: light, dark: dark)
   }
 
   /// `--background`
@@ -75,8 +69,8 @@ enum Brand {
   static let muted = adaptive(light: 0x5C5C64, dark: 0xA8A49C)
   /// `--border` / `--input`
   static let line = adaptiveAlpha(
-    light: UIColor(red: 0.878, green: 0.867, blue: 0.855, alpha: 1),
-    dark: UIColor(white: 1, alpha: 0.10)
+    light: Platform.color(red: 0.878, green: 0.867, blue: 0.855),
+    dark: Platform.color(red: 1, green: 1, blue: 1, alpha: 0.10)
   )
   /// `--primary` (filled actions)
   static let primary = adaptive(light: 0x1F1E24, dark: 0xF2F0ED)
@@ -94,7 +88,7 @@ enum Brand {
   static let warningText = adaptive(light: 0x825A27, dark: 0xE0C070)
 
   /// Brand mark accent (logo, hero glow) — never app chrome.
-  static let burgundy = Color(uiColor: hex(0x8B1E23))
+  static let burgundy = Color(hex(0x8B1E23))
 
   /// Product wordmark shown next to the mark in the sidebar (web `productName()`).
   static let productName = "BOSS & YOUNG"

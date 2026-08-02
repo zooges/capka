@@ -1,7 +1,12 @@
 import Foundation
-import UIKit
 import UserNotifications
 import AudioToolbox
+#if os(macOS)
+  import AppKit
+#endif
+#if os(iOS)
+  import UIKit
+#endif
 
 /// Haptics, a soft system sound, and a local notification when an assistant
 /// reply finishes. Also owns a short `beginBackgroundTask` so a turn started
@@ -14,8 +19,9 @@ import AudioToolbox
 /// running→terminal edge, and check again when the user returns.
 @MainActor
 enum CapkaFeedback {
-  private static let impact = UINotificationFeedbackGenerator()
-  private static var bgTask = UIBackgroundTaskIdentifier.invalid
+  #if os(iOS)
+    private static var bgTask = UIBackgroundTaskIdentifier.invalid
+  #endif
   private static var expectingReply = false
   private static var permissionRequested = false
   private static var pollTimer: Timer?
@@ -24,6 +30,16 @@ enum CapkaFeedback {
   /// Require two consecutive terminal reads so one flaky response can't fire early.
   private static var consecutiveIdlePolls = 0
   private static var pollInFlight = false
+
+  /// "Is the user looking at us right now" — the one thing both platforms need
+  /// from the app lifecycle, spelled very differently on each.
+  private static var isFrontmost: Bool {
+    #if os(macOS)
+      return NSApplication.shared.isActive
+    #else
+      return UIApplication.shared.applicationState == .active
+    #endif
+  }
 
   static func requestNotificationPermissionIfNeeded() {
     let center = UNUserNotificationCenter.current()
@@ -43,7 +59,7 @@ enum CapkaFeedback {
     watchedChatId = chatId
     consecutiveIdlePolls = 0
     requestNotificationPermissionIfNeeded()
-    if UIApplication.shared.applicationState != .active {
+    if !Self.isFrontmost {
       beginReplyBackgroundTask()
       startBackgroundPoll()
     }
@@ -58,8 +74,7 @@ enum CapkaFeedback {
     expectingReply = false
     watchedChatId = nil
     consecutiveIdlePolls = 0
-    impact.prepare()
-    impact.notificationOccurred(.success)
+    Platform.successFeedback()
     AudioServicesPlaySystemSound(1007) // soft "tweet" / mail-sent style
     notifyIfNotActive(preview: preview)
     stopBackgroundPoll()
@@ -97,7 +112,7 @@ enum CapkaFeedback {
 
   private static func notifyIfNotActive(preview: String?) {
     // inactive (Control Center / app switcher) + background both need a banner.
-    guard UIApplication.shared.applicationState != .active else { return }
+    guard !Self.isFrontmost else { return }
     let trimmed = preview?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let content = UNMutableNotificationContent()
     content.title = "回答已完成"
@@ -112,6 +127,7 @@ enum CapkaFeedback {
   }
 
   private static func beginReplyBackgroundTask() {
+    #if os(iOS)
     guard bgTask == .invalid else { return }
     bgTask = UIApplication.shared.beginBackgroundTask(withName: "capka.reply") {
       // Time budget exhausted (~30s). Do NOT pretend the reply finished — keep
@@ -121,12 +137,15 @@ enum CapkaFeedback {
         endReplyBackgroundTask()
       }
     }
+    #endif
   }
 
   private static func endReplyBackgroundTask() {
+    #if os(iOS)
     guard bgTask != .invalid else { return }
     UIApplication.shared.endBackgroundTask(bgTask)
     bgTask = .invalid
+    #endif
   }
 
   private static func startBackgroundPoll() {

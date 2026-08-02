@@ -407,7 +407,7 @@ private struct SettingsDetailView: View {
               .foregroundStyle(Brand.ink)
             Spacer()
             Button("复制") {
-              UIPasteboard.general.string = "/link \(code)"
+              Platform.copyToPasteboard("/link \(code)")
             }
             .font(.system(size: 13, weight: .medium))
           }
@@ -852,7 +852,7 @@ private struct SettingsDetailView: View {
               .lineLimit(2)
               .textSelection(.enabled)
             Spacer(minLength: 8)
-            Button("复制") { UIPasteboard.general.string = secret }
+            Button("复制") { Platform.copyToPasteboard(secret) }
               .font(.system(size: 12, weight: .medium))
           }
           .padding(10)
