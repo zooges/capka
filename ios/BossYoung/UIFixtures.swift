@@ -41,6 +41,27 @@ enum CapkaFixtures {
     // Just the in-flight turn, so the activity rail and artifacts are on screen
     // without having to scroll a long transcript.
     case "live": chat.messages = tailMessages.filter { $0.id == "t_live" }
+    // Minimal repro: one text block, then one activity group.
+    case "minimal":
+      chat.messages = [
+        ChatUIMessage(
+          id: "m_1",
+          role: "assistant",
+          text: "",
+          isStreaming: true,
+          groups: [
+            .text("第一段文字。"),
+            .activity([
+              MessageStep(id: "m_s1", kind: .tool, state: .done, label: "读取了文件", icon: "doc.text", detail: nil),
+              MessageStep(id: "m_s2", kind: .reasoning, state: .done, label: "推理", icon: "lightbulb", detail: "第二步推理。"),
+            ]),
+            .text("第二段文字。"),
+            .activity([
+              MessageStep(id: "m_s3", kind: .tool, state: .running, label: "正在运行命令…", icon: "terminal", detail: nil)
+            ]),
+          ]
+        )
+      ]
     default: chat.messages = messages
     }
   }

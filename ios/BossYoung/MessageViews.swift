@@ -188,12 +188,12 @@ struct CapkaMessageRow: View {
           MarkdownBody(text: message.text)
         }
       } else {
-        ForEach(message.groups) { group in
+        ForEach(Array(message.groups.enumerated()), id: \.offset) { _, group in
           switch group {
           case .text(let chunk):
             MarkdownBody(
               text: chunk,
-              showsCaret: message.isStreaming && group.id == message.groups.last?.id
+              showsCaret: message.isStreaming && isLastGroup(chunk)
             )
           case .activity(let steps):
             ActivityRail(
@@ -241,6 +241,13 @@ struct CapkaMessageRow: View {
         Label("复制", systemImage: "doc.on.doc")
       }
     }
+  }
+
+  /// The caret belongs on the trailing prose only — compared by position, since
+  /// two text groups can legitimately hold the same string.
+  private func isLastGroup(_ chunk: String) -> Bool {
+    if case .text(let last)? = message.groups.last { return last == chunk }
+    return false
   }
 
   /// Files this reply produced, surfaced as tiles so the user doesn't have to go
@@ -784,10 +791,18 @@ struct MarkdownBody: View {
     VStack(alignment: .leading, spacing: 0) {
       let items = blocks
       ForEach(Array(items.enumerated()), id: \.offset) { index, block in
-        HStack(alignment: .lastTextBaseline, spacing: 3) {
-          view(for: block)
+        // Only the final block is ever wrapped, and never on a baseline: a
+        // `lastTextBaseline` HStack lifts a multi-line block by the distance
+        // between its first and last baseline, which pulled a wrapped paragraph
+        // up over whatever sat above it.
+        Group {
           if showsCaret, index == items.count - 1 {
-            StreamingCaret()
+            HStack(alignment: .bottom, spacing: 3) {
+              view(for: block)
+              StreamingCaret().padding(.bottom, 2)
+            }
+          } else {
+            view(for: block)
           }
         }
         .padding(.top, topGap(at: index, in: items))

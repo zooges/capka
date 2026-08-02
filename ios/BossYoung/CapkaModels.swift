@@ -370,20 +370,19 @@ struct ApprovalCardData: Equatable {
 /// reasoning + tool calls into one activity rail and leaves answer text on its
 /// own, so prose and actions interleave as a single timeline; rendering all
 /// steps first and all text after (what this app used to do) reorders the reply.
-enum MessageGroup: Identifiable, Equatable {
+/// Deliberately NOT `Identifiable`. Any id derived from the contents changes on
+/// every delta — a text group's on each character, an activity group's on each
+/// new step — which makes SwiftUI treat the updated group as a *different* view,
+/// tear the old one down, insert a new one, and replay its entrance. That is
+/// what made a streaming reply jitter and the 思考 header hop.
+///
+/// A group's stable identity is its POSITION in the turn, so the transcript
+/// iterates with `enumerated()` and keys on the offset.
+enum MessageGroup: Equatable {
   case text(String)
   case activity([MessageStep])
   case ask(AskCardData)
   case approval(ApprovalCardData)
-
-  var id: String {
-    switch self {
-    case .text(let s): return "t-\(s.hashValue)"
-    case .activity(let steps): return "a-\(steps.map(\.id).joined(separator: ","))"
-    case .ask(let card): return "k-\(card.toolCallId ?? card.title ?? "ask")"
-    case .approval(let card): return "p-\(card.toolCallId)"
-    }
-  }
 }
 
 struct MessageAttachment: Identifiable, Equatable {
@@ -838,8 +837,24 @@ extension ChatUIMessage {
     setTrailingActivity(run)
   }
 
+  /// Replace the card for this tool call if it is already on screen, otherwise
+  /// append it. Matched on the tool-call id — the one thing about a card that
+  /// doesn't change as it moves from awaiting to answered.
   mutating func upsertCard(_ group: MessageGroup) {
-    if let i = groups.firstIndex(where: { $0.id == group.id }) {
+    let key: String? = {
+      switch group {
+      case .ask(let card): return card.toolCallId
+      case .approval(let card): return card.toolCallId
+      default: return nil
+      }
+    }()
+    if let key, let i = groups.firstIndex(where: { existing in
+      switch existing {
+      case .ask(let card): return card.toolCallId == key
+      case .approval(let card): return card.toolCallId == key
+      default: return false
+      }
+    }) {
       groups[i] = group
     } else {
       groups.append(group)
