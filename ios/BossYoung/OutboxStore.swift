@@ -35,9 +35,15 @@ final class OutboxStore {
   private let monitor = NWPathMonitor()
   private var flushing = false
 
+  /// Application Support is NOT created for you on iOS — writing into it before
+  /// it exists fails, and with `try?` swallowing that the queue would quietly
+  /// never survive a relaunch, which is the one thing it promises.
   private static var fileURL: URL {
-    FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-      .appendingPathComponent("capka-outbox.json")
+    let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    if !FileManager.default.fileExists(atPath: dir.path) {
+      try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    }
+    return dir.appendingPathComponent("capka-outbox.json")
   }
 
   init() {
@@ -90,6 +96,11 @@ final class OutboxStore {
 
   private func persist() {
     guard let data = try? JSONEncoder().encode(drafts) else { return }
-    try? data.write(to: Self.fileURL, options: .atomic)
+    do {
+      try data.write(to: Self.fileURL, options: .atomic)
+    } catch {
+      // In-memory queueing still works for this session; only durability is lost.
+      assertionFailure("outbox persist failed: \(error)")
+    }
   }
 }
