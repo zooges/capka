@@ -80,13 +80,12 @@ private struct SheetChrome<Content: View>: View {
         .scrollDismissesKeyboard(.interactively)
       }
       .navigationTitle(title)
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbarBackground(Brand.cream, for: .navigationBar)
+      .capkaNavigationChrome()
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .capkaLeading) {
           Button("取消", action: onCancel).foregroundStyle(Brand.muted)
         }
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .capkaTrailing) {
           Button(isSaving ? "保存中…" : saveLabel, action: onSave)
             .fontWeight(.semibold)
             .foregroundStyle(canSave && !isSaving ? Brand.primary : Brand.muted)

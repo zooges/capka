@@ -91,3 +91,45 @@ enum Platform {
     #endif
   }
 }
+
+extension View {
+  /// `navigationBarTitleDisplayMode` and `toolbarBackground(_:for: .navigationBar)`
+  /// are iOS-only — a Mac window titlebar is the system's to style, and trying to
+  /// tint it is neither possible nor wanted. One modifier so shared screens don't
+  /// each carry an `#if`.
+  func capkaNavigationChrome() -> some View {
+    #if os(iOS)
+      return self
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Brand.cream, for: .navigationBar)
+    #else
+      return self
+    #endif
+  }
+}
+
+/// Toolbar placements: `topBarLeading`/`topBarTrailing` don't exist on macOS.
+/// `cancellationAction`/`primaryAction` are semantic and correct on both, and on
+/// iOS they land in the same two spots.
+extension ToolbarItemPlacement {
+  static var capkaLeading: ToolbarItemPlacement { .cancellationAction }
+  static var capkaTrailing: ToolbarItemPlacement { .primaryAction }
+}
+
+#if os(macOS)
+  /// Soft-keyboard hints — autocapitalisation and the numeric/URL keypads — only
+  /// mean something on a device with a soft keyboard. A Mac has a hardware one,
+  /// so SwiftUI doesn't define these at all there.
+  ///
+  /// They are declared here as no-ops rather than fenced at each of the ~20 call
+  /// sites, so a text field in the shared settings forms reads identically in
+  /// both builds and the iOS behaviour is untouched.
+  enum PlatformAutocapitalization { case never, sentences, words, characters }
+
+  enum PlatformKeyboardType { case `default`, URL, emailAddress, numberPad, decimalPad }
+
+  extension View {
+    func textInputAutocapitalization(_ style: PlatformAutocapitalization?) -> some View { self }
+    func keyboardType(_ type: PlatformKeyboardType) -> some View { self }
+  }
+#endif

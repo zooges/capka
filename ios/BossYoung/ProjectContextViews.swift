@@ -71,13 +71,12 @@ struct ProjectContextSheet: View {
         }
       }
       .navigationTitle(current == nil ? "选择项目" : "项目")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbarBackground(Brand.cream, for: .navigationBar)
+      .capkaNavigationChrome()
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) {
+        ToolbarItem(placement: .capkaLeading) {
           Button("完成", action: onClose).foregroundStyle(Brand.primary)
         }
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .capkaTrailing) {
           Button { showCreate = true } label: { Image(systemName: "plus") }
             .foregroundStyle(Brand.primary)
         }

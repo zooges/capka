@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// One transcript row. User turns are right-aligned card bubbles; assistant
 /// turns are full-width plain prose with an activity rail — same as the web.

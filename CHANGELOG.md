@@ -8,6 +8,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Added
 
+- Native macOS client (`ios/BossYoungMac`, target `BossYoungMac`, macOS 14+) sharing the iOS core under the same bundle id: sidebar + transcript window, ⌘N/⌘, , Touch ID lock, project files. Feishu signs in via web OAuth (the SDK has no macOS slice). No server change.
 - iOS push notifications for finished turns (`APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`, `APNS_KEY_P8`). Unset leaves the previous behaviour; a migration adds `push_tokens`.
 - iOS app (`ios/`) is now a native SwiftUI client instead of the WKWebView shell: Feishu login, streaming chat with tool steps, chat rename/pin/archive/move, projects + workspace files, and settings (skills, connectors, automations, memory). Web-matched visuals; no server change. New iOS build.
 - `CAPKA_TAVILY_STEER` gates China open-web Tavily-first prompt steer (default on when `CAPKA_REGION=cn`). Set `CAPKA_TAVILY_STEER=0` or `CAPKA_WEB_SEARCH=open` on intranet hosts for open curl/Google/Bing without forcing Tavily. Passed through compose; recreate platform after changing.

@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// Settings landing screen. The web packs its nav into a horizontal tab strip on
 /// phones; here the rest of the app is already list-and-push (projects, archived
@@ -48,8 +47,7 @@ struct SettingsHomeView: View {
       }
     }
     .navigationTitle("设置")
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(Brand.cream, for: .navigationBar)
+    .capkaNavigationChrome()
     .navigationDestination(item: $deepLinkTab) { tab in
       SettingsDetailView(tab: tab, model: model)
     }
@@ -203,8 +201,7 @@ private struct SettingsDetailView: View {
       }
     }
     .navigationTitle(tab.title)
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(Brand.cream, for: .navigationBar)
+    .capkaNavigationChrome()
     .sheet(isPresented: $showAddProvider) {
       AddProviderSheet(model: model) { showAddProvider = false }
     }

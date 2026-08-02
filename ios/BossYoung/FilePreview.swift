@@ -1,6 +1,8 @@
-import QuickLook
 import SwiftUI
-import UIKit
+#if os(iOS)
+  import QuickLook
+  import UIKit
+#endif
 
 /// Downloads a workspace file and hands it to Quick Look. Everything the agent
 /// produces — docx, xlsx, pdf, images — opens in-app instead of forcing a detour
@@ -83,6 +85,8 @@ extension View {
     modifier(FilePreviewModifier(loader: loader))
   }
 }
+
+#if os(iOS)
 
 private struct FilePreviewModifier: ViewModifier {
   @Bindable var loader: FilePreviewLoader
@@ -204,3 +208,48 @@ private final class PreviewItem: NSObject, QLPreviewItem {
     super.init()
   }
 }
+
+#endif
+
+#if os(macOS)
+
+/// macOS has no Quick Look *sheet* — a file opens in whatever the Finder would
+/// use. The loader is unchanged; only the presentation differs, so every call
+/// site keeps the one `filePreview(_:)` vocabulary.
+private struct FilePreviewModifier: ViewModifier {
+  @Bindable var loader: FilePreviewLoader
+
+  func body(content: Content) -> some View {
+    content
+      .overlay {
+        if loader.isLoading {
+          ZStack {
+            Color.black.opacity(0.12).ignoresSafeArea()
+            VStack(spacing: 10) {
+              ProgressView().tint(Brand.primary)
+              Text("正在打开…")
+                .font(.system(size: 13))
+                .foregroundStyle(Brand.muted)
+            }
+            .padding(22)
+            .capkaCard(radius: Brand.Radius.lg)
+          }
+        }
+      }
+      .onChange(of: loader.ready) { _, target in
+        guard let target else { return }
+        Platform.openInDefaultApp(target.url)
+        loader.ready = nil
+      }
+      .alert("无法预览", isPresented: Binding(
+        get: { loader.error != nil },
+        set: { if !$0 { loader.error = nil } }
+      )) {
+        Button("好", role: .cancel) { loader.error = nil }
+      } message: {
+        Text(loader.error ?? "")
+      }
+  }
+}
+
+#endif

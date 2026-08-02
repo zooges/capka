@@ -43,6 +43,32 @@
 		A1000000000000000000003A /* MarkupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003A /* MarkupView.swift */; };
 		A1000000000000000000003B /* ProjectContextViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003B /* ProjectContextViews.swift */; };
 		A1000000000000000000003C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003C /* Platform.swift */; };
+		A1000000000000000000500 /* MacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000050 /* MacApp.swift */; };
+		A1000000000000000000510 /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000051 /* MacRootView.swift */; };
+		A1000000000000000000520 /* MacLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000052 /* MacLoginView.swift */; };
+		A1000000000000000000039 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AppConfig.swift */; };
+		A1000000000000000000109 /* BrandTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* BrandTheme.swift */; };
+		A1000000000000000000119 /* CapkaModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* CapkaModels.swift */; };
+		A1000000000000000000129 /* CapkaAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* CapkaAPIClient.swift */; };
+		A1000000000000000000139 /* SSEClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* SSEClient.swift */; };
+		A1000000000000000000149 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* SessionStore.swift */; };
+		A1000000000000000000179 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* ChatListViewModel.swift */; };
+		A1000000000000000000199 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000019 /* ChatViewModel.swift */; };
+		A10000000000000000001A9 /* Phase2ViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001A /* Phase2ViewModels.swift */; };
+		A10000000000000000001B9 /* Phase2Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* Phase2Views.swift */; };
+		A10000000000000000001D9 /* MessageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001D /* MessageViews.swift */; };
+		A10000000000000000001E9 /* UIFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001E /* UIFixtures.swift */; };
+		A10000000000000000001F9 /* FileKinds.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001F /* FileKinds.swift */; };
+		A1000000000000000000319 /* SettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000031 /* SettingsViews.swift */; };
+		A1000000000000000000339 /* FilePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000033 /* FilePreview.swift */; };
+		A1000000000000000000349 /* SettingsFormViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000034 /* SettingsFormViews.swift */; };
+		A1000000000000000000369 /* AppLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000036 /* AppLock.swift */; };
+		A1000000000000000000379 /* ProviderIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000037 /* ProviderIcons.swift */; };
+		A1000000000000000000399 /* OutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000039 /* OutboxStore.swift */; };
+		A10000000000000000003B9 /* ProjectContextViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003B /* ProjectContextViews.swift */; };
+		A10000000000000000003C9 /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003C /* Platform.swift */; };
+		A10000000000000000000A9 /* CapkaFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* CapkaFeedback.swift */; };
+		A10000000000000000000056 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -97,6 +123,12 @@
 		A2000000000000000000003A /* MarkupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupView.swift; sourceTree = "<group>"; };
 		A2000000000000000000003B /* ProjectContextViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectContextViews.swift; sourceTree = "<group>"; };
 		A2000000000000000000003C /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
+		A20000000000000000000050 /* MacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000051 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
+		A20000000000000000000052 /* MacLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLoginView.swift; sourceTree = "<group>"; };
+		A20000000000000000000053 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000054 /* BossYoungMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BossYoungMac.entitlements; sourceTree = "<group>"; };
+		A20000000000000000000055 /* 邦信阳.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "邦信阳.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +140,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A50000000000000000000022 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -115,6 +154,7 @@
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000002 /* BossYoung */,
+				A40000000000000000000005 /* BossYoungMac */,
 				A2000000000000000000000B /* LarkSSOSDK.xcframework */,
 				A2000000000000000000000D /* LarkSSO.bundle */,
 				A40000000000000000000003 /* Products */,
@@ -166,8 +206,21 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000007 /* BossYoung.app */,
+				A20000000000000000000055 /* 邦信阳.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000005 /* BossYoungMac */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000050 /* MacApp.swift */,
+				A20000000000000000000051 /* MacRootView.swift */,
+				A20000000000000000000052 /* MacLoginView.swift */,
+				A20000000000000000000053 /* Info.plist */,
+				A20000000000000000000054 /* BossYoungMac.entitlements */,
+			);
+			path = BossYoungMac;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -189,6 +242,23 @@
 			name = BossYoung;
 			productName = BossYoung;
 			productReference = A20000000000000000000007 /* BossYoung.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A50000000000000000000020 /* BossYoungMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000000020 /* Build configuration list for PBXNativeTarget "BossYoungMac" */;
+			buildPhases = (
+				A50000000000000000000021 /* Sources */,
+				A50000000000000000000022 /* Frameworks */,
+				A50000000000000000000023 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BossYoungMac;
+			productName = BossYoungMac;
+			productReference = A20000000000000000000055 /* 邦信阳.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -221,6 +291,7 @@
 			projectRoot = "";
 			targets = (
 				A50000000000000000000001 /* BossYoung */,
+				A50000000000000000000020 /* BossYoungMac */,
 			);
 		};
 /* End PBXProject section */
@@ -232,6 +303,14 @@
 			files = (
 				A10000000000000000000005 /* Assets.xcassets in Resources */,
 				A1000000000000000000000D /* LarkSSO.bundle in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A50000000000000000000023 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000056 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,6 +353,38 @@
 				A10000000000000000000032 /* MediaAttach.swift in Sources */,
 				A10000000000000000000009 /* FeishuNativeSSO.swift in Sources */,
 				A1000000000000000000000A /* CapkaFeedback.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A50000000000000000000021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000500 /* MacApp.swift in Sources */,
+				A1000000000000000000510 /* MacRootView.swift in Sources */,
+				A1000000000000000000520 /* MacLoginView.swift in Sources */,
+				A1000000000000000000039 /* AppConfig.swift in Sources */,
+				A1000000000000000000109 /* BrandTheme.swift in Sources */,
+				A1000000000000000000119 /* CapkaModels.swift in Sources */,
+				A1000000000000000000129 /* CapkaAPIClient.swift in Sources */,
+				A1000000000000000000139 /* SSEClient.swift in Sources */,
+				A1000000000000000000149 /* SessionStore.swift in Sources */,
+				A1000000000000000000179 /* ChatListViewModel.swift in Sources */,
+				A1000000000000000000199 /* ChatViewModel.swift in Sources */,
+				A10000000000000000001A9 /* Phase2ViewModels.swift in Sources */,
+				A10000000000000000001B9 /* Phase2Views.swift in Sources */,
+				A10000000000000000001D9 /* MessageViews.swift in Sources */,
+				A10000000000000000001E9 /* UIFixtures.swift in Sources */,
+				A10000000000000000001F9 /* FileKinds.swift in Sources */,
+				A1000000000000000000319 /* SettingsViews.swift in Sources */,
+				A1000000000000000000339 /* FilePreview.swift in Sources */,
+				A1000000000000000000349 /* SettingsFormViews.swift in Sources */,
+				A1000000000000000000369 /* AppLock.swift in Sources */,
+				A1000000000000000000379 /* ProviderIcons.swift in Sources */,
+				A1000000000000000000399 /* OutboxStore.swift in Sources */,
+				A10000000000000000003B9 /* ProjectContextViews.swift in Sources */,
+				A10000000000000000003C9 /* Platform.swift in Sources */,
+				A10000000000000000000A9 /* CapkaFeedback.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -372,6 +483,54 @@
 			};
 			name = Release;
 		};
+		A80000000000000000000020 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BossYoungMac/BossYoungMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 19;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoungMac/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka;
+				PRODUCT_NAME = "邦信阳";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A80000000000000000000021 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BossYoungMac/BossYoungMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 19;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoungMac/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka;
+				PRODUCT_NAME = "邦信阳";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -389,6 +548,15 @@
 			buildConfigurations = (
 				A80000000000000000000003 /* Debug */,
 				A80000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000000020 /* Build configuration list for PBXNativeTarget "BossYoungMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000020 /* Debug */,
+				A80000000000000000000021 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

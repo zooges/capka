@@ -85,6 +85,25 @@ final class CapkaAPIClient: @unchecked Sendable {
 
   // MARK: - Auth
 
+  /// Whether the instance has Feishu login configured — the Mac client only
+  /// offers the web OAuth path when it does.
+  func isFeishuLoginEnabled() async -> Bool {
+    var req = URLRequest(url: baseURL.appendingPathComponent("api/auth/registration-status"))
+    req.setValue("application/json", forHTTPHeaderField: "Accept")
+    guard let (data, _) = try? await send(req),
+          let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let feishu = root["feishu"] as? [String: Any]
+    else { return false }
+    return (feishu["enabled"] as? Bool) ?? false
+  }
+
+  /// The browser sign-in entry point, used where the native SDK isn't available.
+  func feishuWebSignInURL() -> URL? {
+    var comps = URLComponents(url: baseURL.appendingPathComponent("api/auth/oauth2/authorize/feishu"), resolvingAgainstBaseURL: false)
+    comps?.queryItems = [URLQueryItem(name: "callbackURL", value: "/chat")]
+    return comps?.url
+  }
+
   /// Public flag from `GET /api/auth/registration-status`.
   func isRegistrationEnabled() async -> Bool {
     var req = URLRequest(url: baseURL.appendingPathComponent("api/auth/registration-status"))
@@ -169,6 +188,10 @@ final class CapkaAPIClient: @unchecked Sendable {
     }
   }
 
+  /// Redeems the authorization code the Feishu **app** handed back. iOS only —
+  /// `LarkSSOSDK.xcframework` ships no macOS slice, so the Mac signs in through
+  /// the web OAuth round-trip in `MacLoginView` instead.
+  #if os(iOS)
   func exchangeFeishuCode(code: String, codeVerifier: String?) async throws {
     var req = URLRequest(url: FeishuNativeSSO.nativeExchangeURL())
     req.httpMethod = "POST"
@@ -196,6 +219,7 @@ final class CapkaAPIClient: @unchecked Sendable {
       throw CapkaAPIError.message("登录成功但未写入会话，请重试")
     }
   }
+  #endif
 
   func getSession() async throws -> CapkaUser? {
     let url = baseURL.appendingPathComponent("api/auth/get-session")

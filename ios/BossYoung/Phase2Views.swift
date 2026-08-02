@@ -76,8 +76,7 @@ struct ArchivedChatsView: View {
       }
     }
     .navigationTitle("存档的聊天记录")
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(Brand.cream, for: .navigationBar)
+    .capkaNavigationChrome()
     .task {
       list.bind(session: session)
       await list.refreshFiltered(archived: true)
@@ -205,10 +204,9 @@ struct ProjectsListView: View {
       }
     }
     .navigationTitle("项目")
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(Brand.cream, for: .navigationBar)
+    .capkaNavigationChrome()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .capkaTrailing) {
         Button { showCreate = true } label: {
           Label("新项目", systemImage: "plus")
         }
@@ -288,10 +286,9 @@ struct ProjectHubView: View {
       }
     }
     .navigationTitle(model.name.isEmpty ? project.name : model.name)
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(Brand.cream, for: .navigationBar)
+    .capkaNavigationChrome()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .capkaTrailing) {
         Button("新聊天") {
           Task {
             if let id = await model.newChat() {
@@ -602,8 +599,7 @@ struct WorkspaceFilesView: View {
       }
     }
     .navigationTitle(title)
-    .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(Brand.cream, for: .navigationBar)
+    .capkaNavigationChrome()
     .task { await model.load() }
     .refreshable { await model.load() }
     .fileImporter(

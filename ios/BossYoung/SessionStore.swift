@@ -113,6 +113,9 @@ final class SessionStore {
     startRealtime()
   }
 
+  /// The callback from the native Feishu app. iOS only — see
+  /// `CapkaAPIClient.exchangeFeishuCode`; the Mac uses web OAuth.
+  #if os(iOS)
   func handleFeishuResult(_ info: [AnyHashable: Any]?) async {
     if info?["cancelled"] as? Bool == true {
       isLoggingIn = false
@@ -146,6 +149,7 @@ final class SessionStore {
       user = nil
     }
   }
+  #endif
 
   func signOut() async {
     await sse.stop()

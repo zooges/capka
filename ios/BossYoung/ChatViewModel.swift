@@ -1,7 +1,9 @@
 import Foundation
 import Observation
-import UIKit
 import UniformTypeIdentifiers
+#if os(iOS)
+  import UIKit
+#endif
 
 @MainActor
 @Observable
@@ -438,6 +440,7 @@ final class ChatViewModel {
     }
   }
 
+#if os(iOS)
   /// A photo straight off the camera.
   func attach(capturedImage image: UIImage) async {
     await attachStaged { try MediaAttach.stage(image: image, basename: MediaAttach.timestampedName("照片")) }
@@ -449,6 +452,8 @@ final class ChatViewModel {
       try MediaAttach.stage(photoData: data, type: type, basename: MediaAttach.timestampedName("照片"))
     }
   }
+
+#endif
 
   private func attachStaged(_ stage: () throws -> URL) async {
     do {
