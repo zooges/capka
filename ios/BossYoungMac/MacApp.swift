@@ -33,9 +33,16 @@ struct BossYoungMacApp: App {
         }
       }
       .animation(Motion.easeOut(0.2), value: appLock.isLocked)
+      .capkaMacControlChrome()
       .capkaPreferredColorScheme(theme)
       .frame(minWidth: 820, minHeight: 560)
       .task {
+        #if DEBUG
+          if let directory = MacSnapshot.requestedDirectory {
+            MacSnapshot.run(into: directory, session: session)
+            return
+          }
+        #endif
         appLock.lockIfEnabled()
         await session.bootstrap()
       }
@@ -57,14 +64,42 @@ struct BossYoungMacApp: App {
         }
         .keyboardShortcut("n")
       }
+      // The web's ⌘K opens a command palette over the page; here the sidebar's
+      // search field is permanently on screen, so the shortcut goes straight to
+      // it. ⌘F, because on a Mac that is what "find in this list" is called.
+      CommandGroup(after: .toolbar) {
+        Button("搜索聊天记录") {
+          NotificationCenter.default.post(name: SidebarView.focusSearchNotification, object: nil)
+        }
+        .keyboardShortcut("f")
+      }
     }
 
     Settings {
       MacSettingsScene()
         .environment(session)
         .environment(appLock)
+        .capkaMacControlChrome()
         .capkaPreferredColorScheme(theme)
     }
+  }
+}
+
+extension View {
+  /// Strips AppKit's default control chrome from the whole window.
+  ///
+  /// Every button and field in this app draws its own surface — a pill, a card,
+  /// a tinted capsule — because that is what the web does. On iOS a bare
+  /// `Button`/`TextField` adds nothing on top of that, so the shared views
+  /// mostly don't name a style. On macOS the defaults are a bordered push
+  /// button and a bezelled text field, which show up as a grey slab behind each
+  /// row and a white box inside each field.
+  ///
+  /// Both styles come from the environment, so setting them once at the window
+  /// root fixes every shared screen at once; anything that genuinely wants a
+  /// system control still overrides it locally.
+  func capkaMacControlChrome() -> some View {
+    buttonStyle(.plain).textFieldStyle(.plain)
   }
 }
 

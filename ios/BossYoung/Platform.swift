@@ -133,3 +133,30 @@ extension ToolbarItemPlacement {
     func keyboardType(_ type: PlatformKeyboardType) -> some View { self }
   }
 #endif
+
+/// Autofill hints. Both platforms have `textContentType`, but macOS's
+/// `NSTextContentType` models credentials only — there is no `.name` or
+/// `.emailAddress` there. One enum so a form field declares its intent once.
+enum CapkaTextContent { case name, email, username, password, newPassword }
+
+extension View {
+  @ViewBuilder
+  func capkaTextContent(_ kind: CapkaTextContent) -> some View {
+    #if os(iOS)
+      switch kind {
+      case .name: textContentType(.name)
+      case .email: textContentType(.emailAddress)
+      case .username: textContentType(.username)
+      case .password: textContentType(.password)
+      case .newPassword: textContentType(.newPassword)
+      }
+    #else
+      switch kind {
+      case .name, .email: self
+      case .username: textContentType(.username)
+      case .password: textContentType(.password)
+      case .newPassword: textContentType(.newPassword)
+      }
+    #endif
+  }
+}

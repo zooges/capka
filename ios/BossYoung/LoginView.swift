@@ -1,5 +1,8 @@
 import SwiftUI
-import UIKit
+
+#if os(iOS)
+  import UIKit
+#endif
 
 /// Sign-in / register screen — vertically centered composition matching the web
 /// AuthShell: wordmark, Feishu (sign-in only), then email credentials. Register
@@ -161,7 +164,8 @@ struct LoginView: View {
   private var nameField: some View {
     authField(label: "名称", systemImage: "person", focused: focused == .name) {
       TextField("你的名字", text: $name)
-        .textContentType(.name)
+        .textFieldStyle(.plain)
+        .capkaTextContent(.name)
         .textInputAutocapitalization(.words)
         .focused($focused, equals: .name)
         .submitLabel(.next)
@@ -174,7 +178,8 @@ struct LoginView: View {
   private var emailField: some View {
     authField(label: "电子邮件", systemImage: "envelope", focused: focused == .email) {
       TextField("输入工作邮箱", text: $email)
-        .textContentType(isRegister ? .emailAddress : .username)
+        .textFieldStyle(.plain)
+        .capkaTextContent(isRegister ? .email : .username)
         .keyboardType(.emailAddress)
         .textInputAutocapitalization(.never)
         .autocorrectionDisabled()
@@ -211,7 +216,8 @@ struct LoginView: View {
             SecureField(isRegister ? "设置密码" : "输入密码", text: $password)
           }
         }
-        .textContentType(isRegister ? .newPassword : .password)
+        .textFieldStyle(.plain)
+        .capkaTextContent(isRegister ? .newPassword : .password)
         .focused($focused, equals: .password)
         .submitLabel(.go)
         .onSubmit { Task { await submitEmail() } }
@@ -375,17 +381,31 @@ struct LoginView: View {
 
   // MARK: - Actions
 
+  /// The phone hands off to the Feishu app; the Mac cannot — `LarkSSOSDK`
+  /// ships no macOS slice — so it runs the same web OAuth round-trip the browser
+  /// client uses, in a system auth sheet. Either way the button is the button.
   private func startFeishuLogin() {
     session.authError = nil
     activeMethod = .feishu
     session.isLoggingIn = true
-    guard let vc = topViewController() else {
-      session.isLoggingIn = false
-      activeMethod = nil
-      session.authError = "无法启动飞书登录"
-      return
-    }
-    FeishuNativeSSO.start(from: vc)
+    #if os(iOS)
+      guard let vc = topViewController() else {
+        session.isLoggingIn = false
+        activeMethod = nil
+        session.authError = "无法启动飞书登录"
+        return
+      }
+      FeishuNativeSSO.start(from: vc)
+    #else
+      FeishuWebSSO.start { ok in
+        session.isLoggingIn = false
+        activeMethod = nil
+        guard ok else { return }
+        // The round-trip set the session cookie in shared storage; picking the
+        // session up is the same call every other entry point makes.
+        Task { await session.bootstrap() }
+      }
+    #endif
   }
 
   private func submitEmail() async {
@@ -398,11 +418,13 @@ struct LoginView: View {
     }
   }
 
-  private func topViewController() -> UIViewController? {
-    let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-    let window = scenes.flatMap(\.windows).first { $0.isKeyWindow } ?? scenes.first?.windows.first
-    guard var top = window?.rootViewController else { return nil }
-    while let presented = top.presentedViewController { top = presented }
-    return top
-  }
+  #if os(iOS)
+    private func topViewController() -> UIViewController? {
+      let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+      let window = scenes.flatMap(\.windows).first { $0.isKeyWindow } ?? scenes.first?.windows.first
+      guard var top = window?.rootViewController else { return nil }
+      while let presented = top.presentedViewController { top = presented }
+      return top
+    }
+  #endif
 }

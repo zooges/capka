@@ -112,6 +112,12 @@ enum Motion {
     .timingCurve(0.16, 1, 0.3, 1, duration: duration)
   }
 
+  /// Renders every entrance already landed. Offscreen snapshot rendering has no
+  /// lifecycle to run them in, so without this every animated block captures at
+  /// opacity 0 and the image comes out blank.
+  static let entrancesDisabled =
+    ProcessInfo.processInfo.environment["CAPKA_DISABLE_ENTRANCES"] == "1"
+
   enum Entrance {
     /// `blur-rise` — hero / home content.
     case blurRise
@@ -150,7 +156,7 @@ private struct EntranceModifier: ViewModifier {
   private var scale: CGFloat { entrance == .blurRise ? 0.99 : 1 }
 
   func body(content: Content) -> some View {
-    if reduceMotion {
+    if reduceMotion || Motion.entrancesDisabled {
       content
     } else {
       content

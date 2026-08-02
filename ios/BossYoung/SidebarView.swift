@@ -3,6 +3,10 @@ import SwiftUI
 /// Drawer that mirrors the web `app-sidebar.tsx`: brand header, new chat,
 /// search, projects, pinned chats, date-grouped recents, account footer.
 struct SidebarView: View {
+  /// Posted by the Mac's ⌘F. The web's ⌘K opens a command palette; here the
+  /// search field is already on screen, so the shortcut just goes to it.
+  static let focusSearchNotification = Notification.Name("capka.sidebar.focusSearch")
+
   @Environment(SessionStore.self) private var session
   @AppStorage(ThemePreference.storageKey) private var themeRaw = ThemePreference.system.rawValue
 
@@ -72,6 +76,9 @@ struct SidebarView: View {
     }
     .background(Brand.sidebar)
     .animation(Motion.easeOut(0.22), value: showAccountMenu)
+    .onReceive(NotificationCenter.default.publisher(for: Self.focusSearchNotification)) { _ in
+      searchFocused = true
+    }
     // A raised keyboard and the bottom-anchored account card cannot coexist.
     .onChange(of: searchFocused) { _, focused in
       if focused, showAccountMenu {

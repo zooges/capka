@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00000000000000000000000B /* MacSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000A /* MacSnapshot.swift */; };
+		000000000000000000000009 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* SidebarView.swift */; };
+		000000000000000000000008 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* LoginView.swift */; };
+		000000000000000000000007 /* FeishuWebSSO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000002 /* FeishuWebSSO.swift */; };
+		000000000000000000000006 /* HomeStarters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000001 /* HomeStarters.swift */; };
+		000000000000000000000005 /* HomeStarters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000001 /* HomeStarters.swift */; };
+		000000000000000000000004 /* ModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000000 /* ModelPicker.swift */; };
+		000000000000000000000003 /* ModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000000 /* ModelPicker.swift */; };
 		A10000000000000000000031 /* SettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000031 /* SettingsViews.swift */; };
 		A10000000000000000000030 /* VoiceDictation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000030 /* VoiceDictation.swift */; };
 		A10000000000000000000001 /* BossYoungApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* BossYoungApp.swift */; };
@@ -45,7 +53,6 @@
 		A1000000000000000000003C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003C /* Platform.swift */; };
 		A1000000000000000000500 /* MacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000050 /* MacApp.swift */; };
 		A1000000000000000000510 /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000051 /* MacRootView.swift */; };
-		A1000000000000000000520 /* MacLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000052 /* MacLoginView.swift */; };
 		A1000000000000000000039 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AppConfig.swift */; };
 		A1000000000000000000109 /* BrandTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* BrandTheme.swift */; };
 		A1000000000000000000119 /* CapkaModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* CapkaModels.swift */; };
@@ -86,6 +93,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00000000000000000000000A /* MacSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSnapshot.swift; sourceTree = "<group>"; };
+		000000000000000000000002 /* FeishuWebSSO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeishuWebSSO.swift; sourceTree = "<group>"; };
+		000000000000000000000001 /* HomeStarters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStarters.swift; sourceTree = "<group>"; };
+		000000000000000000000000 /* ModelPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPicker.swift; sourceTree = "<group>"; };
 		A20000000000000000000031 /* SettingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViews.swift; sourceTree = "<group>"; };
 		A20000000000000000000030 /* VoiceDictation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceDictation.swift; sourceTree = "<group>"; };
 		A20000000000000000000001 /* BossYoungApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BossYoungApp.swift; sourceTree = "<group>"; };
@@ -125,7 +136,6 @@
 		A2000000000000000000003C /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 		A20000000000000000000050 /* MacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000051 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
-		A20000000000000000000052 /* MacLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLoginView.swift; sourceTree = "<group>"; };
 		A20000000000000000000053 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000054 /* BossYoungMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BossYoungMac.entitlements; sourceTree = "<group>"; };
 		A20000000000000000000055 /* 邦信阳.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "邦信阳.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,6 +174,8 @@
 		A40000000000000000000002 /* BossYoung */ = {
 			isa = PBXGroup;
 			children = (
+				000000000000000000000001 /* HomeStarters.swift */,
+				000000000000000000000000 /* ModelPicker.swift */,
 				A20000000000000000000001 /* BossYoungApp.swift */,
 				A20000000000000000000002 /* RootView.swift */,
 				A20000000000000000000003 /* AppConfig.swift */,
@@ -214,9 +226,10 @@
 		A40000000000000000000005 /* BossYoungMac */ = {
 			isa = PBXGroup;
 			children = (
+				00000000000000000000000A /* MacSnapshot.swift */,
+				000000000000000000000002 /* FeishuWebSSO.swift */,
 				A20000000000000000000050 /* MacApp.swift */,
 				A20000000000000000000051 /* MacRootView.swift */,
-				A20000000000000000000052 /* MacLoginView.swift */,
 				A20000000000000000000053 /* Info.plist */,
 				A20000000000000000000054 /* BossYoungMac.entitlements */,
 			);
@@ -321,6 +334,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				000000000000000000000005 /* HomeStarters.swift in Sources */,
+				000000000000000000000003 /* ModelPicker.swift in Sources */,
 				A10000000000000000000001 /* BossYoungApp.swift in Sources */,
 				A10000000000000000000002 /* RootView.swift in Sources */,
 				A10000000000000000000003 /* AppConfig.swift in Sources */,
@@ -360,9 +375,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00000000000000000000000B /* MacSnapshot.swift in Sources */,
+				000000000000000000000009 /* SidebarView.swift in Sources */,
+				000000000000000000000008 /* LoginView.swift in Sources */,
+				000000000000000000000007 /* FeishuWebSSO.swift in Sources */,
+				000000000000000000000006 /* HomeStarters.swift in Sources */,
+				000000000000000000000004 /* ModelPicker.swift in Sources */,
 				A1000000000000000000500 /* MacApp.swift in Sources */,
 				A1000000000000000000510 /* MacRootView.swift in Sources */,
-				A1000000000000000000520 /* MacLoginView.swift in Sources */,
 				A1000000000000000000039 /* AppConfig.swift in Sources */,
 				A1000000000000000000109 /* BrandTheme.swift in Sources */,
 				A1000000000000000000119 /* CapkaModels.swift in Sources */,
