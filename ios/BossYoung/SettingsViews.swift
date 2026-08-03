@@ -18,11 +18,6 @@ struct SettingsHomeView: View {
     model.visibleTabs.filter(\.isAdminOnly)
   }
 
-  /// MCP connector endpoints stay admin-only — members must not see URLs here.
-  private var visibleExtTabs: [SettingsViewModel.ExtTab] {
-    SettingsViewModel.ExtTab.allCases.filter { model.isAdmin || $0 != .connectors }
-  }
-
   var body: some View {
     ZStack {
       Brand.cream.ignoresSafeArea()
@@ -516,17 +511,12 @@ private struct SettingsDetailView: View {
     @Bindable var model = model
     return VStack(alignment: .leading, spacing: 14) {
       HStack(spacing: 6) {
-        ForEach(visibleExtTabs) { extTab in
+        ForEach(SettingsViewModel.ExtTab.allCases) { extTab in
           pill(label: extTab.rawValue, icon: nil, selected: model.extTab == extTab) {
             withAnimation(Motion.easeOut(0.18)) { model.extTab = extTab }
           }
         }
         Spacer(minLength: 0)
-      }
-      .onAppear {
-        if !model.isAdmin && model.extTab == .connectors {
-          model.extTab = .skills
-        }
       }
 
       switch model.extTab {
@@ -584,7 +574,8 @@ private struct SettingsDetailView: View {
               )) {
                 VStack(alignment: .leading, spacing: 2) {
                   Text(c.name).font(.system(size: 14)).foregroundStyle(Brand.ink)
-                  if let url = c.url, !url.isEmpty {
+                  // Endpoint URLs are admin-only — members still see name + toggle.
+                  if model.isAdmin, let url = c.url, !url.isEmpty {
                     Text(url).font(.system(size: 11)).foregroundStyle(Brand.muted).lineLimit(1)
                   }
                 }

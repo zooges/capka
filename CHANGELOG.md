@@ -63,7 +63,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Security
 
-- Settings → Connectors (MCP) is admin-only (web + iOS). `GET /api/mcp` redacts endpoint URLs for non-admins; the manage `mcp` list shows only "remote"/"local" for members. Recreate platform; new iOS build.
+- Settings → Connectors stays visible to every role, but MCP endpoint URLs are admin-only (web + iOS UI). `GET /api/mcp` redacts `url` for non-admins; the manage `mcp` list shows only "remote"/"local" for members. Recreate platform; new iOS build.
 
 ### Changed
 

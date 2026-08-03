@@ -559,7 +559,7 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
                     </Badge>
                   )}
                 </div>
-                {s.url && <p className="break-all text-xs text-muted-foreground">{s.url}</p>}
+                {isAdmin && s.url && <p className="break-all text-xs text-muted-foreground">{s.url}</p>}
                 {s.transport === "stdio" && <p className="truncate text-xs text-muted-foreground">{t("localRuns")}</p>}
                 {s.enabled && <HealthLine h={h} loading={healthLoading} t={t} />}
               </div>

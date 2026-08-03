@@ -87,8 +87,7 @@ export const mcpCollection: Collection = {
     "NEVER ask the user to paste API keys or tokens into chat — a connector needing a secret token is configured on the settings page, not here.",
   requiredRole: "user",
   auditNoun: "connector",
-  // Admins open the connectors tab; members land on Customize without MCP URLs.
-  settingsPath: "/settings/skills",
+  settingsPath: "/settings/skills?tab=connectors",
   // A connector runs third-party code in the sandbox, so adding one is confirmed
   // even in autonomous mode — the one checkpoint prompt-injection can't bypass.
   alwaysConfirm: true,

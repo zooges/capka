@@ -29,21 +29,17 @@ export default function CustomizePage() {
   // view didn't, which is exactly how that button looked broken.
   const tabParam = useSearchParams().get("tab");
   useEffect(() => {
-    if (tabParam === "connectors") {
-      // Connectors tab is admin-only — never open the MCP URL list for members.
-      setTab(isAdmin ? "connectors" : "library");
-    } else if (tabParam === "installed" || tabParam === "plugins") setTab("plugins");
+    if (tabParam === "connectors") setTab("connectors");
+    else if (tabParam === "installed" || tabParam === "plugins") setTab("plugins");
     else if (tabParam === "marketplace") {
       setTab("plugins");
       setPluginsView("browse");
     }
-  }, [tabParam, isAdmin]);
+  }, [tabParam]);
 
   const tabs: { key: Tab; label: string; icon: typeof Library; adminOnly?: boolean }[] = [
     { key: "library", label: t("tab.library"), icon: Library },
-    // Connectors (MCP URLs / commands) are admin-only — regular users must not
-    // see endpoint links in Settings. Agents still use org connectors at runtime.
-    { key: "connectors", label: t("tab.connectors"), icon: Plug, adminOnly: true },
+    { key: "connectors", label: t("tab.connectors"), icon: Plug },
     // Plugins is visible to everyone (read-only + per-user OAuth sign-in); only
     // admins get the management actions + the Browse/marketplace view inside it.
     { key: "plugins", label: t("tab.installed"), icon: Package },

@@ -10,8 +10,8 @@ import { and, eq } from "drizzle-orm";
 export const GET = apiHandler(async () => {
   const { userId, role } = await requireSession();
   const servers = await listServers(userId, null);
-  // Non-admins must not receive MCP endpoint URLs (or stdio commands) — Settings
-  // hides the connectors tab for them; this keeps the API from leaking the same.
+  // Members can list connectors (enable/mute/OAuth) but must not receive endpoint
+  // URLs — only admins see those in Settings.
   if (role === "admin") {
     return Response.json({ servers });
   }
