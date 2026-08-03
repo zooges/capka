@@ -15,10 +15,10 @@ const COPY = {
     message: "The app ran into an unexpected problem. Please reload the page.",
     retry: "Reload",
   },
-  uk: {
-    title: "Щось пішло не так",
-    message: "Застосунок зіткнувся з неочікуваною помилкою. Перезавантажте сторінку.",
-    retry: "Перезавантажити",
+  zh: {
+    title: "出了点问题",
+    message: "应用遇到了意外错误，请重新加载页面。",
+    retry: "重新加载",
   },
 } as const;
 
@@ -35,9 +35,9 @@ export default function GlobalError({
     console.error(error);
   }, [error]);
 
-  const isUk =
-    typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("uk");
-  const lang = isUk ? "uk" : "en";
+  const isZh =
+    typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("zh");
+  const lang = isZh ? "zh" : "en";
   const t = COPY[lang];
   const retry = unstable_retry ?? reset ?? (() => window.location.reload());
 

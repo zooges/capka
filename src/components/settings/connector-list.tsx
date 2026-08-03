@@ -139,6 +139,9 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
   const methodTouched = useRef(false);
   // Admin only, remote connectors: shared (system scope) vs private (user scope).
   const [shared, setShared] = useState(true);
+  const [tokenEditId, setTokenEditId] = useState<string | null>(null);
+  const [tokenEditValue, setTokenEditValue] = useState("");
+  const [tokenSaving, setTokenSaving] = useState(false);
 
   const loadHealth = useCallback(async () => {
     setHealthLoading(true);
@@ -154,7 +157,14 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
       if (res.ok) {
         const list: Server[] = (await res.json()).servers ?? [];
         setServers(list);
-        if (list.some((s) => s.enabled)) loadHealth();
+        // Defer health probes so the connector list paints first (probes can take
+        // several seconds and were making the settings tab feel stuck).
+        if (list.some((s) => s.enabled)) {
+          const defer = typeof requestIdleCallback === "function"
+            ? (fn: () => void) => requestIdleCallback(() => fn(), { timeout: 1500 })
+            : (fn: () => void) => setTimeout(fn, 200);
+          defer(() => { void loadHealth(); });
+        }
       }
     } finally { setLoading(false); }
   }, [loadHealth]);
@@ -191,6 +201,8 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
         const data: Health & { method?: AuthMethod; serverName?: string } = await res.json();
         setTestResult({ status: data.status, toolCount: data.toolCount, detail: data.detail });
         if (data.method && !methodTouched.current) setMethod(data.method);
+        // Probe without credentials got 401 → nudge toward token auth.
+        if (data.status === "unauthorized" && !methodTouched.current) setMethod("token");
         if (!nameTouched.current) {
           const suggested = data.serverName?.trim() || nameFromHost(url);
           if (suggested) { setName(suggested); setNameError(false); }
@@ -322,6 +334,24 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
     else toast.error(t("signOutFailed"));
   };
 
+  const saveToken = async (srv: Server) => {
+    if (!tokenEditValue.trim()) return;
+    setTokenSaving(true);
+    try {
+      const res = await fetch(endpointFor(srv), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: srv.id, headers: { Authorization: `Bearer ${tokenEditValue.trim()}` } }),
+      });
+      if (res.ok) {
+        toast.success(t("tokenUpdated"));
+        setTokenEditId(null);
+        setTokenEditValue("");
+        loadHealth();
+      } else toast.error(t("tokenUpdateFailed"));
+    } finally { setTokenSaving(false); }
+  };
+
   const scopeLabel: Record<Server["scope"], string> = { system: t("scope.system"), user: t("scope.user"), project: t("scope.project") };
 
   // The name field — shown upfront for local connectors, but for remote ones only
@@ -344,10 +374,10 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
       {chrome && (
         <>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-base font-medium">{t("title")}</h2>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
@@ -360,10 +390,10 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
       </div>
 
       {showForm && (
-        <div className="space-y-3 rounded-md border p-4">
+        <div className="min-w-0 space-y-3 rounded-md border p-3 sm:p-4">
           {/* Remote (URL) vs Local (sandbox command) — local is admin-only. */}
           {isAdmin && (
-            <div className="inline-flex rounded-md border bg-muted/40 p-0.5 text-sm">
+            <div className="inline-flex max-w-full flex-wrap rounded-md border bg-muted/40 p-0.5 text-sm">
               {(["remote", "local"] as const).map((k) => (
                 <button
                   key={k}
@@ -411,7 +441,7 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
               {/* Auth method — auto-detected from the URL, user can override. */}
               <div className="space-y-2 pt-1">
                 <label className="block text-xs text-muted-foreground">{t("method.label")}</label>
-                <div className="inline-flex rounded-md border bg-muted/40 p-0.5 text-sm">
+                <div className="flex max-w-full flex-wrap rounded-md border bg-muted/40 p-0.5 text-sm">
                   {(["none", "token", "oauth"] as const).map((m) => (
                     <button
                       key={m}
@@ -434,9 +464,16 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
 
               {method === "token" && (
                 <div className="space-y-1">
-                  <Input placeholder={t("tokenPlaceholder")} value={token} onChange={(e) => { setToken(e.target.value); setTestResult(null); }} type="password" />
+                  <Input placeholder={t("tokenPlaceholder")} value={token} onChange={(e) => { setToken(e.target.value); setTestResult(null); }} type="password" autoComplete="off" />
                   <p className="text-xs text-muted-foreground">{t("tokenHint")}</p>
+                  {testResult?.status === "unauthorized" && (
+                    <p className="text-xs text-warning-text">{t("authRequiredHint")}</p>
+                  )}
                 </div>
+              )}
+
+              {method === "none" && testResult?.status === "unauthorized" && (
+                <p className="text-xs text-warning-text">{t("authRequiredHint")}</p>
               )}
 
               {method === "oauth" && (
@@ -480,7 +517,7 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={add} disabled={saving || !canSubmit}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{!isLocal && method === "oauth" ? t("saveAndSignIn") : t("save")}</Button>
             {!isLocal && method === "token" && (
               <Button variant="outline" size="sm" onClick={test} disabled={testing || !looksLikeUrl(url)}>{testing && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{t("test")}</Button>
@@ -500,15 +537,19 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
       {!loading && servers.map((s) => {
         const h = health[s.id];
         const isOauth = s.authKind === "oauth";
+        const showTokenEdit = tokenEditId === s.id;
+        const canEditToken = canManage(s) && s.transport !== "stdio" && !isOauth;
         return (
-          <div key={s.id} className="flex items-start justify-between gap-4 rounded-md border p-3">
-            <div className="flex flex-1 items-start gap-3">
+          <div key={s.id} className="min-w-0 space-y-2 rounded-md border p-3">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
               <ConnectorIcon />
               <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{s.name}</span>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="min-w-0 break-words text-sm font-medium">{s.name}</span>
                   <Badge variant="secondary">{scopeLabel[s.scope]}</Badge>
                   {s.transport === "stdio" && <Badge variant="outline">{t("localBadge")}</Badge>}
+                  {s.transport === "sse" && <Badge variant="outline">{t("sseBadge")}</Badge>}
                   {/* At-a-glance "this connector is broken" flag — the detail still
                       streams in the HealthLine below. Only for genuine failures
                       (can't reach / token rejected); needs_login has its own Sign in. */}
@@ -518,17 +559,27 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
                     </Badge>
                   )}
                 </div>
-                {s.url && <p className="truncate text-xs text-muted-foreground">{s.url}</p>}
+                {s.url && <p className="break-all text-xs text-muted-foreground">{s.url}</p>}
                 {s.transport === "stdio" && <p className="truncate text-xs text-muted-foreground">{t("localRuns")}</p>}
                 {s.enabled && <HealthLine h={h} loading={healthLoading} t={t} />}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1 sm:shrink-0 sm:justify-end">
               {isOauth && s.enabled && (h?.status === "needs_login" || h?.status === "unauthorized") && (
                 <Button size="xs" onClick={() => signIn(s.id)}><LogIn className="mr-1 h-3.5 w-3.5" />{t("signIn")}</Button>
               )}
               {isOauth && s.enabled && h?.status === "ok" && (
                 <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => signOut(s.id)}>{t("signOut")}</Button>
+              )}
+              {canEditToken && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="text-muted-foreground"
+                  onClick={() => { setTokenEditId(showTokenEdit ? null : s.id); setTokenEditValue(""); }}
+                >
+                  {t("updateToken")}
+                </Button>
               )}
               <Switch checked={s.enabled} onCheckedChange={(v) => toggle(s, v)} aria-label={t("toggleAria", { name: s.name })} />
               {canManage(s) && (
@@ -537,6 +588,26 @@ export default function ConnectorList({ chrome = true }: { chrome?: boolean }) {
                 </Button>
               )}
             </div>
+            </div>
+            {showTokenEdit && (
+              <div className="space-y-2 rounded-md bg-muted/40 p-3">
+                <p className="text-xs text-muted-foreground">{t("updateTokenHint")}</p>
+                <Input
+                  type="password"
+                  autoComplete="off"
+                  placeholder={t("tokenPlaceholder")}
+                  value={tokenEditValue}
+                  onChange={(e) => setTokenEditValue(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => saveToken(s)} disabled={tokenSaving || !tokenEditValue.trim()}>
+                    {tokenSaving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+                    {t("save")}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setTokenEditId(null); setTokenEditValue(""); }}>{t("cancel")}</Button>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

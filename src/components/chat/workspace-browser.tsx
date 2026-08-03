@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import {
-  ArrowDownUp, ChevronLeft, Cloud, Check, Download, Folder, LayoutGrid, List, Loader2, RefreshCw, Upload, X,
+  ArrowDownUp, ChevronLeft, Cloud, Check, Download, Folder, FolderUp, LayoutGrid, List, Loader2, RefreshCw, Upload, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuRadioGroup, DropdownMenuRadioItem,
-  DropdownMenuCheckboxItem, DropdownMenuSeparator,
+  DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { formatSize } from "@/lib/constants";
+import { FOLDER_MAX_FILES, FOLDER_MAX_TOTAL_MB } from "@/lib/folder-bridge/filter";
 import { extOf, fileCategory, fileKind, previewKind, type FileCategory } from "@/lib/file-kinds";
 import { cn } from "@/lib/utils";
 import { type WorkspaceTarget, targetQuery } from "@/lib/workspace-target";
@@ -96,6 +97,7 @@ export function WorkspaceBrowser({
   className?: string;
 }) {
   const t = useTranslations("chat.workspace");
+  const tf = useTranslations("chat.folders");
   const tc = useTranslations("common");
   const { open: openPreview } = usePreview();
   const [path, setPath] = useState(".");
@@ -103,6 +105,7 @@ export function WorkspaceBrowser({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [view, setView] = usePref<View>("capka.files.view", "list");
   const [sortKey, setSortKey] = usePref<SortKey>("capka.files.sortKey", "name");
@@ -263,6 +266,40 @@ export function WorkspaceBrowser({
     }
   };
 
+  /** One-shot directory import into /workspace/<folder>/… (Safari/Firefox and
+   *  the project Files toolbar when live folder sync isn't attached). */
+  const importFolderOnce = async () => {
+    setUploading(true);
+    try {
+      const { importFolderFallback } = await import("@/lib/folder-bridge/fallback");
+      const r = await importFolderFallback(target);
+      if (!r) return;
+      if (r.count === 0) toast.message(tf("nothingImported"));
+      else toast.success(tf("imported", { n: r.count, name: r.name }));
+      fetchFiles();
+    } catch (e) {
+      if (e instanceof Error && e.name === "FolderTooLargeError") {
+        const m = e as Error & { count?: number; bytes?: number };
+        toast.error(tf("tooLarge", {
+          count: m.count ?? 0,
+          size: formatSize(m.bytes ?? 0),
+          maxFiles: FOLDER_MAX_FILES,
+          maxMb: FOLDER_MAX_TOTAL_MB,
+        }));
+      } else {
+        toast.error(tf("syncFailed"));
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const uploadIcon = (
+    <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+      <Upload className={`h-3.5 w-3.5 ${uploading ? "animate-pulse" : ""}`} />
+    </div>
+  );
+
   // ── Row / tile renderers (shared by list and grid layouts) ──────────────────
   const folderRow = (entry: FileEntry) => {
     const { Icon, color, bg } = fileKind(entry.name, true);
@@ -386,12 +423,63 @@ export function WorkspaceBrowser({
             <span className="shrink-0 text-[11px] font-normal tabular-nums text-muted-foreground">{entryCount}</span>
           )}
         </h3>
-        <label title={t("upload")} aria-label={t("upload")}>
-          <input type="file" multiple className="hidden" onChange={(e) => e.target.files && upload(e.target.files)} />
-          <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-            <Upload className={`h-3.5 w-3.5 ${uploading ? "animate-pulse" : ""}`} />
-          </div>
-        </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) void upload(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        {/* Always expose file + folder import here. Live "connect folder" stays
+            in AttachFolderMenu when the org allows it — but one-shot import must
+            never be gated behind that, or project Files looks files-only. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            title={t("upload")}
+            aria-label={t("upload")}
+            disabled={uploading}
+            className="outline-none disabled:opacity-60"
+          >
+            {uploadIcon}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-4 w-4" />
+              {t("upload")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void importFolderOnce()} disabled={uploading}>
+              <FolderUp className="h-4 w-4" />
+              {tf("importFolder")}
+            </DropdownMenuItem>
+            {folderSync?.canAttach && folderSync.supported && (
+              <DropdownMenuItem
+                disabled={uploading}
+                onClick={() => {
+                  void folderSync.connect().then((r) => {
+                    if (!r.ok) {
+                      if (r.tooLarge) {
+                        toast.error(tf("tooLarge", {
+                          count: r.tooLarge.count,
+                          size: formatSize(r.tooLarge.bytes),
+                          maxFiles: FOLDER_MAX_FILES,
+                          maxMb: FOLDER_MAX_TOTAL_MB,
+                        }));
+                      } else toast.error(tf("syncFailed"));
+                      return;
+                    }
+                    void fetchFiles();
+                  });
+                }}
+              >
+                <Folder className="h-4 w-4" />
+                {tf("connect")}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         {canDownloadAll(folders.length, fileCount) && (
           <button onClick={downloadAll} title={t("downloadAll")} aria-label={t("downloadAll")} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
             <Download className="h-3.5 w-3.5" />

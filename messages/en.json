@@ -145,7 +145,7 @@
   },
   "chat": {
     "untitled": "New chat",
-    "searchChats": "Search chats…",
+    "searchChats": "Search titles or messages…",
     "fileType": {
       "image": "Image",
       "file": "File"
@@ -1702,7 +1702,7 @@
     "toggleSidebar": "Toggle sidebar",
     "toggleTheme": "Toggle theme",
     "commandPalette": "Command palette",
-    "searchChats": "Search chats"
+    "searchChats": "Search titles or messages"
   },
   "auth": {
     "emailLabel": "Email",

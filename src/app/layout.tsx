@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
-import { Onest, Lora } from "next/font/google";
+import { Onest, Lora, Noto_Sans_SC } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/sw-register";
+import { DevPerfMeasureGuard } from "@/components/dev-perf-measure-guard";
+import { productName } from "@/lib/brand";
 import "./globals.css";
 
 // Body + UI face. Onest is a humanist sans drawn with Latin and Cyrillic as
@@ -19,6 +21,15 @@ const onest = Onest({
   display: "swap",
 });
 
+// Simplified Chinese UI body — paired with Onest so zh-CN screens don't fall
+// back to a generic system songti for long assistant answers.
+const notoSansSc = Noto_Sans_SC({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-noto-sc",
+  display: "swap",
+});
+
 // Serif display face for hero headings. Cyrillic subset is required — the UI is
 // Ukrainian-first, and Latin-only display serifs (Instrument Serif, Fraunces)
 // would fall back to a generic serif for Cyrillic text.
@@ -29,15 +40,15 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Capka",
-  description: "Personal AI Platform",
+  title: productName(),
+  description: "Self-hosted team file-processing AI agent",
   // iOS ignores the manifest's `display: standalone`; this is what makes the
   // app launch full-screen (no Safari chrome) once added to the home screen.
   // statusBarStyle "default" keeps content below the status bar — safe-area
   // insets are already handled, but this avoids any edge-to-edge surprises.
   appleWebApp: {
     capable: true,
-    title: "Capka",
+    title: productName(),
     statusBarStyle: "default",
   },
   icons: {
@@ -83,7 +94,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${onest.variable} ${GeistMono.variable} ${lora.variable}`}
+      className={`${onest.variable} ${notoSansSc.variable} ${GeistMono.variable} ${lora.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -94,6 +105,7 @@ export default async function RootLayout({
       <body className="font-sans antialiased" suppressHydrationWarning>
         <NextIntlClientProvider>
           <Providers>
+            <DevPerfMeasureGuard />
             {children}
             <Toaster />
             <ServiceWorkerRegister />

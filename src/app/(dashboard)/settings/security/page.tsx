@@ -95,6 +95,8 @@ export default function SecuritySettingsPage() {
   };
 
   // The network setting stores "bridge"/"none", not "true"/"false".
+  // Existing sandboxes keep their old Docker network until the next session
+  // ensure recreates them (controller compares networkMode on reuse).
   const toggleNet = (checked: boolean) => {
     const prev = sandboxNet.value;
     const next = checked ? "bridge" : "none";

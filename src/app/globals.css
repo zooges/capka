@@ -16,7 +16,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-onest), var(--font-noto-sc), "PingFang SC", "Noto Sans SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --font-heading: var(--font-sans);
   --font-display: var(--font-lora), Georgia, "Times New Roman", serif;
@@ -344,6 +344,92 @@
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
     overscroll-behavior: none;
+  }
+  /* Safe-area tokens used by headers / composer / mobile sheet. Mobile Safari
+     gets env(); the iOS WKWebView shell also injects `--native-sa*` and we take
+     the larger value so notch / home-indicator never clip when env() is 0. */
+  :root {
+    --capka-sat: env(safe-area-inset-top, 0px);
+    --capka-sab: env(safe-area-inset-bottom, 0px);
+    --capka-sal: env(safe-area-inset-left, 0px);
+    --capka-sar: env(safe-area-inset-right, 0px);
+  }
+  /* Fallback 47px (notch-class) so SPA navigations that land before the native
+     shell re-pushes --native-sa* still clear the status bar / Dynamic Island.
+     Native pushNativeSafeAreaVars() overrides --native-sa* with real insets. */
+  html.capka-native-app,
+  html[data-capka-native="ios"] {
+    -webkit-touch-callout: none;
+    --capka-sat: max(env(safe-area-inset-top, 0px), var(--native-sat, 47px));
+    --capka-sab: max(env(safe-area-inset-bottom, 0px), var(--native-sab, 0px));
+    --capka-sal: max(env(safe-area-inset-left, 0px), var(--native-sal, 0px));
+    --capka-sar: max(env(safe-area-inset-right, 0px), var(--native-sar, 0px));
+  }
+  html.capka-native-app body,
+  html[data-capka-native="ios"] body {
+    min-height: 100dvh;
+    max-width: 100%;
+    overflow-x: hidden;
+    /* Document must not scroll under the keyboard — panes own scrolling, and a
+       root scroll + --kb composer lift double-counts into the message list. */
+    overflow-y: hidden;
+    overscroll-behavior: none;
+  }
+  /* Sticky Capka headers: pin below the status area in the native shell
+     (WKWebView often reports env(safe-area-inset-*) as 0). */
+  html[data-capka-native="ios"] header.sticky {
+    top: 0;
+    padding-top: max(0.75rem, var(--capka-sat, 47px));
+  }
+  /* Settings / Connectors: keep the pane inside the visible viewport on phones
+     (no horizontal bleed past the home indicator / notch edges). */
+  html[data-capka-native="ios"] [data-capka-settings="1"] {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  html[data-capka-native="ios"] [data-slot="sidebar-inset"] {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  /* Hide register / secondary strips on the login screen in the native shell. */
+  html.capka-native-app .auth-shell-footer {
+    display: none;
+  }
+  /* Keyboard open: drop home-indicator padding under the composer so a solid
+     horizontal band does not sit between the input card and the keyboard. */
+  html[data-kb-open] .capka-composer-pad {
+    padding-bottom: 0.5rem !important;
+  }
+  /* Home: keep the tight pad even while the keyboard is up (model chip sits
+     below the composer; dock-style 0.5rem is only for in-chat). */
+  html[data-kb-open] [data-capka-home="1"] .capka-composer-pad {
+    padding-bottom: 0.25rem !important;
+  }
+  /* Empty-home keyboard inset: animate --kb padding so logo+composer reflow
+     with the soft keyboard instead of jumping. In-chat dock uses the same
+     --kb but stays in-flow at the bottom (no .capka-home-kb). */
+  .capka-home-kb {
+    transition: padding-bottom 0.32s var(--ease-out);
+  }
+  /* Home greeting: composer is mid-column (model + history sit below), so the
+     dock-style home-indicator pad only creates a dead band under the card.
+     Keep a tight bottom pad; model row supplies the real gap. */
+  [data-capka-home="1"] .capka-composer-pad {
+    padding-bottom: 0.25rem;
+  }
+  /* While the keyboard is up, freeze root scroll so iOS cannot shift the layout
+     under fixed/absolute docks (composer + model chip). */
+  html[data-kb-open],
+  html[data-kb-open] body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+  /* Mobile sheet: keep the drawer chrome clear of notch / home indicator even
+     if a child forgot to pad — belt-and-suspenders for the iOS WKWebView shell. */
+  html.capka-native-app [data-slot="sheet-content"][data-mobile="true"],
+  html.capka-native-app [data-sidebar="sidebar"][data-mobile="true"] {
+    padding-top: 0;
+    padding-bottom: 0;
   }
   body {
     @apply bg-background text-foreground;

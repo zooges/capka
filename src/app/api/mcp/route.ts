@@ -1,5 +1,5 @@
 import { apiHandler, requireSession, requireActive } from "@/lib/auth";
-import { listServers, upsertServer, setEnabled, deleteServer } from "@/lib/mcp/service";
+import { listServers, upsertServer, setEnabled, deleteServer, updateServerSecrets } from "@/lib/mcp/service";
 import { detectAuthKind } from "@/lib/mcp/oauth/detect";
 import { saveOAuthClientFromInput } from "@/lib/mcp/oauth/admin-client";
 import { setMuted } from "@/lib/muted-resources";
@@ -8,33 +8,60 @@ import { mcpServers } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export const GET = apiHandler(async () => {
-  const { userId } = await requireSession();
-  return Response.json({ servers: await listServers(userId, null) });
+  const { userId, role } = await requireSession();
+  const servers = await listServers(userId, null);
+  // Non-admins must not receive MCP endpoint URLs (or stdio commands) — Settings
+  // hides the connectors tab for them; this keeps the API from leaking the same.
+  if (role === "admin") {
+    return Response.json({ servers });
+  }
+  return Response.json({
+    servers: servers.map(({ url: _url, ...rest }) => ({ ...rest, url: null })),
+  });
 });
 
 export const POST = apiHandler(async (req: Request) => {
   // Mutations are install-class (a connector runs SSRF-guarded probes / third-party
   // tools), so a pending account may not create them — requireActive, not session.
   const { userId } = await requireActive();
-  const { name, url, headers, oauthClientId, oauthClientSecret, authKind: pick } = await req.json();
+  const { name, url, headers, oauthClientId, oauthClientSecret, authKind: pick, transport: rawTransport } = await req.json();
   if (typeof name !== "string" || typeof url !== "string") {
     return Response.json({ error: "name and url required" }, { status: 400 });
   }
   const secrets = headers && typeof headers === "object" ? { headers } : undefined;
+  const transport = rawTransport === "sse" || rawTransport === "http" ? rawTransport : undefined;
   // A pre-registered client (advanced) forces OAuth; an explicit method from the form
   // is authoritative ('none' is stored as 'token' with no secrets = open). We only
   // fall back to probing when the caller didn't say.
   const authKind =
     oauthClientId ? "oauth" : pick === "oauth" || pick === "token" ? pick : await detectAuthKind(url);
-  const id = await upsertServer({ scope: "user", userId, projectId: null, name, url, secrets, authKind });
+  const id = await upsertServer({ scope: "user", userId, projectId: null, name, url, transport, secrets, authKind });
   await saveOAuthClientFromInput(id, oauthClientId, oauthClientSecret);
   return Response.json({ ok: true, id, authKind });
 });
 
 export const PATCH = apiHandler(async (req: Request) => {
   const { userId } = await requireActive();
-  const { id, enabled } = await req.json();
-  if (typeof id !== "string" || typeof enabled !== "boolean") {
+  const body = await req.json();
+  const { id, enabled, headers } = body;
+  if (typeof id !== "string") {
+    return Response.json({ error: "Bad request" }, { status: 400 });
+  }
+
+  // Update access token on an owned user connector, or admin-managed shared one
+  // (shared secrets go through /api/admin/mcp).
+  if (headers && typeof headers === "object") {
+    const [row] = await db.select({ scope: mcpServers.scope, userId: mcpServers.userId })
+      .from(mcpServers).where(eq(mcpServers.id, id)).limit(1);
+    if (!row) return Response.json({ error: "Not found" }, { status: 404 });
+    if (row.scope !== "user" || row.userId !== userId) {
+      return Response.json({ error: "Not yours" }, { status: 404 });
+    }
+    await updateServerSecrets(id, { headers });
+    return Response.json({ ok: true });
+  }
+
+  if (typeof enabled !== "boolean") {
     return Response.json({ error: "Bad request" }, { status: 400 });
   }
   const [row] = await db.select({ scope: mcpServers.scope, userId: mcpServers.userId })

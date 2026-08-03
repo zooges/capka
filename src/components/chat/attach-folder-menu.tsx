@@ -13,8 +13,20 @@ type FolderSync = ReturnType<typeof useFolderSync>;
 
 /** The paperclip's menu when folder access is on: upload files, or connect/import
  *  a folder from the user's own computer. Lives in the attach menu (not a chip
- *  above the composer) so the composer stays clean when nothing is attached. */
-export function AttachFolderMenu({ folders, onUpload, children }: { folders: FolderSync; onUpload: () => void; children: React.ReactNode }) {
+ *  above the composer) so the composer stays clean when nothing is attached.
+ *  Also reused by the workspace / project Files toolbar. */
+export function AttachFolderMenu({
+  folders,
+  onUpload,
+  onChanged,
+  children,
+}: {
+  folders: FolderSync;
+  onUpload: () => void;
+  /** Fired after a connect / import / disconnect so a file browser can refresh. */
+  onChanged?: () => void;
+  children: React.ReactNode;
+}) {
   const t = useTranslations("chat.folders");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
@@ -30,14 +42,20 @@ export function AttachFolderMenu({ folders, onUpload, children }: { folders: Fol
       else setErr(t("syncFailed"));
     }
     setBusy(false);
-    if (r.ok) setOpen(false);
+    if (r.ok) {
+      setOpen(false);
+      onChanged?.();
+    }
   };
 
   const importFolder = async () => {
     setBusy(true); setErr("");
     try {
       const r = await folders.importFallback();
-      if (r) setImported(r);
+      if (r) {
+        setImported(r);
+        onChanged?.();
+      }
     } catch (e) {
       // Same ceiling as live sync — surface the same localized "too large" message.
       if (e instanceof Error && e.name === "FolderTooLargeError") {
@@ -61,6 +79,12 @@ export function AttachFolderMenu({ folders, onUpload, children }: { folders: Fol
 
         <div className="my-1 border-t border-border" />
 
+        {/* One-shot import is always available; live connect is Chromium-only. */}
+        <button type="button" className={item} onClick={importFolder} disabled={busy}>
+          {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FolderUp className="h-4 w-4 shrink-0 text-muted-foreground" />}
+          {t("importFolder")}
+        </button>
+
         {folders.supported ? (
           <>
             <button type="button" className={item} onClick={connect} disabled={busy}>
@@ -80,7 +104,7 @@ export function AttachFolderMenu({ folders, onUpload, children }: { folders: Fol
                       {t("reconnect")}
                     </button>
                   )}
-                  <button type="button" onClick={() => folders.remove(f.id)} aria-label={t("disconnect")} className="text-muted-foreground/70 transition-colors hover:text-foreground">
+                  <button type="button" onClick={() => { void folders.remove(f.id).then(() => onChanged?.()); }} aria-label={t("disconnect")} className="text-muted-foreground/70 transition-colors hover:text-foreground">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -107,30 +131,23 @@ export function AttachFolderMenu({ folders, onUpload, children }: { folders: Fol
             )}
           </>
         ) : (
-          <>
-            <button type="button" className={item} onClick={importFolder} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FolderUp className="h-4 w-4 shrink-0 text-muted-foreground" />}
-              {t("importFolder")}
-            </button>
-            {imported && (imported.count > 0 ? (
-              <div className="px-2 pt-1 text-xs text-muted-foreground">
-                {t("imported", { n: imported.count, name: imported.name })}{" "}
-                <a
-                  href={`/api/sandbox/files/download-all?${targetQuery(folders.target)}&paths=${encodeURIComponent(imported.name)}`}
-                  className="inline-flex items-center gap-1 text-foreground hover:underline"
-                >
-                  <Download className="h-3 w-3" />
-                  {t("downloadZip")}
-                </a>
-              </div>
-            ) : (
-              // Nothing survived the filter (all skipped/oversized) — no folder was
-              // created, so don't offer a zip link to a path that doesn't exist.
-              <div className="px-2 pt-1 text-xs text-muted-foreground">{t("nothingImported")}</div>
-            ))}
-            <div className="px-2 pt-1 text-xs text-muted-foreground/70">{t("unsupportedBrowser")}</div>
-          </>
+          <div className="px-2 pt-1 text-xs text-muted-foreground/70">{t("unsupportedBrowser")}</div>
         )}
+
+        {imported && (imported.count > 0 ? (
+          <div className="px-2 pt-1 text-xs text-muted-foreground">
+            {t("imported", { n: imported.count, name: imported.name })}{" "}
+            <a
+              href={`/api/sandbox/files/download-all?${targetQuery(folders.target)}&paths=${encodeURIComponent(imported.name)}`}
+              className="inline-flex items-center gap-1 text-foreground hover:underline"
+            >
+              <Download className="h-3 w-3" />
+              {t("downloadZip")}
+            </a>
+          </div>
+        ) : imported ? (
+          <div className="px-2 pt-1 text-xs text-muted-foreground">{t("nothingImported")}</div>
+        ) : null)}
 
         {err && <div className="px-2 pt-1 text-xs text-destructive">{err}</div>}
       </PopoverContent>

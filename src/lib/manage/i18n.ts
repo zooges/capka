@@ -1,8 +1,8 @@
 import { createTranslator } from "next-intl";
 import { toLocale } from "@/lib/i18n/translator";
-import type { Locale } from "@/i18n/config";
+import { defaultLocale, type Locale } from "@/i18n/config";
 import en from "../../../messages/en.json";
-import uk from "../../../messages/uk.json";
+import zhCN from "../../../messages/zh-CN.json";
 
 /**
  * The ONE place manage strings are localized. Anti-divergence design:
@@ -14,7 +14,7 @@ import uk from "../../../messages/uk.json";
  *  - Keys are DERIVED from the control/value id here, so renaming an id can't
  *    leave a stale hand-written key behind.
  */
-const MESSAGES: Record<Locale, Record<string, unknown>> = { en, uk };
+const MESSAGES: Record<Locale, Record<string, unknown>> = { en, "zh-CN": zhCN };
 // A sentinel next-intl returns for an untranslated key, distinct from any real
 // translation. Written as an escape (NOT a raw NUL byte, which would make this
 // file read as binary to git diff/blame and choke NUL-averse tooling).
@@ -22,10 +22,15 @@ const MISSING = "\x00missing";
 
 export type ManageT = (key: string, values?: Record<string, string | number>) => string;
 
+function manageLocale(locale?: string): Locale {
+  const l = toLocale(locale);
+  return l in MESSAGES ? (l as Locale) : defaultLocale;
+}
+
 /** Build a manage-scoped translator. Missing keys resolve to a sentinel (not a
  *  noisy thrown/logged error) so `loc` can fall back to the English literal. */
 export function manageT(locale?: string): ManageT {
-  const l = toLocale(locale);
+  const l = manageLocale(locale);
   return createTranslator({
     locale: l,
     messages: MESSAGES[l],

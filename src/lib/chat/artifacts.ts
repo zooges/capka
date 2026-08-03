@@ -9,12 +9,14 @@
  * surfaced.
  */
 
-// Matches `/workspace/<relative path>.<ext>`, capturing the relative path. The
-// character class allows nested dirs, spaces, parens and Ukrainian letters in
-// file names, but stops before a second `/workspace/` so adjacent references
-// don't merge into one.
+// Matches `/workspace/<relative path>.<ext>`, capturing the relative path.
+// Letters/digits via Unicode properties (Latin, Cyrillic, CJK, …) so zh-CN
+// file names become chips/tiles the same way English ones do. Stops before a
+// second `/workspace/` so adjacent references don't merge into one.
+// The `u` flag is required for `\p{…}`; callers that clone this regex must
+// copy `.flags`, not hard-code `"g"`.
 export const WORKSPACE_PATH_RE =
-  /\/workspace\/((?:(?!\/workspace\/)[\w/.А-Яа-яІіЇїЄєҐґ_\- ()])+\.\w+)/g;
+  /\/workspace\/((?:(?!\/workspace\/)[\p{L}\p{N}\p{M}/._\- ()[\]（）【】])+\.\w+)/gu;
 
 /**
  * A captured path is safe only if it stays inside the workspace: relative, with

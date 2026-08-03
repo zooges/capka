@@ -1,5 +1,6 @@
 import { tool, type Tool } from "ai";
 import { z } from "zod";
+import { isChinaRegion, isTavilySteerEnabled } from "@/lib/agents/chat-agent";
 import { log } from "@/lib/log";
 
 /**
@@ -33,23 +34,86 @@ import { log } from "@/lib/log";
  * one-off cost `stepSettings` already accepts for a late `toolChoice`), not once
  * per step.
  *
- * Gating: deferral only kicks in when the connector tools' estimated cost exceeds
- * a fraction of the effective context window (`MCP_DEFER_TOKEN_PCT`, default 10%),
- * mirroring Anthropic's `auto:N`. A small chat with a couple of tools behaves
- * exactly as before — no index, no extra round-trip.
+ * Gating: deferral kicks in when the connector tools' estimated cost exceeds
+ * `min(percent of window, absolute ceiling)` — `MCP_DEFER_TOKEN_PCT` (default
+ * 10%, Anthropic's `auto:N`) clamped by `MCP_DEFER_TOKEN_MAX` (default 8192).
+ * The absolute cap matters on ~1M-token models: 10% of 1M is ~100k, so a
+ * Firecrawl-scale block never deferred under percent-only gating. A small chat
+ * with a couple of tools still stays eager — no index, no extra round-trip.
  */
 
 export const FIND_TOOL_NAME = "find_tool";
 
 /** Percentage of the effective context window the connector tool block may occupy
- *  before deferral kicks in. Matches Anthropic's `auto:N` default of ~10%. */
-const DEFER_PCT = Number(process.env.MCP_DEFER_TOKEN_PCT) || 10;
+ *  before deferral kicks in. Matches Anthropic's `auto:N` default of ~10%.
+ *  `0` means always defer (any non-empty MCP set). Do not use `|| 10` — that
+ *  would treat an intentional `0` as "unset". */
+const DEFER_PCT = (() => {
+  const raw = process.env.MCP_DEFER_TOKEN_PCT;
+  if (raw === undefined || raw === "") return 10;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 10;
+})();
+
+/** Absolute token ceiling for the always-on connector tool block. Percent gating
+ *  alone fails open on large windows; this keeps progressive disclosure useful
+ *  without forcing `MCP_DEFER_TOKEN_PCT=0` (which always adds a find_tool hop).
+ *  `0` disables the absolute cap (percent-only). Unset → 8192. */
+const DEFER_MAX = (() => {
+  const raw = process.env.MCP_DEFER_TOKEN_MAX;
+  if (raw === undefined || raw === "") return 8192;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 8192;
+})();
+
+/** Effective defer budget for this turn: percent of the window, optionally
+ *  clamped by the absolute max. `thresholdPct === 0` → budget 0 (always defer). */
+export function deferTokenBudget(effectiveLimit: number, thresholdPct = DEFER_PCT, maxTokens = DEFER_MAX): number {
+  if (thresholdPct <= 0) return 0;
+  const pctBudget = (effectiveLimit * thresholdPct) / 100;
+  return maxTokens > 0 ? Math.min(pctBudget, maxTokens) : pctBudget;
+}
 
 /** How many tools a single `find_tool` call may surface by default. Generous on
  *  purpose: BM25 is lexical, so a synonym gap ("fetch page" vs "scrape") is real —
  *  recall matters more than precision here since the cost of a miss is a wasted
  *  round-trip, while a couple of extra loaded tools is cheap. */
 const DEFAULT_FIND_LIMIT = 8;
+
+/**
+ * Connector servers (or exact `mcp__server__tool` names) that stay active even
+ * when deferral is on — no `find_tool` hop. Comma-separated via `MCP_ALWAYS_LOAD`.
+ * When unset/empty and `CAPKA_REGION=cn` / `CAPKA_CHINA=1`, defaults to `tavily`.
+ * Set `MCP_ALWAYS_LOAD=none` (or `-` / `off`) to disable the China default.
+ * (Compose often passes an empty string when the host var is unset — treat that
+ * as unset, not as "explicitly none".)
+ */
+export function alwaysLoadMatchers(raw = process.env.MCP_ALWAYS_LOAD): string[] {
+  const region = (process.env.CAPKA_REGION ?? "").trim().toLowerCase();
+  const china = region === "cn" || region === "china" || process.env.CAPKA_CHINA === "1";
+  const trimmed = raw?.trim();
+  if (trimmed === "none" || trimmed === "-" || trimmed === "off") return [];
+  if (trimmed) {
+    return trimmed.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  }
+  return china ? ["tavily"] : [];
+}
+
+/** True when a connector *server* name is listed in `MCP_ALWAYS_LOAD` (or China default). */
+export function isAlwaysLoadServer(serverName: string, matchers = alwaysLoadMatchers()): boolean {
+  if (matchers.length === 0) return false;
+  const lower = serverName.toLowerCase();
+  return matchers.some((m) => m === lower || m === `mcp__${lower}`);
+}
+
+function isAlwaysLoaded(name: string, matchers: string[]): boolean {
+  if (matchers.length === 0) return false;
+  const { server, short } = splitMcpName(name);
+  const lower = name.toLowerCase();
+  return matchers.some(
+    (m) => m === server || m === short || m === lower || lower === `mcp__${m}` || short === m,
+  );
+}
 
 /** The minimal shape planToolSearch reads from an assembled tool. Accepting this
  *  structural type (not the AI SDK `Tool`) lets the caller pass its precisely-typed
@@ -70,51 +134,44 @@ function splitMcpName(name: string): { server: string; short: string } {
     : { server: rest.slice(0, i), short: rest.slice(i + 2) };
 }
 
-/** The capability "family" of a tool: the token after any server-name echo, so
- *  `firecrawl_monitor_check` and `firecrawl_monitor_run` collapse to "monitor". */
-function familyKey(short: string, server: string): string {
-  const toks = short.split(/[_-]/).filter(Boolean);
-  return toks[0] === server ? toks[1] ?? toks[0] : toks[0];
-}
+/**
+ * BM25 is Latin-token only; Chinese-only queries used to match nothing.
+ * Expand domain zh intents to English / server-name tokens that hit the right
+ * connector names+descriptions. Tavily expansion is **only** for general
+ * open-web search — never append "tavily" for legal / company / wechat / etc.
+ *
+ * Production China connectors (examples): yuandian-*, qcc-*, wx-article,
+ * local-legal, law-theory, people-case-civil, tavily.
+ */
+function expandFindQuery(query: string): string {
+  const extras: string[] = [];
 
-/** A short human gist of what a tool DOES, for the prompt index — the first clause
- *  of its (already length-clamped) description, cut at a NATURAL break (comma,
- *  parenthesis, "and", …) so it reads as a whole phrase, not a mid-word stub. Falls
- *  back to the de-prefixed, spaced-out name when a connector ships no description. */
-function toolGist(short: string, server: string, description?: string): string {
-  const d = (description ?? "").trim();
-  if (d) {
-    // first line → first sentence → first clause (stop at the earliest natural break)
-    let g = d.split("\n")[0].split(/(?<=[.!?])\s/)[0].split(/[,(:;]| [-–—] | and /i)[0].trim();
-    const MAX = 52;
-    if (g.length > MAX) g = g.slice(0, MAX).replace(/\s+\S*$/, "");
-    g = g.replace(/[.;:,()\s]+$/, "").trim();
-    if (g) return g;
+  // Domain connectors first — these must not fall through to Tavily.
+  if (/法律|法规|案例|判例|司法解释|元典|chineselaw|yuandian|立法|裁判|判决|条文|诉讼|民法|刑法/.test(query)) {
+    extras.push("yuandian chineselaw local legal law theory people case civil statute judgment");
   }
-  const toks = short.split(/[_-]/).filter(Boolean);
-  return (toks[0] === server ? toks.slice(1) : toks).join(" ") || short;
-}
+  if (/企查查|工商|企业信息|企业查询|公司信息|公司注册|天眼查|qcc|company registry|高管|经营风险/.test(query)) {
+    extras.push("qcc company executive operation risk registry business credit enterprise agent");
+  }
+  if (/微信|公众号|wechat|weixin|wx-?article/.test(query)) {
+    extras.push("wx article wechat weixin");
+  }
 
-/** A one-line CAPABILITY overview of a connector for the prompt index: a short
- *  gist per distinct tool family (deduped, so seven `monitor_*` tools read as one
- *  "monitor a URL for changes"), so the model learns what the connector can DO —
- *  not a truncated list of tool names it has to decode. `tools` is pre-sorted; the
- *  cap is a high safety ceiling (a connector rarely has this many distinct
- *  families) so every capability domain is surfaced — not hidden behind a "…", the
- *  whole point being that the model must SEE a capability to think to search it. */
-function connectorSummary(tools: { short: string; description?: string }[], server: string, cap = 16): string {
-  const seen = new Set<string>();
-  const parts: string[] = [];
-  let truncated = false;
-  for (const { short, description } of tools) {
-    const key = familyKey(short, server);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    if (parts.length >= cap) { truncated = true; break; }
-    const g = toolGist(short, server, description);
-    if (!parts.includes(g)) parts.push(g);
+  // General open-web search only (not 查资料/检索 alone — those are often domain).
+  if (
+    extras.length === 0 &&
+    /搜索网页|查网页|搜网页|上网|新闻|联网|网络搜索|公开互联网|公开网页|web search|search the web/.test(query)
+  ) {
+    extras.push("search the web tavily");
+  } else if (
+    extras.length === 0 &&
+    /搜索|检索|查资料|找资料|搜一下|搜下|搜一搜|查一下|查下/.test(query) &&
+    /网页|网站|网上|互联网|新闻|百度|必应|google|bing|tavily/.test(query)
+  ) {
+    extras.push("search the web tavily");
   }
-  return `${parts.join(", ")}${truncated ? ", …" : ""}`;
+
+  return extras.length === 0 ? query : `${query} ${extras.join(" ")}`;
 }
 
 /** Rough token estimate for a tool's serialized definition (name + description +
@@ -225,12 +282,14 @@ export function planToolSearch(opts: {
   tools: Record<string, ReadableTool | undefined>;
   effectiveLimit: number;
   thresholdPct?: number;
+  /** Absolute token ceiling; omit to use `MCP_DEFER_TOKEN_MAX` / default 8192. */
+  maxTokens?: number;
 }): ToolSearchPlan {
   const mcpNames = Object.keys(opts.tools).filter(isMcpToolName);
   if (mcpNames.length === 0) return INERT_PLAN;
 
   const mcpTokens = mcpNames.reduce((s, n) => s + estimateToolTokens(opts.tools[n]!), 0);
-  const budget = (opts.effectiveLimit * (opts.thresholdPct ?? DEFER_PCT)) / 100;
+  const budget = deferTokenBudget(opts.effectiveLimit, opts.thresholdPct ?? DEFER_PCT, opts.maxTokens ?? DEFER_MAX);
   if (mcpTokens <= budget) return INERT_PLAN;
 
   // Decision is made ONCE, at the start of the turn, off the connector set as it
@@ -240,57 +299,90 @@ export function planToolSearch(opts: {
 
   const eagerNames = Object.keys(opts.tools).filter((n) => !isMcpToolName(n));
   const sortedMcp = [...mcpNames].sort();
+  const alwaysMatchers = alwaysLoadMatchers();
+  const alwaysOn = sortedMcp.filter((n) => isAlwaysLoaded(n, alwaysMatchers));
 
   // Deterministic catalog (sorted) so BM25 and the index are stable turn to turn.
-  // BM25 indexes the tool's SHORT NAME as well as its description: names are always
-  // English and snake_case-tokenized (generate_image → generate, image), so an
+  // BM25 indexes the server name + SHORT NAME as well as its description: names are
+  // always English and snake_case-tokenized (generate_image → generate, image), so an
   // English query still matches a connector whose description is in another
   // language (e.g. a Ukrainian-described image server) — the cross-lingual floor.
   const docs: Doc[] = sortedMcp.map((name) => {
-    const { short } = splitMcpName(name);
+    const { server, short } = splitMcpName(name);
     const description = opts.tools[name]?.description ?? "";
-    return { name, description, terms: tokenize(`${short} ${description}`) };
+    return { name, description, terms: tokenize(`${server} ${short} ${description}`) };
   });
 
-  // ── System-prompt index: one line per connector describing what it CAN DO — a
-  //    short capability gist per tool family (from the tools' descriptions), not a
-  //    truncated list of tool names. A big server (Firecrawl: scrape + web search +
-  //    change monitors + paper search + GitHub …) then surfaces the breadth of its
-  //    capabilities, so the model knows what to ask find_tool for. ────────────────
-  const byServer = new Map<string, { short: string; description?: string }[]>();
+  // ── System-prompt index: one line per connector — NAME + tool count only.
+  //    Capability essays / per-family gists used to inflate the stable prompt by
+  //    hundreds of tokens on every deferred turn; BM25 still searches full
+  //    descriptions when the model calls find_tool. Always-loaded servers are
+  //    called out so the model knows they need no find_tool hop. ───────────────
+  const byServer = new Map<string, number>();
   for (const name of sortedMcp) {
-    const { server, short } = splitMcpName(name);
-    const entry = { short, description: opts.tools[name]?.description };
-    const list = byServer.get(server);
-    if (list) list.push(entry);
-    else byServer.set(server, [entry]);
+    const { server } = splitMcpName(name);
+    byServer.set(server, (byServer.get(server) ?? 0) + 1);
   }
-  const serverLines = [...byServer.entries()].map(
-    ([server, tools]) => `- **${server}** (${tools.length} tool${tools.length === 1 ? "" : "s"}): ${connectorSummary(tools, server)}`,
-  );
+  const alwaysServers = new Set(alwaysOn.map((n) => splitMcpName(n).server));
+  // Soften Tavily-first index/find_tool copy only on China hosts with steer off.
+  // Non-China always-load of tavily keeps the original "already configured" hints.
+  const tavilySoft = isChinaRegion() && !isTavilySteerEnabled();
+  const serverLines = [...byServer.entries()].map(([server, n]) => {
+    const count = `${n} tool${n === 1 ? "" : "s"}`;
+    if (alwaysServers.has(server)) {
+      const hint =
+        server === "tavily"
+          ? tavilySoft
+            ? "; optional general web search — already loaded if you want it; open curl/Google/Bing also OK; not for legal/company/wechat"
+            : "; general web search only — already configured, call mcp__tavily__tavily_search now (never install / find_tool); not for legal/company/wechat"
+          : "; already loaded — use directly";
+      return `- **${server}** (${count}${hint})`;
+    }
+    return `- **${server}** (${count})`;
+  });
+  const alwaysIntro = tavilySoft
+    ? `Connectors marked "use directly" / "already loaded" are available without \`${FIND_TOOL_NAME}\`. Tavily (if listed) is **optional** general web search — not mandatory; open \`curl\`/Google/Bing/Baidu are fine. Do not use Tavily for 法律/案例/元典/企查查/微信文章. For deferred domain connectors (chineselaw, wechat-article, company registry, …), call \`${FIND_TOOL_NAME}\` with a short need description first. Do not guess deferred tool names.`
+    : `Connectors marked "use directly" / "already configured" are loaded — call their \`mcp__…\` tools now. Tavily is **general web search only** (\`mcp__tavily__tavily_search\`) — do not use it for 法律/案例/元典/企查查/微信文章. Do not install always-loaded connectors, do not \`find_tool\` for them. For other connectors (chineselaw, wechat-article, company registry, …), call \`${FIND_TOOL_NAME}\` with a short need description first (Chinese or English domain keywords are fine). Do not guess deferred tool names.`;
   const indexText = [
-    "## Connector tools (loaded on demand)",
-    `Extra tools from connected apps are available but not loaded up front, to keep your context lean. To use any of them, first call \`${FIND_TOOL_NAME}\` with a short description of what you need — the matching tools then become callable on your next step. Do NOT guess a connector tool name directly; discover it with \`${FIND_TOOL_NAME}\` first.`,
-    "Available connectors:",
+    "## Connector tools (on demand)",
+    alwaysOn.length > 0
+      ? alwaysIntro
+      : `Call \`${FIND_TOOL_NAME}\` with a short need description before any connector tool. Do not guess tool names.`,
+    "Connectors:",
     ...serverLines,
   ].join("\n");
 
   // ── find_tool: BM25 over the deferred catalog; matches become active next step.
-  const expanded = new Set<string>();
+  // Always-load matchers start expanded so hot tools (e.g. tavily on China deploys)
+  // skip the discovery hop.
+  const expanded = new Set<string>(alwaysOn);
+  if (alwaysOn.length > 0) {
+    log.info("mcp.always_load", { tools: alwaysOn });
+  }
   const findTool = tool({
     description:
       "Discover connector tools that are not yet loaded. Pass a short natural-language description of the capability you need " +
-      "(e.g. \"search the web\", \"read a PDF from a URL\"). Returns the best-matching tools; they become callable on your next step. " +
-      "Call this before using any connector listed under \"Connector tools\" in the system prompt.",
+      "(e.g. \"chineselaw 案例\", \"wechat article\", \"company registry 企查查\", \"read a PDF from a URL\"). Returns the best-matching tools; they become callable on your next step. " +
+      "Chinese or English domain keywords are fine. " +
+      (tavilySoft
+        ? "General open-web search may use sandbox curl/Google/Bing; Tavily is optional if loaded. "
+        : "Do NOT use this for Tavily / general web search when the prompt marks tavily as already configured — call \`mcp__tavily__tavily_search\` directly. ") +
+      "Do use this for deferred domain connectors (legal, company registry, wechat, …) — never substitute Tavily for those. " +
+      "Call this before using any deferred connector listed under \"Connector tools\" in the system prompt.",
     inputSchema: z.object({
       query: z.string().describe("What you want to do, in a few words"),
       limit: z.number().int().min(1).max(15).optional().describe("Max tools to return (default 5)"),
     }),
     execute: async ({ query, limit }) => {
-      const hits = bm25Search(docs, query, limit ?? DEFAULT_FIND_LIMIT);
+      const expandedQuery = expandFindQuery(query);
+      const hits = bm25Search(docs, expandedQuery, limit ?? DEFAULT_FIND_LIMIT);
       // Telemetry: query → matches. The only lever for tuning BM25, the sample
       // breadth, and the defer threshold — without it none of these is observable.
-      log.info("mcp.find_tool", { query, matched: hits.map((h) => h.name) });
+      log.info("mcp.find_tool", {
+        query,
+        expandedQuery: expandedQuery !== query ? expandedQuery : undefined,
+        matched: hits.map((h) => h.name),
+      });
       if (hits.length === 0) {
         return {
           matched: [],

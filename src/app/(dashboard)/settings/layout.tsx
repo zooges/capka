@@ -67,11 +67,17 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const flatItems = visibleSections.flatMap((section) => section.items);
 
   return (
-    <>
+    <div
+      data-capka-settings="1"
+      className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden"
+    >
       <Header title={t("title")} />
-      <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Mobile: flat horizontal scroll tabs (headers don't fit a single row) */}
-        <nav className="flex gap-1 overflow-x-auto border-b px-3 py-2 md:hidden">
+        <nav
+          className="flex shrink-0 gap-1 overflow-x-auto overscroll-x-contain border-b py-2 pl-[max(0.75rem,var(--capka-sal,env(safe-area-inset-left,0px)))] pr-[max(0.75rem,var(--capka-sar,env(safe-area-inset-right,0px)))] md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label={t("title")}
+        >
           {flatItems.map((item) => (
             <Link
               key={item.href}
@@ -89,7 +95,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           ))}
         </nav>
         {/* Desktop: vertical sidebar, grouped by section */}
-        <nav className="hidden w-48 flex-col gap-4 border-r p-3 md:flex">
+        <nav className="hidden w-48 shrink-0 flex-col gap-4 border-r p-3 md:flex">
           {visibleSections.map((section) => (
             <div key={section.titleKey} className="flex flex-col gap-1">
               <p className="px-2.5 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
@@ -113,8 +119,13 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             </div>
           ))}
         </nav>
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 [scrollbar-gutter:stable]">{children}</div>
+        <div
+          data-capka-settings-scroll="1"
+          className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pl-[max(1rem,var(--capka-sal,env(safe-area-inset-left,0px)))] pr-[max(1rem,var(--capka-sar,env(safe-area-inset-right,0px)))] pt-4 pb-[max(1.25rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))] md:p-6 md:pb-6 md:[scrollbar-gutter:stable]"
+        >
+          {children}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

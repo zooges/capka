@@ -21,6 +21,11 @@ node_modules/
 # production
 /build
 
+# xcode
+/ios/build/
+xcuserdata/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
 # misc
 .DS_Store
 *.pem
@@ -56,3 +61,4 @@ next-env.d.ts
 # Maintainer-private deploy runbook + internal planning docs (not for the public tree)
 /DEPLOY.md
 docs/superpowers/
+boot.log

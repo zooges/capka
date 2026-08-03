@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSandboxConfig, resolveNetworkMode } from "./sandbox-spec.js";
+import { buildSandboxConfig, resolveNetworkMode, resolveSandboxDns, resolveSandboxProxy, proxyUrlToAllowEntry } from "./sandbox-spec.js";
 
 const base = {
   image: "capka-sandbox",
@@ -187,5 +187,66 @@ describe("resolveNetworkMode — platform decides; only bridge grants network", 
     expect(resolveNetworkMode("none")).toBe("none");
     expect(resolveNetworkMode("host")).toBe("none");
     expect(resolveNetworkMode(undefined)).toBe("none");
+  });
+});
+
+describe("resolveSandboxDns — bypass host fake-ip", () => {
+  it("defaults to AliDNS + Google DNS", () => {
+    expect(resolveSandboxDns("")).toEqual(["223.5.5.5", "8.8.8.8"]);
+    expect(resolveSandboxDns(undefined)).toEqual(["223.5.5.5", "8.8.8.8"]);
+  });
+
+  it("honours SANDBOX_DNS overrides", () => {
+    expect(resolveSandboxDns("1.1.1.1,8.8.4.4")).toEqual(["1.1.1.1", "8.8.4.4"]);
+  });
+
+  it("pins Dns on bridge configs and omits it when network is off", () => {
+    const bridged = buildSandboxConfig({ ...base, networkMode: "bridge", dns: ["223.5.5.5", "8.8.8.8"] });
+    expect(bridged.HostConfig.Dns).toEqual(["223.5.5.5", "8.8.8.8"]);
+    expect(buildSandboxConfig(base).HostConfig.Dns).toBeUndefined();
+  });
+});
+
+describe("resolveSandboxProxy — host mihomo/Clash pinholes", () => {
+  it("is off when unset", () => {
+    expect(resolveSandboxProxy({}).fingerprint).toBe("");
+    expect(resolveSandboxProxy({}).allow).toEqual([]);
+  });
+
+  it("derives IPv4:port allowlist from proxy URLs", () => {
+    const p = resolveSandboxProxy({
+      SANDBOX_HTTP_PROXY: "http://172.17.0.1:7890",
+      SANDBOX_ALL_PROXY: "socks5://172.17.0.1:7890",
+    });
+    expect(p.allow).toEqual(["172.17.0.1:7890"]);
+    expect(p.http).toBe("http://172.17.0.1:7890");
+    expect(p.all).toBe("socks5://172.17.0.1:7890");
+  });
+
+  it("rejects hostname proxies without an explicit allowlist", () => {
+    expect(() => resolveSandboxProxy({ SANDBOX_HTTP_PROXY: "http://host.docker.internal:7890" }))
+      .toThrow(/IPv4/);
+  });
+
+  it("never allowlists link-local metadata", () => {
+    expect(proxyUrlToAllowEntry("http://169.254.169.254:80")).toBeNull();
+  });
+
+  it("injects proxy env + egress allow on bridge only", () => {
+    const proxy = resolveSandboxProxy({ SANDBOX_HTTP_PROXY: "http://172.17.0.1:7890" });
+    const bridged = buildSandboxConfig({ ...base, networkMode: "bridge", proxy });
+    expect(bridged.Env).toContain("SANDBOX_EGRESS_ALLOW=172.17.0.1:7890");
+    expect(bridged.Env).toContain("HTTP_PROXY=http://172.17.0.1:7890");
+    expect(bridged.Env).toContain("HTTPS_PROXY=http://172.17.0.1:7890");
+    expect(bridged.Labels["capka.proxy"]).toBe(proxy.fingerprint);
+    expect(buildSandboxConfig({ ...base, proxy }).Env.join("\n")).not.toMatch(/HTTP_PROXY/);
+  });
+
+  it("can bind-mount a host entrypoint over /entrypoint.sh", () => {
+    const cfg = buildSandboxConfig({
+      ...base,
+      entrypointHostPath: "/opt/capka/sandbox-entrypoint.sh",
+    });
+    expect(cfg.HostConfig.Binds).toContain("/opt/capka/sandbox-entrypoint.sh:/entrypoint.sh:ro");
   });
 });

@@ -287,7 +287,10 @@ fi
 # publish), `set -e` would abort before diagnostics; route through diagnose().
 echo "Starting the stack ..."
 if [ "${CAPKA_BUILD:-}" = "1" ]; then
-  docker compose $COMPOSE up -d --build --remove-orphans || { diagnose; exit 1; }
+  # Never pull GHCR while building a fork — pull_policy:never alone is not
+  # enough on every Compose version; an accidental pull would overwrite the
+  # China/local platform image with upstream Capka.
+  docker compose $COMPOSE up -d --build --pull never --remove-orphans || { diagnose; exit 1; }
 else
   docker compose $COMPOSE up -d --remove-orphans || { diagnose; exit 1; }
 fi

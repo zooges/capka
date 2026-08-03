@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import UniformTypeIdentifiers
 
 /// The Mac window: a permanent sidebar beside the conversation.
@@ -31,6 +32,7 @@ struct MacRootView: View {
   @State private var renameText = ""
   @State private var moveTarget: ChatSummary?
   @State private var moveProjects: [ProjectSummary] = []
+  @State private var shareTarget: ChatSummary?
   @State private var starterType = "pdf"
   @State private var follow = true
   @FocusState private var composerFocused: Bool
@@ -81,6 +83,20 @@ struct MacRootView: View {
         onMove: { row in
           moveTarget = row
           Task { moveProjects = (try? await CapkaAPIClient.shared.listProjects()) ?? [] }
+        },
+        onShare: { row in shareTarget = row },
+        onExport: { row in
+          Task {
+            do {
+              let url = try await CapkaAPIClient.shared.exportChatMarkdown(
+                chatId: row.id,
+                title: row.title
+              )
+              NSWorkspace.shared.activateFileViewerSelecting([url])
+            } catch {
+              list.error = "导出失败：\(error.localizedDescription)"
+            }
+          }
         }
       )
       .navigationSplitViewColumnWidth(min: 232, ideal: 268, max: 360)
@@ -193,6 +209,14 @@ struct MacRootView: View {
         renameTarget = nil
       }
       Button("取消", role: .cancel) { renameTarget = nil }
+    }
+    .sheet(item: $shareTarget) { row in
+      ChatShareSheet(chat: row) { updated in
+        if let idx = list.chats.firstIndex(where: { $0.id == updated.id }) {
+          list.chats[idx] = updated
+        }
+      }
+      .frame(width: 420, height: 480)
     }
     .confirmationDialog("移至项目", isPresented: Binding(
       get: { moveTarget != nil },

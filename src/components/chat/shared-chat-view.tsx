@@ -7,10 +7,11 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ChatMessage } from "@/components/chat/message";
-import { ClawMark } from "@/components/brand/claw-mark";
+import { BrandMark } from "@/components/brand/brand-lockup";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
+import { productName } from "@/lib/brand";
 
 /**
  * Read-only render of a published conversation. Reuses ChatMessage with no
@@ -55,8 +56,8 @@ export function SharedChatView({
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur">
-        <Link href="/" aria-label="Capka" className="shrink-0 text-foreground">
-          <ClawMark className="size-6" />
+        <Link href="/" aria-label={productName()} className="shrink-0 text-foreground">
+          <BrandMark size="sm" />
         </Link>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-medium">{title || tc("untitled")}</h1>

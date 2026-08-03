@@ -13,6 +13,88 @@ export function resolveNetworkMode(requested) {
   return requested === "bridge" ? "bridge" : "none";
 }
 
+/**
+ * Public resolvers for bridge sandboxes. Host Docker DNS often inherits the
+ * Mac's Clash/Surge fake-ip resolver (198.18.0.0/15); the egress firewall then
+ * DROPs those addresses and every fetch times out. Pinning real DNS avoids that.
+ * Override with SANDBOX_DNS=1.1.1.1,8.8.8.8 (comma-separated).
+ */
+export function resolveSandboxDns(dnsEnv = process.env.SANDBOX_DNS) {
+  const fromEnv = String(dnsEnv || "")
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return fromEnv.length ? fromEnv : ["223.5.5.5", "8.8.8.8"];
+}
+
+export function dnsEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  const sa = [...a].sort().join(",");
+  const sb = [...b].sort().join(",");
+  return sa === sb;
+}
+
+/**
+ * Extract an IPv4 or IPv4:port allowlist entry from a proxy URL.
+ * Hostnames are rejected — Docker's bridge gateway / LAN IP must be used so the
+ * entrypoint can pin an iptables ACCEPT without DNS (which may be fake-ip).
+ * Returns null when the value is empty or not a usable IPv4 proxy URL.
+ */
+export function proxyUrlToAllowEntry(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  let url;
+  try {
+    url = new URL(s.includes("://") ? s : `http://${s}`);
+  } catch {
+    return null;
+  }
+  const host = url.hostname;
+  if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return null;
+  if (host.startsWith("169.254.")) return null;
+  const port = url.port || (url.protocol === "https:" ? "443" : url.protocol === "http:" ? "80" : "");
+  // socks / http proxies almost always need an explicit port in the URL; if the
+  // parser left it empty, allow the whole host (operator supplied host-only).
+  return port ? `${host}:${port}` : host;
+}
+
+/**
+ * Resolve optional host-proxy settings for bridge sandboxes.
+ * Controllers set SANDBOX_HTTP_PROXY / SANDBOX_HTTPS_PROXY / SANDBOX_ALL_PROXY
+ * (and optional SANDBOX_EGRESS_ALLOW) so agents can reach foreign sites via a
+ * host Clash/mihomo while the private-range DROP still blocks the rest of the LAN.
+ */
+export function resolveSandboxProxy(env = process.env) {
+  const http = String(env.SANDBOX_HTTP_PROXY || "").trim();
+  const https = String(env.SANDBOX_HTTPS_PROXY || (http ? http : "")).trim();
+  const all = String(env.SANDBOX_ALL_PROXY || "").trim();
+  const no = String(env.SANDBOX_NO_PROXY || "localhost,127.0.0.1").trim();
+  const fromUrls = [http, https, all].map(proxyUrlToAllowEntry).filter(Boolean);
+  const fromAllow = String(env.SANDBOX_EGRESS_ALLOW || "")
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((e) => !e.startsWith("169.254."));
+  const allow = [...new Set([...fromUrls, ...fromAllow])];
+  const enabled = Boolean(http || https || all || allow.length);
+  if (!enabled) {
+    return { http: "", https: "", all: "", no: "", allow: [], fingerprint: "" };
+  }
+  // Proxy URLs must use an IPv4 host so the entrypoint can ACCEPT before DROP.
+  if ((http || https || all) && fromUrls.length === 0 && allow.length === 0) {
+    throw new Error(
+      "SANDBOX_*_PROXY must use an IPv4 host (e.g. http://172.17.0.1:7890), not a hostname — " +
+        "or set SANDBOX_EGRESS_ALLOW=x.x.x.x:port explicitly",
+    );
+  }
+  const fingerprint = [http, https, all, no, allow.slice().sort().join(" ")].join("|");
+  return { http, https, all, no, allow, fingerprint };
+}
+
+export function proxyEqual(a, b) {
+  return (a || "") === (b || "");
+}
+
 /** Build the full dockerode createContainer config for a sandbox.
  *  `runtime` selects the OCI runtime (gVisor "runsc" by default in the secure
  *  profile; "runc" only for trusted/dev). `readonlyRootfs` makes the container's
@@ -54,7 +136,31 @@ export function buildSandboxConfig({
   // in server.js. Deliberately OUTSIDE /workspace so the quota/prune/delete_path
   // machinery never touches the operator's files. Empty by default (zero-config).
   mounts = [],
+  // Public DNS for bridge mode (see resolveSandboxDns). Ignored when network is off.
+  dns = [],
+  // Host proxy for bridge sandboxes (mihomo/Clash). See resolveSandboxProxy.
+  proxy = null,
+  // Optional host path bind-mounted over /entrypoint.sh so operators can ship an
+  // updated egress firewall without rebuilding the multi-GB sandbox image.
+  entrypointHostPath = "",
 }) {
+  const proxyCfg = proxy && networkMode === "bridge" ? proxy : null;
+  const proxyEnv = [];
+  if (proxyCfg) {
+    if (proxyCfg.allow?.length) proxyEnv.push(`SANDBOX_EGRESS_ALLOW=${proxyCfg.allow.join(" ")}`);
+    if (proxyCfg.http) {
+      proxyEnv.push(`HTTP_PROXY=${proxyCfg.http}`, `http_proxy=${proxyCfg.http}`);
+    }
+    if (proxyCfg.https) {
+      proxyEnv.push(`HTTPS_PROXY=${proxyCfg.https}`, `https_proxy=${proxyCfg.https}`);
+    }
+    if (proxyCfg.all) {
+      proxyEnv.push(`ALL_PROXY=${proxyCfg.all}`, `all_proxy=${proxyCfg.all}`);
+    }
+    if (proxyCfg.no) {
+      proxyEnv.push(`NO_PROXY=${proxyCfg.no}`, `no_proxy=${proxyCfg.no}`);
+    }
+  }
   return {
     Image: image,
     name: `sandbox-${sessionId}`,
@@ -71,6 +177,7 @@ export function buildSandboxConfig({
       // open fails and the fail-closed egress firewall kills the container. Point
       // it at the writable /tmp tmpfs. (Only meaningful alongside the firewall.)
       ...(networkMode === "bridge" ? ["SANDBOX_EGRESS_FILTER=1", "XTABLES_LOCKFILE=/tmp/xtables.lock"] : []),
+      ...proxyEnv,
     ],
     HostConfig: {
       Memory: memoryBytes,
@@ -128,7 +235,16 @@ export function buildSandboxConfig({
       // command (exec runs as uid 1000 with no caps), these buy nothing.
       CapAdd: ["CHOWN", "SETUID", "SETGID", ...(networkMode === "bridge" ? ["NET_ADMIN", "NET_RAW"] : [])],
       NetworkMode: networkMode,
-      Binds: [`${wsHostPath}:/workspace`, `${sharedHostPath}:/shared`],
+      // Bypass host fake-ip DNS (Clash etc.) so public hosts resolve to real IPs
+      // the egress filter will actually allow.
+      ...(networkMode === "bridge" && dns.length ? { Dns: dns } : {}),
+      Binds: [
+        `${wsHostPath}:/workspace`,
+        `${sharedHostPath}:/shared`,
+        // Optional override of the image entrypoint (updated egress allowlist /
+        // proxy pinholes) without rebuilding the sandbox image.
+        ...(entrypointHostPath ? [`${entrypointHostPath}:/entrypoint.sh:ro`] : []),
+      ],
       // Host folders use Mounts (not Binds): Mounts fails on a missing source
       // instead of silently creating a root-owned dir, and carries explicit
       // ReadOnly + Propagation. rprivate stops mount events propagating either way.
@@ -150,6 +266,7 @@ export function buildSandboxConfig({
       "capka.session": sessionId,
       "capka.user": userId,
       "capka.network": networkMode,
+      ...(proxyCfg?.fingerprint ? { "capka.proxy": proxyCfg.fingerprint } : {}),
     },
   };
 }

@@ -5,6 +5,8 @@ enum AppConfig {
   static let baseURL = URL(string: "http://111.231.24.43:3100")!
 
   static let openURLNotification = Notification.Name("capka.openURL")
+  /// Workspace listing should reload (agent wrote a file, markup uploaded, …).
+  static let workspaceDidChangeNotification = Notification.Name("capka.workspace.didChange")
 
   /// Rebuild the Capka OAuth callback URL from a `bossyoung://oauth?...` deep link.
   static func feishuCallbackURL(fromBridge url: URL) -> URL? {

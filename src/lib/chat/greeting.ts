@@ -19,7 +19,21 @@ import { GREETINGS } from "@/lib/chat/greetings.catalog";
 
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 export type Season = "winter" | "spring" | "summer" | "autumn";
-export type GreetingLocale = "uk" | "en";
+/** UI locales plus legacy `uk` (Telegram / older catalogs). */
+export type GreetingLocale = "zh-CN" | "en" | "uk";
+
+/** Map next-intl / Accept-Language tags onto a greeting catalog key.
+ *  China-fork default is Simplified Chinese — never fall through to Ukrainian. */
+export function resolveGreetingLocale(value?: string | null): GreetingLocale {
+  if (!value) return "zh-CN";
+  const lower = value.toLowerCase();
+  if (lower === "en" || lower.startsWith("en-")) return "en";
+  // Legacy `uk` → zh-CN (China fork does not ship a Ukrainian UI).
+  if (lower === "zh-cn" || lower === "zh" || lower.startsWith("zh-") || lower === "uk" || lower.startsWith("uk-")) {
+    return "zh-CN";
+  }
+  return "zh-CN";
+}
 
 /** The decoded "now" a greeting is matched against. All derived from one Date so
  *  the engine stays a pure function of its inputs (easy to test). */
@@ -124,6 +138,18 @@ function needsName(g: Greeting): boolean {
   return g.needsName ?? Object.values(g.text).some((t) => t?.includes("{name}"));
 }
 
+/** Resolve catalog text for a UI locale. China fork: never pick Ukrainian when
+ *  Chinese or English is available (users read Cyrillic as "Russian"). */
+function textForLocale(g: Greeting, locale: GreetingLocale): string | undefined {
+  if (locale === "zh-CN") {
+    return g.text["zh-CN"] ?? g.text.en ?? undefined;
+  }
+  if (locale === "en") {
+    return g.text.en ?? g.text["zh-CN"] ?? undefined;
+  }
+  return g.text.uk ?? g.text.en ?? g.text["zh-CN"] ?? undefined;
+}
+
 export interface PickOptions {
   now?: Date;
   name?: string | null;
@@ -142,26 +168,26 @@ export interface PickOptions {
  */
 export function pickGreeting(opts: PickOptions = {}): string {
   const now = opts.now ?? new Date();
-  const locale = opts.locale ?? "uk";
+  const locale = resolveGreetingLocale(opts.locale);
   const catalog = opts.catalog ?? GREETINGS;
   const rng = opts.random ?? Math.random;
   const name = firstName(opts.name);
   const moment = getMoment(now);
 
   const eligible = catalog.filter(
-    (g) => g.text[locale] && matches(g, moment) && (needsName(g) ? !!name : true),
+    (g) => textForLocale(g, locale) && matches(g, moment) && (needsName(g) ? !!name : true),
   );
 
   // Resolve a line's text for this locale, substituting the name (or trimming a
-  // trailing-comma form like "Доброго ранку, {name}!" down cleanly when absent).
+  // trailing-comma form like "早上好，{name}！" down cleanly when absent).
   const render = (g: Greeting): string => {
-    const tmpl = g.text[locale] ?? g.text.uk ?? "";
+    const tmpl = textForLocale(g, locale) ?? "";
     return name ? tmpl.replace("{name}", name) : tmpl.replace(/,?\s*\{name\}/, "");
   };
 
   if (eligible.length === 0) {
-    // Should not happen with a healthy catalog; fail soft to any localized line.
-    const any = catalog.find((g) => g.text[locale]);
+    // Should not happen with a healthy catalog; fail soft to any renderable line.
+    const any = catalog.find((g) => textForLocale(g, locale));
     return any ? render(any) : "";
   }
 

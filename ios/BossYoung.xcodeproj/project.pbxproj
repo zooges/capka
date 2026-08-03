@@ -51,6 +51,7 @@
 		A1000000000000000000003A /* MarkupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003A /* MarkupView.swift */; };
 		A1000000000000000000003B /* ProjectContextViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003B /* ProjectContextViews.swift */; };
 		A1000000000000000000003C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003C /* Platform.swift */; };
+		A1000000000000000000003D /* ChatShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003D /* ChatShareSheet.swift */; };
 		A1000000000000000000500 /* MacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000050 /* MacApp.swift */; };
 		A1000000000000000000510 /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000051 /* MacRootView.swift */; };
 		A1000000000000000000039 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AppConfig.swift */; };
@@ -74,6 +75,7 @@
 		A1000000000000000000399 /* OutboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000039 /* OutboxStore.swift */; };
 		A10000000000000000003B9 /* ProjectContextViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003B /* ProjectContextViews.swift */; };
 		A10000000000000000003C9 /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003C /* Platform.swift */; };
+		A10000000000000000003D9 /* ChatShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000003D /* ChatShareSheet.swift */; };
 		A10000000000000000000A9 /* CapkaFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* CapkaFeedback.swift */; };
 		A10000000000000000000056 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -134,6 +136,7 @@
 		A2000000000000000000003A /* MarkupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkupView.swift; sourceTree = "<group>"; };
 		A2000000000000000000003B /* ProjectContextViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectContextViews.swift; sourceTree = "<group>"; };
 		A2000000000000000000003C /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
+		A2000000000000000000003D /* ChatShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatShareSheet.swift; sourceTree = "<group>"; };
 		A20000000000000000000050 /* MacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000051 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A20000000000000000000053 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -191,6 +194,7 @@
 				A2000000000000000000001A /* Phase2ViewModels.swift */,
 				A2000000000000000000001B /* Phase2Views.swift */,
 				A2000000000000000000001C /* SidebarView.swift */,
+				A2000000000000000000003D /* ChatShareSheet.swift */,
 				A2000000000000000000001D /* MessageViews.swift */,
 				A20000000000000000000031 /* SettingsViews.swift */,
 				A20000000000000000000034 /* SettingsFormViews.swift */,
@@ -351,6 +355,7 @@
 				A1000000000000000000001A /* Phase2ViewModels.swift in Sources */,
 				A1000000000000000000001B /* Phase2Views.swift in Sources */,
 				A1000000000000000000001C /* SidebarView.swift in Sources */,
+				A1000000000000000000003D /* ChatShareSheet.swift in Sources */,
 				A1000000000000000000001D /* MessageViews.swift in Sources */,
 				A10000000000000000000031 /* SettingsViews.swift in Sources */,
 				A10000000000000000000034 /* SettingsFormViews.swift in Sources */,
@@ -404,6 +409,7 @@
 				A1000000000000000000399 /* OutboxStore.swift in Sources */,
 				A10000000000000000003B9 /* ProjectContextViews.swift in Sources */,
 				A10000000000000000003C9 /* Platform.swift in Sources */,
+				A10000000000000000003D9 /* ChatShareSheet.swift in Sources */,
 				A10000000000000000000A9 /* CapkaFeedback.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -451,7 +457,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = 5FSTWGBV38;
 				CODE_SIGN_ENTITLEMENTS = BossYoung/BossYoung.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -480,7 +486,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = 5FSTWGBV38;
 				CODE_SIGN_ENTITLEMENTS = BossYoung/BossYoung.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -511,7 +517,7 @@
 				CODE_SIGN_ENTITLEMENTS = BossYoungMac/BossYoungMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = 5FSTWGBV38;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -535,7 +541,7 @@
 				CODE_SIGN_ENTITLEMENTS = BossYoungMac/BossYoungMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_TEAM = 5FSTWGBV38;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;

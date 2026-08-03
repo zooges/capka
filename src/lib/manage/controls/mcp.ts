@@ -87,7 +87,8 @@ export const mcpCollection: Collection = {
     "NEVER ask the user to paste API keys or tokens into chat — a connector needing a secret token is configured on the settings page, not here.",
   requiredRole: "user",
   auditNoun: "connector",
-  settingsPath: "/settings/skills?tab=connectors",
+  // Admins open the connectors tab; members land on Customize without MCP URLs.
+  settingsPath: "/settings/skills",
   // A connector runs third-party code in the sandbox, so adding one is confirmed
   // even in autonomous mode — the one checkpoint prompt-injection can't bypass.
   alwaysConfirm: true,
@@ -108,7 +109,12 @@ export const mcpCollection: Collection = {
     return Promise.all(servers.map(async (s) => ({
       id: s.id,
       title: s.name,
-      subtitle: s.transport === "stdio" ? loc(t, "mcp.stdio", "local (stdio)") : s.url ?? undefined,
+      // Endpoint URLs are admin-only — non-admins only see transport kind.
+      subtitle: s.transport === "stdio"
+        ? loc(t, "mcp.stdio", "local (stdio)")
+        : ctx.isAdmin
+          ? (s.url ?? undefined)
+          : loc(t, "mcp.remote", "remote"),
       enabled: s.enabled,
       // "sign-in needed" only when an OAuth connector actually lacks a token — once
       // the user has signed in it reads as a normal connector. (Was unconditional
@@ -190,7 +196,7 @@ export const mcpCollection: Collection = {
     const t = manageT(ctx.locale);
     const s = await getAccessibleServer(ctx.userId, itemId);
     if (!s) throw new Error("No such connector.");
-    if (s.transport !== "http" || !s.url) {
+    if ((s.transport !== "http" && s.transport !== "sse") || !s.url) {
       return {
         itemTitle: s.name,
         state: loc(t, "state.local", "local"),
@@ -202,7 +208,7 @@ export const mcpCollection: Collection = {
       try { secrets = JSON.parse(decrypt(s.secrets, await getMasterKey())) as McpSecrets; } catch { /* ignore */ }
     }
     const health = await probeConfig(
-      { name: s.name, url: s.url, secrets, authKind: s.authKind as McpAuthKind, id: s.id },
+      { name: s.name, url: s.url, secrets, authKind: s.authKind as McpAuthKind, id: s.id, transport: s.transport === "sse" ? "sse" : "http" },
       await getBlockPrivateProviderUrls(),
       { userId: ctx.userId },
     );

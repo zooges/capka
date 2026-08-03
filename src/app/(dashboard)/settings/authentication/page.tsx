@@ -14,8 +14,16 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type Mode = "open" | "approval" | "closed";
+interface ProviderCfg {
+  enabledToggle: boolean;
+  ready: boolean;
+  clientId: string;
+  hasClientSecret: boolean;
+  redirectUri: string;
+}
 interface Config {
-  telegram: { enabledToggle: boolean; ready: boolean; clientId: string; hasClientSecret: boolean; redirectUri: string };
+  telegram: ProviderCfg;
+  feishu: ProviderCfg;
   registrationMode: Mode;
   emailSignupEnabled: boolean;
 }
@@ -29,10 +37,15 @@ export default function AuthenticationPage() {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [hasSecret, setHasSecret] = useState(false);
+  const [redirectUri, setRedirectUri] = useState("");
+  const [feishuEnabled, setFeishuEnabled] = useState(false);
+  const [feishuClientId, setFeishuClientId] = useState("");
+  const [feishuClientSecret, setFeishuClientSecret] = useState("");
+  const [feishuHasSecret, setFeishuHasSecret] = useState(false);
+  const [feishuRedirectUri, setFeishuRedirectUri] = useState("");
   const [mode, setMode] = useState<Mode>("closed");
   const [emailSignup, setEmailSignup] = useState(true);
-  const [redirectUri, setRedirectUri] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"tg" | "feishu" | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -43,6 +56,10 @@ export default function AuthenticationPage() {
         setClientId(data.telegram.clientId);
         setHasSecret(data.telegram.hasClientSecret);
         setRedirectUri(data.telegram.redirectUri);
+        setFeishuEnabled(data.feishu.enabledToggle);
+        setFeishuClientId(data.feishu.clientId);
+        setFeishuHasSecret(data.feishu.hasClientSecret);
+        setFeishuRedirectUri(data.feishu.redirectUri);
         setMode(data.registrationMode);
         setEmailSignup(data.emailSignupEnabled);
       }
@@ -50,13 +67,23 @@ export default function AuthenticationPage() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const save = async () => {
     setSaving(true);
     try {
-      const body: Record<string, unknown> = { enabled, registrationMode: mode, emailSignupEnabled: emailSignup, clientId: clientId.trim() };
+      const body: Record<string, unknown> = {
+        enabled,
+        registrationMode: mode,
+        emailSignupEnabled: emailSignup,
+        clientId: clientId.trim(),
+        feishuEnabled,
+        feishuClientId: feishuClientId.trim(),
+      };
       if (clientSecret.trim()) body.clientSecret = clientSecret.trim();
+      if (feishuClientSecret.trim()) body.feishuClientSecret = feishuClientSecret.trim();
       const res = await fetch("/api/admin/auth-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,6 +92,7 @@ export default function AuthenticationPage() {
       if (res.ok) {
         toast.success(t("saved"));
         setClientSecret("");
+        setFeishuClientSecret("");
         await load();
       } else {
         toast.error(t("saveFailed"));
@@ -74,19 +102,24 @@ export default function AuthenticationPage() {
     }
   };
 
-  const copyRedirect = () => {
-    navigator.clipboard.writeText(redirectUri);
-    setCopied(true);
+  const copyRedirect = (which: "tg" | "feishu", value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopied(which);
     toast.success(t("copied"));
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(null), 2000);
   };
 
-  const modes: { key: Mode; }[] = [{ key: "open" }, { key: "approval" }, { key: "closed" }];
-  // "Active" = toggle on AND credentials present (stored secret or a fresh one).
+  const modes: { key: Mode }[] = [{ key: "open" }, { key: "approval" }, { key: "closed" }];
   const ready = enabled && !!clientId.trim() && (hasSecret || !!clientSecret.trim());
+  const feishuReady =
+    feishuEnabled && !!feishuClientId.trim() && (feishuHasSecret || !!feishuClientSecret.trim());
 
   if (loading) {
-    return <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -144,14 +177,83 @@ export default function AuthenticationPage() {
                   variant="outline"
                   size="icon"
                   className="h-9 w-9 shrink-0"
-                  onClick={copyRedirect}
-                  aria-label={copied ? t("copied") : t("copyRedirect")}
+                  onClick={() => copyRedirect("tg", redirectUri)}
+                  aria-label={copied === "tg" ? t("copied") : t("copyRedirect")}
                 >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied === "tg" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
-                <span role="status" aria-live="polite" className="sr-only">{copied ? t("copied") : ""}</span>
               </div>
               <p className="text-xs text-muted-foreground">{t("telegram.redirectHint")}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Feishu login provider */}
+      <div className="space-y-4 rounded-md border p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#3370ff]/10">
+              <span className="text-sm font-semibold text-[#3370ff]">飞</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium">{t("feishu.title")}</h3>
+                {feishuEnabled && (
+                  <Badge variant={feishuReady ? "secondary" : "outline"} className="text-xs">
+                    {feishuReady ? t("feishu.active") : t("feishu.incomplete")}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">{t("feishu.desc")}</p>
+            </div>
+          </div>
+          <Switch
+            checked={feishuEnabled}
+            onCheckedChange={setFeishuEnabled}
+            aria-label={t("feishu.toggleAria")}
+          />
+        </div>
+
+        {feishuEnabled && (
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground">{t("feishu.hint")}</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="feishuClientId">{t("feishu.clientId")}</Label>
+              <Input
+                id="feishuClientId"
+                value={feishuClientId}
+                onChange={(e) => setFeishuClientId(e.target.value)}
+                placeholder="cli_xxx"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="feishuClientSecret">{t("feishu.clientSecret")}</Label>
+              <Input
+                id="feishuClientSecret"
+                type="password"
+                value={feishuClientSecret}
+                onChange={(e) => setFeishuClientSecret(e.target.value)}
+                placeholder={feishuHasSecret ? t("feishu.secretStored") : t("feishu.secretPlaceholder")}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("feishu.redirectUri")}</Label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate rounded-md bg-muted px-3 py-2 text-xs font-mono">
+                  {feishuRedirectUri}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={() => copyRedirect("feishu", feishuRedirectUri)}
+                  aria-label={copied === "feishu" ? t("copied") : t("copyRedirect")}
+                >
+                  {copied === "feishu" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">{t("feishu.redirectHint")}</p>
             </div>
           </div>
         )}
@@ -174,7 +276,12 @@ export default function AuthenticationPage() {
                 mode === key ? "border-foreground/40 bg-accent" : "hover:bg-accent/40",
               )}
             >
-              <div className={cn("mt-0.5 h-4 w-4 shrink-0 rounded-full border-2", mode === key ? "border-foreground bg-foreground" : "border-muted-foreground/40")} />
+              <div
+                className={cn(
+                  "mt-0.5 h-4 w-4 shrink-0 rounded-full border-2",
+                  mode === key ? "border-foreground bg-foreground" : "border-muted-foreground/40",
+                )}
+              />
               <div>
                 <p className="text-sm font-medium">{t(`mode.${key}.label`)}</p>
                 <p className="text-xs text-muted-foreground">{t(`mode.${key}.desc`)}</p>
@@ -184,9 +291,6 @@ export default function AuthenticationPage() {
         </div>
       </div>
 
-      {/* Email sign-up toggle — a separate axis from the mode above. Off = no new
-          email accounts; existing email users still sign in, and Telegram (if
-          configured) stays open. */}
       <div className="space-y-3 rounded-md border p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -195,7 +299,7 @@ export default function AuthenticationPage() {
           </div>
           <Switch checked={emailSignup} onCheckedChange={setEmailSignup} aria-label={t("email.toggleAria")} />
         </div>
-        {!emailSignup && !ready && (
+        {!emailSignup && !ready && !feishuReady && (
           <p className="rounded-md border border-warning-border bg-warning-surface px-3 py-2 text-xs text-foreground">
             {t("email.deadEndWarning")}
           </p>
@@ -204,12 +308,11 @@ export default function AuthenticationPage() {
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={saving}>
-          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("save")}
+          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {t("save")}
         </Button>
       </div>
 
-      {/* Approvals now live on the Users page (the single home for people
-          management); when in approval mode, point admins there. */}
       {mode === "approval" && (
         <Link
           href="/settings/users"

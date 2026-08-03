@@ -77,6 +77,9 @@ export class DockerBackend {
       mcpTmpMb: spec.mcpTmpMb,
       fsizeBytes: spec.fsizeBytes,
       mounts: spec.mounts,
+      dns: spec.dns,
+      proxy: spec.proxy,
+      entrypointHostPath: spec.entrypointHostPath,
     });
 
     let container;
@@ -101,6 +104,19 @@ export class DockerBackend {
     }
     await container.start();
     return { handle: container.id };
+  }
+
+  /** HostConfig.Dns of a live container — used to detect stale bridge sandboxes
+   *  that still inherit the host's fake-ip resolver after we started pinning DNS. */
+  async inspectDns(handle) {
+    const info = await this.docker.getContainer(handle).inspect();
+    return info?.HostConfig?.Dns || [];
+  }
+
+  /** Proxy fingerprint label — recreate when host mihomo/Clash settings change. */
+  async inspectProxyFingerprint(handle) {
+    const info = await this.docker.getContainer(handle).inspect();
+    return info?.Config?.Labels?.["capka.proxy"] || "";
   }
 
   async exec(handle, command, timeoutMs = this.execTimeoutMs) {

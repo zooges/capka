@@ -55,7 +55,10 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
+          // Mobile: pin to safe horizontal inset so the palette never wider than
+          // the screen (w-full + translate centering was overflowing WKWebView).
+          "left-4 right-4 top-[max(1rem,var(--capka-sat,env(safe-area-inset-top,0px)))] w-auto max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-xl! p-0",
+          "sm:left-1/2 sm:right-auto sm:top-1/3 sm:w-full sm:max-w-md sm:-translate-x-1/2",
           className
         )}
         showCloseButton={showCloseButton}
@@ -74,11 +77,12 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
-      <InputGroup className="h-8! rounded-lg! border-input/30 bg-input/30 shadow-none! *:data-[slot=input-group-addon]:pl-2!">
+      <InputGroup className="h-9! rounded-lg! border-input/30 bg-input/30 shadow-none! md:h-8! *:data-[slot=input-group-addon]:pl-2!">
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
-            "w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            // 16px on mobile prevents iOS auto-zoom on focus (see ChatSearch).
+            "w-full text-base outline-hidden disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
             className
           )}
           {...props}
@@ -158,7 +162,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground",
+        "group/command-item relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none in-data-[slot=dialog-content]:rounded-lg! data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-muted data-selected:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-selected:*:[svg]:text-foreground min-w-0",
         className
       )}
       {...props}
@@ -177,7 +181,9 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground",
+        // Hide keyboard chords on narrow phones — they push the row past the
+        // dialog width. Desktop keeps them.
+        "ml-auto hidden text-xs tracking-widest text-muted-foreground sm:inline group-data-selected/command-item:text-foreground",
         className
       )}
       {...props}

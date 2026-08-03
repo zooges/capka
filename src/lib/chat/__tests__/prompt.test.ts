@@ -56,6 +56,94 @@ describe("buildSystemPrompt — network state", () => {
     // Safe default: absent an explicit mode, assume no egress.
     expect(buildSystemPrompt({}).stable).toContain("no network access");
   });
+
+  it("adds China network + search guidance only when CAPKA_REGION=cn and network is bridged", () => {
+    const prev = process.env.CAPKA_REGION;
+    const prevSteer = process.env.CAPKA_TAVILY_STEER;
+    const prevWeb = process.env.CAPKA_WEB_SEARCH;
+    process.env.CAPKA_REGION = "cn";
+    delete process.env.CAPKA_TAVILY_STEER;
+    delete process.env.CAPKA_WEB_SEARCH;
+    try {
+      const bridged = buildSystemPrompt({ networkMode: "bridge" });
+      expect(bridged.stable).toContain("Network & web access (China)");
+      expect(bridged.stable).toContain("no built-in web search");
+      expect(bridged.stable).toContain("tavily");
+      expect(bridged.stable).toMatch(/Tavily replaces general web search only/);
+      expect(bridged.stable).toMatch(/Tavily is already configured/);
+      expect(bridged.stable).toContain("mcp__tavily__tavily_search");
+      expect(bridged.stable).toContain("pip install tavily");
+      expect(bridged.stable).toMatch(/find_tool` for Tavily/);
+      expect(bridged.stable).toContain("Domain tasks");
+      expect(bridged.stable).toMatch(/matching MCP/);
+      expect(bridged.stable).toContain("chineselaw");
+      expect(bridged.stable).toMatch(/企查查|yuandian|元典/);
+      expect(bridged.stable).toContain("find_tool");
+      expect(bridged.stable).toContain("curl");
+      expect(bridged.stable).toContain("bing.com");
+      expect(bridged.stable).toContain("baidu.com");
+      expect(bridged.stable).toContain("google.com");
+      expect(bridged.stable).toMatch(/domestic and overseas|overseas sites/);
+      expect(bridged.stable).toMatch(/Do not invent network blocks/);
+      expect(bridged.stable).toMatch(/must.*attempt a real tool call|Before.*claiming any site is unreachable/i);
+      expect(bridged.stable).not.toMatch(/still never Google|Do not use .* foreign search|China-accessible|国内可达|mainland China/);
+      expect(bridged.stable).not.toMatch(/Keep using Tavily MCP/);
+      expect(bridged.stable).not.toMatch(/For any web search/);
+
+      const offline = buildSystemPrompt({ networkMode: "none" });
+      expect(offline.stable).not.toContain("Network & web access (China)");
+    } finally {
+      if (prev === undefined) delete process.env.CAPKA_REGION;
+      else process.env.CAPKA_REGION = prev;
+      if (prevSteer === undefined) delete process.env.CAPKA_TAVILY_STEER;
+      else process.env.CAPKA_TAVILY_STEER = prevSteer;
+      if (prevWeb === undefined) delete process.env.CAPKA_WEB_SEARCH;
+      else process.env.CAPKA_WEB_SEARCH = prevWeb;
+    }
+  });
+
+  it("disables Tavily-first steer when CAPKA_TAVILY_STEER=0 (open web)", () => {
+    const prev = process.env.CAPKA_REGION;
+    const prevSteer = process.env.CAPKA_TAVILY_STEER;
+    const prevWeb = process.env.CAPKA_WEB_SEARCH;
+    process.env.CAPKA_REGION = "cn";
+    process.env.CAPKA_TAVILY_STEER = "0";
+    delete process.env.CAPKA_WEB_SEARCH;
+    try {
+      const bridged = buildSystemPrompt({ networkMode: "bridge" });
+      expect(bridged.stable).toContain("Network & web access (China)");
+      expect(bridged.stable).toMatch(/Do not invent network blocks/);
+      expect(bridged.stable).toMatch(/must.*attempt a real tool call|Before.*claiming any site is unreachable/i);
+      expect(bridged.stable).toMatch(/Open web \(this host\)/);
+      expect(bridged.stable).toMatch(/Tavily MCP is \*\*optional\*\*|optional if it appears/);
+      expect(bridged.stable).toMatch(/do \*\*not\*\* insist on Tavily-first|not mandatory/);
+      expect(bridged.stable).toContain("google.com");
+      expect(bridged.stable).toContain("YouTube");
+      expect(bridged.stable).toContain("Domain tasks");
+      expect(bridged.stable).not.toMatch(/Tavily is already configured/);
+      expect(bridged.stable).not.toMatch(/Tavily replaces general web search only/);
+      expect(bridged.stable).not.toMatch(/Last resort only/);
+    } finally {
+      if (prev === undefined) delete process.env.CAPKA_REGION;
+      else process.env.CAPKA_REGION = prev;
+      if (prevSteer === undefined) delete process.env.CAPKA_TAVILY_STEER;
+      else process.env.CAPKA_TAVILY_STEER = prevSteer;
+      if (prevWeb === undefined) delete process.env.CAPKA_WEB_SEARCH;
+      else process.env.CAPKA_WEB_SEARCH = prevWeb;
+    }
+  });
+
+  it("does not inject China search guidance when CAPKA_REGION is unset", () => {
+    const prev = process.env.CAPKA_REGION;
+    delete process.env.CAPKA_REGION;
+    delete process.env.CAPKA_CHINA;
+    try {
+      const p = buildSystemPrompt({ networkMode: "bridge" });
+      expect(p.stable).not.toContain("Network & web access (China)");
+    } finally {
+      if (prev !== undefined) process.env.CAPKA_REGION = prev;
+    }
+  });
 });
 
 describe("buildSystemPrompt — tier assembly", () => {

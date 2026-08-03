@@ -4,7 +4,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { useTranslations } from "next-intl";
 import { visit, SKIP } from "unist-util-visit";
 import type { Root, RootContent } from "mdast";
-import { usePreview, useFileStatus, type PreviewFile } from "./file-preview";
+import { usePreview, useFileStatus, requestNativeFilePreview, isCapkaNativeApp, type PreviewFile } from "./file-preview";
 import { fileKind, previewKind } from "@/lib/file-kinds";
 import { WORKSPACE_PATH_RE, isSafeWorkspaceRel, workspaceRelFromHref } from "@/lib/chat/artifacts";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,8 @@ export function remarkWorkspacePaths() {
       if (node.type === "text") {
         const value = node.value;
         // Fresh regex — WORKSPACE_PATH_RE is global and carries lastIndex state.
-        const re = new RegExp(WORKSPACE_PATH_RE.source, "g");
+        // Copy `.flags` (includes `u`) so `\p{L}` etc. keep working.
+        const re = new RegExp(WORKSPACE_PATH_RE.source, WORKSPACE_PATH_RE.flags);
         const out: RootContent[] = [];
         let last = 0;
         for (let m = re.exec(value); m; m = re.exec(value)) {
@@ -83,7 +84,16 @@ function WorkspacePathChip({ rel, chatId, live }: { rel: string; chatId: string;
       </span>
     );
   }
-  if (previewKind(name) !== null) {
+  const kind = previewKind(name);
+  // Native shell: PDF + non-web-previewable files go straight to Quick Look.
+  if (isCapkaNativeApp() && (kind === "pdf" || kind === null)) {
+    return (
+      <button type="button" title={`/workspace/${rel}`} onClick={() => requestNativeFilePreview(file)} className={cls}>
+        {inner}
+      </button>
+    );
+  }
+  if (kind !== null) {
     return (
       <button type="button" title={`/workspace/${rel}`} onClick={() => open([file], 0)} className={cls}>
         {inner}

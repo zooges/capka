@@ -5,6 +5,8 @@ const PUBLIC_PATHS = [
   "/login",
   "/register",
   "/setup",
+  // App Store / public legal pages — must render without a session.
+  "/privacy",
   // Shared chats are viewable without a session. The page itself enforces the
   // per-chat visibility gate (anyone-with-link vs signed-in-only vs private),
   // so the middleware must let anonymous visitors reach it instead of bouncing
@@ -22,8 +24,13 @@ export async function proxy(request: NextRequest) {
     PUBLIC_PATHS.some((p) => p !== "/" && pathname.startsWith(p)) ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
+    pathname.startsWith("/brand/") ||
+    pathname === "/icon.svg" ||
+    pathname === "/icon.png" ||
+    pathname === "/apple-icon.png" ||
     pathname === "/manifest.json" ||
     pathname === "/sw.js" ||
+    pathname.startsWith("/.well-known/") ||
     // Precached by the service worker and shown when the origin is unreachable —
     // it must never bounce to /login (the worker would cache that instead).
     pathname === "/offline.html"

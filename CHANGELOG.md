@@ -8,6 +8,8 @@ All notable changes to Capka are documented here. Format follows
 
 ### Added
 
+- Project / workspace Files: upload menu can import a whole folder (web one-shot or live connect when enabled; iOS recursive upload into `/workspace/<name>/`). Bulk `/api/folders/upload` no longer requires `pc_folder_access` (live folder *connect* still does). Recreate platform; new iOS build.
+- Public `/privacy` page (no login) for App Store privacy-policy URL; `src/proxy.ts` allows anonymous access. Recreate platform.
 - Native macOS client (`ios/BossYoungMac`, target `BossYoungMac`, macOS 14+) sharing the iOS core under the same bundle id: sidebar + transcript window, ⌘N/⌘, , Touch ID lock, project files. Feishu signs in via web OAuth (the SDK has no macOS slice). No server change.
 - iOS push notifications for finished turns (`APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`, `APNS_KEY_P8`). Unset leaves the previous behaviour; a migration adds `push_tokens`.
 - iOS app (`ios/`) is now a native SwiftUI client instead of the WKWebView shell: Feishu login, streaming chat with tool steps, chat rename/pin/archive/move, projects + workspace files, and settings (skills, connectors, automations, memory). Web-matched visuals; no server change. New iOS build.
@@ -19,6 +21,14 @@ All notable changes to Capka are documented here. Format follows
 
 ### Changed
 
+- iOS model brand icons download once into Application Support (memory + disk); model list prefetch warms light/dark glyphs so the picker/chip no longer re-hit jsDelivr every paint. New iOS build.
+- iOS local-first cache: chat list + transcripts (recent chats prefetched), workspace listings, uploads ingested on the phone, generated/uploaded files warmed after tool writes, preview keys shared between chat chips and workspace, image thumbs prefer disk. New iOS build.
+- iOS chat: follow-scroll pins to a transcript-end anchor (no longer stuck on the previous turn while streaming); file previews always cache under Application Support (chat chips included); image attachment tiles show sandbox thumbnails like the web. New iOS build.
+- `GET /api/chats?search=` matches chat **title or message body** (and message metadata text), not title alone. Recreate platform. iOS sidebar placeholder says「搜索标题或内容」; local cache also scans cached transcripts. New iOS build.
+- iOS sidebar search ignores cancelled keystroke requests (no more false “网络错误”), filters titles from the on-disk chat index immediately, and falls back to that cache when the host is unreachable. Chat list + last-opened transcripts are cached under Application Support for faster reopen / brief offline. New iOS build.
+- iOS workspace / chat file preview caches downloads on disk (keyed by path + size/mtime), streams via `URLSession.download`, and prefetches small files after a folder list — second open is local; first open still needs the phone→host round trip. New iOS build.
+- iOS sidebar account row sits lower with safe-area padding and shows the Feishu profile photo when `user.image` is present (same source as the web). New iOS build.
+- iOS chat: mid-turn reloads no longer wipe richer streamed prose/groups; workspace drawer refreshes when tools write files or markup uploads; workspace UI adds refresh/upload chrome and “添加到对话”; PDF preview disables Quick Look’s native markup so only Capka 批注 remains, with per-page stroke isolation. New iOS build.
 - iOS chat: tap outside the composer dismisses the keyboard and restores the home layout; model picker/chip show provider brand logos (same lobehub glyphs as the web); live SSE streams reasoning + tool/command steps into the activity rail (with poll fallback when SSE is blocked); workspace opens from a right-edge swipe on the conversation page. New iOS build.
 - iOS native client: sidebar restores `BOSS & YOUNG` wordmark; account menu matches web (search / projects / archived / appearance / settings / sign-out); system/light/dark theme; mic control sits right of the composer; settings nav aligns with web personal + admin tabs (connections, users, usage, auth, activity, updates, …). New iOS build.
 - iOS native client: home drops the「我能帮忙做什么」greeting (logo + composer only); assistant markdown gains tables / task lists / copyable code / link tint; message and step entrances follow the web motion curve. Capka `URLSession` ignores the system HTTP proxy so office IP deploys stay reachable under Shadowrocket. New iOS build.
@@ -26,9 +36,16 @@ All notable changes to Capka are documented here. Format follows
 - iOS login screen is vertically centered with filled fields, focus rings, password reveal, and deferred notification permission (no prompt over the sign-in form). New iOS build.
 - iOS login adds email sign-up (`POST /api/auth/sign-up/email`) with name/email/password; respects `registration-status` and pending-approval accounts. New iOS build.
 - iOS: settings redesigned to web personal tabs (general / extensions / memory / automations) with usage limits and Telegram link; latest assistant turn gains regenerate; composer adds speech-to-text mic; left-edge swipe opens sidebar and swipe-left closes it. New iOS build.
+- Empty home / new chat no longer shows a rotating welcome line — brand mark + composer only (same as iOS). Recreate platform.
 
 ### Fixed
 
+- iOS: new-chat from the conversation top bar no longer resurrects the previous transcript (SSE chatId adoption + load race); ask cards survive rapid SSE bursts via an event queue; thinking rail no longer bounces while reasoning streams. New iOS build.
+- iOS: finished thinking no longer keeps pulsing while the answer streams; reopening a chat no longer replays entrance animations on every historical reasoning row. New iOS build.
+- Project Files / workspace UI copy is Simplified Chinese; legacy `user.locale=uk` is rewritten to `zh-CN` so labels never stay Ukrainian. iOS language picker drops Українська. Recreate platform; new iOS build for the settings picker.
+- Moving a chat into a project no longer creates a Ukrainian carry-over folder (`Із чату «…»`); it uses `来自对话「…」` instead. Recreate platform. Already-created folders keep their old names until renamed/removed.
+- iOS model catalog refreshes from `/api/models` on home, new chat, model picker open, and foreground (no longer stuck on the first in-memory list after web admin changes). New iOS build.
+- iOS chat: follow-scroll no longer lands past the transcript (blank viewport after send/regenerate). Eager VStack + pin to the last message bottom after layout. New iOS build.
 - iOS speech-to-text: avoid crashing when tearing down the audio tap; clearer errors when the simulator has no mic. New iOS build.
 - DeepSeek / gateway `Content Exists Risk` (and similar content-filter refusals) now map to a calm `content_blocked` message instead of the raw provider string. Recreate platform.
 - Always-load MCP servers (China default `tavily`) are connected on the current turn even with a cold schema cache, and a cached always-load server is pre-dialed so the first `tavily_search` skips a second `initialize`. Stops the agent from falling back to `pip install tavily-python` / empty `find_tool` after platform restart. Recreate platform.
@@ -43,6 +60,10 @@ All notable changes to Capka are documented here. Format follows
 - iOS shell: background-task expiration no longer posts the misleading 「回复可能仍在服务器处理」 local notification or clears the in-flight reply watch. Completion notifications use title「回答已完成」+ preview, and the shell re-checks busy→idle on return to the app. New iOS build; recreate platform for the React `replyBusy`/`replyDone` bridge.
 - DeepSeek V4 DSML tool calls that leaked into assistant text through OpenAI-compatible gateways (LiteLLM, etc.) are parsed into real tool executions instead of showing protocol markup. Recreate the platform image after pulling.
 - Reply copy button works in the iOS WKWebView shell via a native clipboard bridge (`clipboardWrite` → UIPasteboard) plus `execCommand` fallback. New iOS build; recreate platform for the web fallback.
+
+### Security
+
+- Settings → Connectors (MCP) is admin-only (web + iOS). `GET /api/mcp` redacts endpoint URLs for non-admins; the manage `mcp` list shows only "remote"/"local" for members. Recreate platform; new iOS build.
 
 ### Changed
 

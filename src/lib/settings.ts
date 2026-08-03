@@ -323,6 +323,30 @@ export async function getTelegramOidcConfig(): Promise<TelegramOidcConfig> {
 }
 
 /**
+ * Feishu (Lark) OAuth login — App ID + App Secret from the Feishu open platform.
+ * Same storage pattern as Telegram: secret encrypted at rest; `enabled` requires
+ * the admin toggle AND both credentials.
+ */
+export interface FeishuOAuthConfig {
+  enabled: boolean;
+  clientId: string | null;
+  clientSecret: string | null;
+}
+
+export async function getFeishuOAuthConfig(): Promise<FeishuOAuthConfig> {
+  const [clientId, clientSecret, toggle] = await Promise.all([
+    getSetting("feishu_oauth_client_id"),
+    getSetting("feishu_oauth_client_secret"),
+    getSetting("feishu_login_enabled"),
+  ]);
+  return {
+    enabled: toggle === "true" && !!clientId && !!clientSecret,
+    clientId: clientId || null,
+    clientSecret: clientSecret || null,
+  };
+}
+
+/**
  * The single registration policy for the whole instance — governs BOTH email
  * and Telegram sign-ups (open / approval / closed). Reads the unified
  * `registration_mode` key; for instances that predate it, derives from the

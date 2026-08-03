@@ -7,7 +7,9 @@ import { connectMcpServer, disconnectMcp } from "./client";
 import { getConnectError } from "./connect-errors";
 import { McpOAuthProvider } from "./oauth/provider";
 import { hasUserTokens } from "./oauth/store";
+import { setCachedTools } from "./tool-cache";
 import type { McpAuthKind, McpSecrets } from "./types";
+import { inferRemoteTransport } from "./types";
 
 /** A plain, non-jargon status the UI localizes into a friendly badge. */
 export type ProbeStatus = "ok" | "unauthorized" | "unreachable" | "needs_login";
@@ -43,7 +45,7 @@ function classify(e: unknown): ProbeStatus {
  *  `auth` (userId + serverId) enables OAuth servers to probe with the user's
  *  stored token; without a token an OAuth server reports `needs_login`. */
 export async function probeConfig(
-  cfg: { name: string; url: string; secrets?: McpSecrets; authKind?: McpAuthKind; id?: string },
+  cfg: { name: string; url: string; secrets?: McpSecrets; authKind?: McpAuthKind; id?: string; transport?: "http" | "sse" },
   blockPrivate: boolean,
   auth?: { userId: string },
 ): Promise<ServerHealth> {
@@ -54,11 +56,19 @@ export async function probeConfig(
   }
   let connected;
   try {
-    connected = await connectMcpServer({ name: cfg.name, transport: "http", url: cfg.url, secrets: cfg.secrets }, { blockPrivate, authProvider });
+    const transport = cfg.transport ?? inferRemoteTransport(cfg.url);
+    connected = await connectMcpServer(
+      { name: cfg.name, transport, url: cfg.url, secrets: cfg.secrets },
+      { blockPrivate, authProvider },
+    );
   } catch (e) {
     return { status: classify(e) };
   }
   try {
+    // Seed the turn-time schema cache so the next chat can declare tools without
+    // dialling (load.ts is fully lazy). Prefer the durable server id when known.
+    if (cfg.id) setCachedTools(cfg.id, connected.tools);
+    else setCachedTools(cfg.name, connected.tools);
     // The handshake recorded the server's serverInfo; surface its name so the add
     // form can auto-fill the connector name instead of leaving it blank.
     const serverName = connected.client.getServerVersion()?.name;
@@ -77,7 +87,7 @@ export async function probeUserServers(userId: string): Promise<Record<string, S
       eq(mcpServers.enabled, true),
       or(and(eq(mcpServers.userId, userId), isNull(mcpServers.projectId)), eq(mcpServers.scope, "system")),
     ));
-  const httpRows = rows.filter((r) => r.transport === "http" && r.url);
+  const httpRows = rows.filter((r) => (r.transport === "http" || r.transport === "sse") && r.url);
   const key = await getMasterKey();
   const blockPrivate = await getBlockPrivateProviderUrls();
   const now = Date.now();
@@ -91,14 +101,15 @@ export async function probeUserServers(userId: string): Promise<Record<string, S
   }
 
   // Split into cache hits vs rows needing a live probe.
-  const toProbe: { id: string; cacheKey: string; name: string; url: string; secrets?: McpSecrets; authKind: McpAuthKind }[] = [];
+  const toProbe: { id: string; cacheKey: string; name: string; url: string; secrets?: McpSecrets; authKind: McpAuthKind; transport: "http" | "sse" }[] = [];
   for (const r of httpRows) {
     const cacheKey = `${r.id}:${r.updatedAt?.getTime() ?? 0}`;
     const hit = cache.get(cacheKey);
     if (hit && now - hit.at < CACHE_TTL_MS) { out[r.id] = hit.health; continue; }
     let secrets: McpSecrets | undefined;
     if (r.secrets) { try { secrets = JSON.parse(decrypt(r.secrets, key)) as McpSecrets; } catch { secrets = undefined; } }
-    toProbe.push({ id: r.id, cacheKey, name: r.name, url: r.url!, secrets, authKind: r.authKind as McpAuthKind });
+    const transport = (r.transport === "sse" ? "sse" : "http") as "http" | "sse";
+    toProbe.push({ id: r.id, cacheKey, name: r.name, url: r.url!, secrets, authKind: r.authKind as McpAuthKind, transport });
   }
 
   for (let i = 0; i < toProbe.length; i += PROBE_CONCURRENCY) {

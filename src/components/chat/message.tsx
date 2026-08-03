@@ -17,6 +17,7 @@ import { previewKind } from "@/lib/file-kinds";
 import { extractWorkspacePaths } from "@/lib/chat/artifacts";
 import { cleanReasoning } from "@/lib/chat/reasoning";
 import { formatShortDuration } from "@/lib/chat/duration";
+import { copyToClipboard } from "@/lib/clipboard";
 import { SandboxFileTile, type PreviewFile } from "./file-preview";
 import { describeStep, type StepDescriptor } from "./steps";
 import { AskCard } from "./ask-card";
@@ -29,7 +30,8 @@ import { ManageCard, ApprovalCard, isManageCard, manageStepLabel } from "./manag
 // rendered here (localized) instead of the English string baked in at runtime.
 const LLM_ERROR_CATEGORIES = new Set([
   "out_of_credits", "invalid_key", "rate_limited", "model_unavailable",
-  "context_too_long", "network", "timed_out", "interrupted", "unknown",
+  "context_too_long", "content_blocked", "network", "timed_out", "interrupted",
+  "unknown",
 ]);
 
 type TimeTranslator = (key: string, values?: Record<string, string | number>) => string;
@@ -551,14 +553,11 @@ function CopyButton({ text }: { text: string }) {
   const t = useTranslations("chat.message");
   const [copied, setCopied] = useState(false);
   const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      haptic("tap");
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard blocked (insecure context / permissions) — fail quietly */
-    }
+    const ok = await copyToClipboard(text);
+    if (!ok) return;
+    setCopied(true);
+    haptic("tap");
+    setTimeout(() => setCopied(false), 1500);
   };
   return (
     <button
@@ -739,7 +738,7 @@ function UserBubble({
       icon: <Copy />,
       label: tMsg("copy"),
       hidden: !text,
-      onSelect: () => navigator.clipboard?.writeText(text).catch(() => {}),
+      onSelect: () => { void copyToClipboard(text); },
     },
     {
       key: "edit",

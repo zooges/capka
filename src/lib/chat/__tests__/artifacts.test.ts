@@ -7,6 +7,21 @@ describe("extractWorkspacePaths", () => {
     expect(extractWorkspacePaths(text)).toEqual(["report.pdf", "sub/dir/data.csv"]);
   });
 
+  it("captures CJK and Cyrillic file names so chips/tiles still appear", () => {
+    const text =
+      "已生成 /workspace/合同审阅报告.docx 与 /workspace/附件/汇总表.xlsx。Also /workspace/звіт.pdf.";
+    expect(extractWorkspacePaths(text)).toEqual([
+      "合同审阅报告.docx",
+      "附件/汇总表.xlsx",
+      "звіт.pdf",
+    ]);
+  });
+
+  it("stops before trailing sentence punctuation", () => {
+    expect(extractWorkspacePaths("See /workspace/报告.pdf.")).toEqual(["报告.pdf"]);
+    expect(extractWorkspacePaths("See /workspace/report.pdf, thanks.")).toEqual(["report.pdf"]);
+  });
+
   it("rejects path traversal so a model reply can't escape the workspace", () => {
     const text = [
       "/workspace/../../etc/passwd.txt",

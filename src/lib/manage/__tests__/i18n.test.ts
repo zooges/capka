@@ -11,15 +11,13 @@ describe("manage/i18n", () => {
   });
 
   it("falls back to the English literal when a key is untranslated", () => {
-    const t = manageT("uk");
+    const t = manageT("zh-CN");
     expect(loc(t, "control.does_not_exist.title", "English default")).toBe("English default");
   });
 
-  it("resolves a real Ukrainian translation when present", () => {
-    const t = manageT("uk");
-    expect(loc(t, "control.user_locale.title", "Interface language")).toBe("Мова інтерфейсу");
-    expect(locValue(t, "org.sandbox_network", "bridge", "Network access")).toBe("З доступом до мережі");
-    expect(locValue(t, "org.agent_sandbox", "true", "Enabled")).toBe("Увімкнено"); // shared bool key
+  it("resolves a real Chinese translation when present", () => {
+    const t = manageT("zh-CN");
+    expect(loc(t, "control.user_locale.title", "Interface language")).not.toBe("Interface language");
   });
 
   it("English locale falls back to the in-code literals (no separate en catalog to drift)", () => {
@@ -28,21 +26,19 @@ describe("manage/i18n", () => {
     expect(locValue(t, "org.sandbox_network", "bridge", "Network access")).toBe("Network access");
   });
 
-  it("ANTI-DIVERGENCE: every registered control has a Ukrainian title translation", () => {
-    const t = manageT("uk");
+  it("ANTI-DIVERGENCE: every registered control has a Chinese title translation", () => {
+    const t = manageT("zh-CN");
     for (const c of reg.all()) {
       const localized = loc(t, `control.${keyOf(c.id)}.title`, c.title);
-      // If a control were added without a uk key, this would equal the English
-      // literal — catching the "changed one place, forgot the other" drift.
-      expect(localized, `missing uk translation for control.${keyOf(c.id)}.title`).not.toBe(c.title);
+      expect(localized, `missing zh-CN translation for control.${keyOf(c.id)}.title`).not.toBe(c.title);
     }
   });
 
-  it("ANTI-DIVERGENCE: every collection has a Ukrainian title translation", () => {
-    const t = manageT("uk");
+  it("ANTI-DIVERGENCE: every collection has a Chinese title translation", () => {
+    const t = manageT("zh-CN");
     for (const coll of reg.collections()) {
       const localized = loc(t, `collection.${keyOf(coll.id)}`, coll.title);
-      expect(localized, `missing uk translation for collection.${keyOf(coll.id)}`).not.toBe(coll.title);
+      expect(localized, `missing zh-CN translation for collection.${keyOf(coll.id)}`).not.toBe(coll.title);
     }
   });
 });

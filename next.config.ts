@@ -15,6 +15,9 @@ const BASE_CSP = "object-src 'none'; base-uri 'self'; form-action 'self'";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Dev binds to 127.0.0.1; browsing via that host (or localhost) otherwise trips
+  // Next's cross-origin guard and breaks HMR / some client interactions.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   // Enables React's <ViewTransition>, so route navigations crossfade like an app
   // instead of hard-cutting. Progressive enhancement: browsers without the View
   // Transitions API just navigate instantly, no animation.
@@ -27,17 +30,28 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: "110mb",
   },
   async headers() {
+    // Only emit HSTS when this build is meant for HTTPS. Sending HSTS on a
+    // plain-HTTP IP deploy is ignored by most browsers (RFC), but some clients
+    // still behave oddly; never advertise HSTS unless PUBLIC_URL is https.
+    const publicUrl = (process.env.PUBLIC_URL || "").trim();
+    const hsts =
+      publicUrl.startsWith("https://")
+        ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]
+        : [];
     return [
+      {
+        source: "/.well-known/apple-app-site-association",
+        headers: [
+          { key: "Content-Type", value: "application/json" },
+        ],
+      },
       {
         source: "/:path*",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // HSTS at the app layer too (not only the Caddy profile), so deployments
-          // behind a different proxy still get it. Browsers honour it only over
-          // HTTPS, so it's a no-op on a plain-HTTP/localhost response.
-          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          ...hsts,
           // frame-ancestors is the modern, header-superseding clickjacking guard;
           // 'none' mirrors the DENY above for browsers that honour CSP.
           { key: "Content-Security-Policy", value: `${BASE_CSP}; frame-ancestors 'none'` },

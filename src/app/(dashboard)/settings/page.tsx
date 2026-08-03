@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Github } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
-const REPO_URL = "https://github.com/LyoSU/capka";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
@@ -82,16 +79,6 @@ function AccountSection() {
 export default function GeneralSettingsPage() {
   const tLang = useTranslations("language");
   const t = useTranslations("settings.general");
-  // The build-time package.json version never moves (release versioning lives
-  // in git tags), so fetch the version actually stamped into this running
-  // image (CAPKA_VERSION) instead of hardcoding a stale number.
-  const [version, setVersion] = useState<string | null>(null);
-  useEffect(() => {
-    fetch("/api/version")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setVersion(d?.version ?? null))
-      .catch(() => {});
-  }, []);
 
   return (
     <div className="max-w-lg space-y-6">
@@ -121,54 +108,6 @@ export default function GeneralSettingsPage() {
           configured by an admin in Settings → Integrations. */}
       <Separator />
       <TelegramLinkCard />
-
-      {/* About — open-source attribution. Every role sees it; the source link
-          and license are public anyway. */}
-      <Separator />
-      <div>
-        <h2 className="text-base font-medium">{t("about")}</h2>
-        <p className="text-sm text-muted-foreground">{t("aboutDesc")}</p>
-      </div>
-      <div className="space-y-1.5 text-sm">
-        <p className="text-muted-foreground">
-          {t.rich("openSource", {
-            license: (chunks) => (
-              <a
-                href={`${REPO_URL}/blob/master/LICENSE`}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                {chunks}
-              </a>
-            ),
-          })}
-        </p>
-        <p className="text-muted-foreground">
-          {t.rich("author", {
-            author: (chunks) => (
-              <a
-                href="https://github.com/LyoSU"
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                {chunks}
-              </a>
-            ),
-          })}
-        </p>
-        <a
-          href={REPO_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          <Github className="size-4" />
-          {t("sourceCode")}
-        </a>
-        {version && <p className="text-xs text-muted-foreground">{t("version", { version })}</p>}
-      </div>
     </div>
   );
 }

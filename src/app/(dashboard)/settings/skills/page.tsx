@@ -29,17 +29,21 @@ export default function CustomizePage() {
   // view didn't, which is exactly how that button looked broken.
   const tabParam = useSearchParams().get("tab");
   useEffect(() => {
-    if (tabParam === "connectors") setTab("connectors");
-    else if (tabParam === "installed" || tabParam === "plugins") setTab("plugins");
+    if (tabParam === "connectors") {
+      // Connectors tab is admin-only — never open the MCP URL list for members.
+      setTab(isAdmin ? "connectors" : "library");
+    } else if (tabParam === "installed" || tabParam === "plugins") setTab("plugins");
     else if (tabParam === "marketplace") {
       setTab("plugins");
       setPluginsView("browse");
     }
-  }, [tabParam]);
+  }, [tabParam, isAdmin]);
 
   const tabs: { key: Tab; label: string; icon: typeof Library; adminOnly?: boolean }[] = [
     { key: "library", label: t("tab.library"), icon: Library },
-    { key: "connectors", label: t("tab.connectors"), icon: Plug },
+    // Connectors (MCP URLs / commands) are admin-only — regular users must not
+    // see endpoint links in Settings. Agents still use org connectors at runtime.
+    { key: "connectors", label: t("tab.connectors"), icon: Plug, adminOnly: true },
     // Plugins is visible to everyone (read-only + per-user OAuth sign-in); only
     // admins get the management actions + the Browse/marketplace view inside it.
     { key: "plugins", label: t("tab.installed"), icon: Package },
@@ -48,29 +52,34 @@ export default function CustomizePage() {
   const active = visibleTabs.some((tb) => tb.key === tab) ? tab : "library";
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
+    <div className="w-full min-w-0 max-w-2xl space-y-6">
+      <div className="min-w-0">
         <h2 className="text-base font-medium">{t("title")}</h2>
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground/80">
-          <MessageSquare className="h-3 w-3" />
-          {t("chatHint")}
+        <p className="mt-1 flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground/80">
+          <MessageSquare className="mt-0.5 h-3 w-3 shrink-0" />
+          <span className="min-w-0 break-words">{t("chatHint")}</span>
         </p>
       </div>
 
-      {/* Segmented control */}
-      <div className="inline-flex rounded-lg border bg-muted/40 p-1">
+      {/* Segmented control — wrap on narrow phones so Connectors never clips */}
+      <div
+        role="tablist"
+        className="flex w-full min-w-0 flex-wrap gap-1 rounded-lg border bg-muted/40 p-1"
+      >
         {visibleTabs.map((tb) => (
           <button
             key={tb.key}
+            role="tab"
+            aria-selected={active === tb.key}
             onClick={() => setTab(tb.key)}
             className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
+              "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors sm:flex-none sm:px-3",
               active === tb.key ? "bg-card font-medium shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <tb.icon className="h-4 w-4" />
-            {tb.label}
+            <tb.icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{tb.label}</span>
           </button>
         ))}
       </div>

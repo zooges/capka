@@ -37,6 +37,34 @@ if [ "${SANDBOX_EGRESS_FILTER:-0}" = "1" ]; then
   PRIVATE_V4="10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 100.64.0.0/10 192.0.0.0/24 198.18.0.0/15"
   iptables -F OUTPUT || die "iptables flush failed"
   iptables -A OUTPUT -o lo -j ACCEPT || die "iptables loopback rule failed"
+  # Optional pinholes BEFORE the private DROP so a host-side proxy (Clash/mihomo
+  # on docker0 / LAN) is reachable. Entries are space-separated IPv4 or IPv4:port
+  # (see SANDBOX_EGRESS_ALLOW / SANDBOX_*_PROXY on the controller). Link-local /
+  # cloud-metadata is never allowlisted.
+  for dest in ${SANDBOX_EGRESS_ALLOW:-}; do
+    case "$dest" in
+      169.254.*|169.254:*|*:*:* ) die "refusing to allowlist link-local/metadata or non IPv4:port destination: $dest" ;;
+    esac
+    case "$dest" in
+      *:*)
+        ip="${dest%:*}"
+        port="${dest##*:}"
+        case "$ip" in
+          *[!0-9.]*|"") die "invalid SANDBOX_EGRESS_ALLOW entry: $dest" ;;
+        esac
+        case "$port" in
+          *[!0-9]*|"" ) die "invalid SANDBOX_EGRESS_ALLOW port: $dest" ;;
+        esac
+        iptables -A OUTPUT -d "$ip" -p tcp --dport "$port" -j ACCEPT || die "iptables ACCEPT $dest failed"
+        ;;
+      *)
+        case "$dest" in
+          *[!0-9.]*|"") die "invalid SANDBOX_EGRESS_ALLOW entry: $dest" ;;
+        esac
+        iptables -A OUTPUT -d "$dest" -j ACCEPT || die "iptables ACCEPT $dest failed"
+        ;;
+    esac
+  done
   for net in $PRIVATE_V4; do iptables -A OUTPUT -d "$net" -j DROP || die "iptables DROP $net failed"; done
   iptables -A OUTPUT -j ACCEPT || die "iptables accept rule failed"
   # Verify the cloud-metadata block actually took. gVisor's netfilter is partial,

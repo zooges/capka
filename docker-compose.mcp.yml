@@ -1,0 +1,68 @@
+# Optional MCP sidecars for the China-team fork (chineselaw + wechat article).
+#
+# Usage (with Capka already running via docker:dev):
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml \
+#     -f docker-compose.dev.yml -f docker-compose.mcp.yml up -d --build
+#
+# Or only the sidecars against an existing Capka compose project:
+#   docker compose -f docker-compose.yml -f docker-compose.mcp.yml up -d --build \
+#     chineselaw-mcp wechat-article-mcp
+#
+# Build contexts default to sibling checkouts next to this repo:
+#   ../chineselaw-mcp  and  ../wechat-article-mcp
+# Override with CHINESELAW_MCP_PATH / WECHAT_MCP_PATH if needed.
+#
+# After they are healthy, register system connectors:
+#   npm run mcp:seed-china
+#
+# Required for chineselaw: set CHINESELAW_API_KEY in the environment (or .env).
+
+services:
+  wechat-article-mcp:
+    build:
+      context: ${WECHAT_MCP_PATH:-../wechat-article-mcp}
+      dockerfile: Dockerfile
+    container_name: wechat-article-mcp
+    expose:
+      - "8809"
+    ports:
+      - "127.0.0.1:8809:8809"
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: "8809"
+      MCP_HTTP_PATH: /mcp
+      MCP_HTTP_AUTH_TOKEN: ${WECHAT_MCP_AUTH_TOKEN:-}
+      MCP_PUBLIC_HOSTNAME: ${WECHAT_PUBLIC_HOSTNAME:-}
+      MCP_ALLOWED_HOSTS: ${WECHAT_ALLOWED_HOSTS:-127.0.0.1,localhost,wechat-article-mcp,platform}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8809/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  chineselaw-mcp:
+    build:
+      context: ${CHINESELAW_MCP_PATH:-../chineselaw-mcp}
+      dockerfile: Dockerfile
+    container_name: chineselaw-mcp
+    expose:
+      - "8317"
+    ports:
+      - "127.0.0.1:8317:8317"
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: "8317"
+      MCP_HTTP_PATH: /mcp
+      CHINESELAW_API_KEY: ${CHINESELAW_API_KEY:?set CHINESELAW_API_KEY in .env}
+      MCP_HTTP_AUTH_TOKEN: ${CHINESELAW_MCP_AUTH_TOKEN:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8317/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

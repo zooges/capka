@@ -51,8 +51,10 @@ export const PATCH = apiHandler(async (req, { params }) => {
       const listing = await listFiles(srcKey, ".", userId);
       const hasFiles = (listing.entries ?? []).some((e) => !e.name.startsWith("."));
       if (hasFiles) {
-        const title = ((existing.title as string | null) || "chat").replace(/[/\\]/g, "-").slice(0, 80);
-        const subdir = `Із чату «${title}» (${id.slice(0, 8)})`;
+        const title = ((existing.title as string | null) || "对话").replace(/[/\\]/g, "-").slice(0, 80);
+        // Folder name shown in Project → Files. China fork: Simplified Chinese
+        // (never Ukrainian «Із чату» — reads as garbled Cyrillic in the UI).
+        const subdir = `来自对话「${title}」（${id.slice(0, 8)}）`;
         await copyWorkspace(newProjectId, srcKey, subdir, userId);
         log.info("chat files carried into project on move", { chatId: id, projectId: newProjectId });
       }

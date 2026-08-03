@@ -8,20 +8,30 @@
  * `language_code` we don't ship, like "ru" or "de") resolves to "en".
  */
 import { createTranslator } from "next-intl";
-import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { defaultLocale, isLocale } from "@/i18n/config";
 import en from "../../../messages/en.json";
+import zhCN from "../../../messages/zh-CN.json";
 import uk from "../../../messages/uk.json";
 
-const MESSAGES: Record<Locale, Record<string, unknown>> = { en, uk };
+/**
+ * UI locales are zh-CN + en only. Ukrainian message catalog is kept for
+ * Telegram / legacy `language_code=uk` clients, but is not offered in settings.
+ */
+const MESSAGES: Record<string, Record<string, unknown>> = { en, "zh-CN": zhCN, uk };
 
 /**
  * Normalize an arbitrary locale-ish string to a supported locale. Accepts BCP-47
  * tags (Telegram sends `language_code` like "uk", "en-US", "ru") and matches on
- * the primary subtag; everything unsupported falls back to English.
+ * the primary subtag; Chinese maps to `zh-CN`; Ukrainian keeps `uk` messages for
+ * Telegram; everything else unsupported falls back to the fork default (`zh-CN`).
  */
-export function toLocale(value: string | null | undefined): Locale {
+export function toLocale(value: string | null | undefined): string {
   if (!value) return defaultLocale;
-  const primary = value.toLowerCase().split("-")[0];
+  const lower = value.toLowerCase();
+  if (lower === "uk" || lower.startsWith("uk-")) return "uk";
+  if (isLocale(lower)) return lower;
+  const primary = lower.split("-")[0];
+  if (primary === "zh") return "zh-CN";
   return isLocale(primary) ? primary : defaultLocale;
 }
 

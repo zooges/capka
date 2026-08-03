@@ -30,6 +30,13 @@ export async function resolveLocale(): Promise<Locale> {
         .from(users)
         .where(eq(users.id, userId))
         .limit(1);
+      // Legacy Capka installs stored `uk`; this China fork no longer ships a
+      // Ukrainian UI — rewrite + serve zh-CN so project Files / dialogs never
+      // flash Cyrillic labels.
+      if (row?.locale === "uk") {
+        void db.update(users).set({ locale: defaultLocale }).where(eq(users.id, userId));
+        return defaultLocale;
+      }
       if (isLocale(row?.locale)) return row.locale;
     }
   } catch {

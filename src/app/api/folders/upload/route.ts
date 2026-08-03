@@ -2,19 +2,17 @@ import { apiHandler, requireActive } from "@/lib/auth";
 import { uploadFile } from "@/lib/sandbox/client";
 import { resolveWorkspaceTarget } from "@/lib/sandbox/target";
 import { take } from "@/lib/rate-limit";
-import { pcFolderLevel, canAttachPc } from "@/lib/manage/controls/folders";
 import { ignoredPath, oversized } from "@/lib/folder-bridge/filter";
 
-// Bulk upload for PC-folder sync: MANY files in one request, written under
-// /workspace/<name>/<relpath>. Each file's form name is its path relative to the
-// folder. This exists so folder sync doesn't hammer the interactive per-file
-// upload limiter (10/min) — a folder with dozens of files would 429 instantly.
-// Rate-limited per REQUEST (generously), not per file.
+// Bulk upload for folder import / PC-folder sync: MANY files in one request,
+// written under /workspace/<name>/<relpath>. Each file's form name is its path
+// relative to the folder. Avoids hammering the interactive per-file upload
+// limiter (10/min). Rate-limited per REQUEST (generously), not per file.
 export const POST = apiHandler(async (req: Request) => {
-  const { userId, role } = await requireActive();
-  if (!canAttachPc(await pcFolderLevel(), role === "admin")) {
-    return Response.json({ error: "Personal folder access is disabled." }, { status: 403 });
-  }
+  const { userId } = await requireActive();
+  // One-shot folder import and live PC-folder sync share this bulk path. Auth +
+  // own-workspace writes are enough — same boundary as /api/sandbox/files/upload.
+  // (Connecting a live folder handle is still gated in /api/folders POST.)
   // 60-request burst, ~1/s refill — a batch is up to CHUNK files (see the bridge),
   // so this comfortably covers a large folder while still bounding abuse.
   const rl = take(`folder-upload:${userId}`, 60, 1);

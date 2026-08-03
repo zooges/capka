@@ -1,21 +1,16 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Github } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { ClawMark } from "@/components/brand/claw-mark";
-
-const REPO_URL = "https://github.com/LyoSU/capka";
+import { BrandHero } from "@/components/brand/brand-lockup";
+import { productName } from "@/lib/brand";
 
 /** Shared field styling for auth/setup forms — filled, rounded, calm. */
 export const AUTH_FIELD =
-  "h-11 rounded-xl border-transparent bg-muted/60 px-3.5 text-[15px] focus-visible:border-ring focus-visible:bg-card";
+  "h-11 rounded-xl border-transparent bg-muted/60 px-3.5 text-[15px] font-sans focus-visible:border-ring focus-visible:bg-card";
 
 /**
- * The first-run / sign-in chrome: a calm claw monogram far behind, an opaque
- * centered card with the brand mark, a serif title, and a soft entrance morph.
- * Shared by login, register, and (in spirit) the setup wizard so every
- * pre-app surface reads as one product.
+ * Sign-in / register chrome with the official Boss & Young wordmark.
+ * Mobile / native shell: flat full-bleed (no floating card). Desktop keeps the card.
  */
 export function AuthShell({
   title,
@@ -28,43 +23,51 @@ export function AuthShell({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  const t = useTranslations("settings.general");
+  const brand = productName();
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-background">
-      <ClawMark className="pointer-events-none absolute left-1/2 top-1/2 h-[165vmin] w-[165vmin] -translate-x-1/2 -translate-y-1/2 text-foreground opacity-[0.03]" />
+    <div className="relative min-h-dvh overflow-x-hidden bg-background font-sans">
+      {/* Soft wash — desktop only; mobile stays flat. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-[40vmin] w-[40vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_oklch,#8B1E23_10%,transparent),transparent_70%)] opacity-50 md:block" />
 
-      <div className="relative flex min-h-dvh items-center justify-center px-5 py-12">
-        <div className="animate-card-morph w-full max-w-md rounded-[1.75rem] border border-border/60 bg-card p-7 shadow-[0_1px_2px_oklch(0_0_0/0.05),0_28px_60px_-32px_oklch(0.2_0.01_60/0.28)] sm:p-8">
+      {/* Mobile/native: center in the safe region (was top-pinned under the status bar). */}
+      <div
+        className={[
+          "relative flex min-h-dvh flex-col justify-center overflow-y-auto overscroll-contain",
+          "px-6 pt-[max(1.5rem,var(--capka-sat,env(safe-area-inset-top,0px)))] pb-[max(1.5rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))]",
+          "md:items-center md:px-5 md:py-12",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "flex w-full flex-col",
+            // Desktop: centered card. Mobile stays flat full-bleed.
+            "md:max-w-md md:animate-card-morph md:rounded-[1.75rem] md:border md:border-border/60 md:bg-card md:p-8 md:shadow-[0_1px_2px_oklch(0_0_0/0.05),0_28px_60px_-32px_oklch(0.2_0.01_60/0.28)] md:pt-8 md:pb-8",
+          ].join(" ")}
+        >
           <div className="flex flex-col items-center gap-3 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-primary text-primary-foreground shadow-sm">
-              <ClawMark animated className="h-9 w-9" />
-            </span>
-            <span className="text-sm font-medium tracking-tight text-muted-foreground">Capka</span>
+            <BrandHero size="sm" />
+            <span className="sr-only">{brand}</span>
           </div>
 
-          <div className="animate-blur-rise mt-7 space-y-6">
+          <div className="mt-8 space-y-6 md:mt-7 md:animate-blur-rise">
             <div className="space-y-1.5">
-              <h1 className="font-display text-[1.75rem] leading-tight tracking-tight text-balance">{title}</h1>
+              <h1 className="font-sans text-2xl font-semibold leading-snug tracking-tight text-balance text-foreground">
+                {title}
+              </h1>
               {description && (
-                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">{description}</p>
+                <p className="font-sans text-sm leading-relaxed text-muted-foreground text-pretty">
+                  {description}
+                </p>
               )}
             </div>
             {children}
           </div>
 
-          {footer && <div className="mt-6 text-center text-sm text-muted-foreground">{footer}</div>}
-
-          {/* Open-source attribution — shown on every pre-app surface (login,
-              register, pending) since AuthShell wraps them all. */}
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-7 inline-flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground/70 transition-colors hover:text-muted-foreground"
-          >
-            <Github className="size-3.5" />
-            {t("openSourceShort")}
-          </a>
+          {footer && (
+            <div className="auth-shell-footer mt-6 hidden text-center font-sans text-sm text-muted-foreground md:block">
+              {footer}
+            </div>
+          )}
         </div>
       </div>
     </div>

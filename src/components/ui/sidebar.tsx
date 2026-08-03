@@ -31,7 +31,7 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "18rem"
 // Full-screen on mobile: the nav opens as a whole page, not a half-width drawer
 // peeking over the content — reads as a proper screen on a phone.
-const SIDEBAR_WIDTH_MOBILE = "100dvw"
+const SIDEBAR_WIDTH_MOBILE = "100%"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -198,7 +198,7 @@ function Sidebar({
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
               width: SIDEBAR_WIDTH_MOBILE,
-              maxWidth: "none",
+              maxWidth: "100vw",
             } as React.CSSProperties
           }
           side={side}
@@ -212,14 +212,16 @@ function Sidebar({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="absolute top-3 right-3 z-10"
+                className="absolute top-[max(0.75rem,var(--capka-sat,env(safe-area-inset-top,0px)))] right-[max(0.75rem,var(--capka-sar,env(safe-area-inset-right,0px)))] z-10"
               />
             }
           >
             <XIcon />
             <span className="sr-only">Close</span>
           </SheetClose>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div className="flex h-full min-h-0 w-full flex-col pt-[max(0.5rem,var(--capka-sat,env(safe-area-inset-top,0px)))] pb-[max(0.5rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))]">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )

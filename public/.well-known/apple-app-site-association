@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["5FSTWGBV38.com.bossyoung.capka"],
+        "paths": [
+          "/api/auth/oauth2/callback/*",
+          "/api/auth/*",
+          "/login",
+          "/login/*",
+          "/chat",
+          "/chat/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["5FSTWGBV38.com.bossyoung.capka"]
+  }
+}

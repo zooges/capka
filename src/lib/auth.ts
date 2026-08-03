@@ -7,19 +7,31 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "./db";
 import * as schema from "./db/schema";
-import { getMasterKey, getTelegramOidcConfig, getRegistrationMode, isSetupComplete } from "./settings";
-import { getPublicUrl } from "./url";
+import { getMasterKey, getTelegramOidcConfig, getFeishuOAuthConfig, getRegistrationMode, isSetupComplete } from "./settings";
+import { resolveTrustedAuthOrigins, parseTrustedOrigins } from "./url";
 import {
   decodeTelegramClaims,
   resolveRegistration,
   syntheticTelegramEmail,
   telegramDisplayName,
 } from "./auth/telegram-oidc";
+import {
+  FEISHU_PROVIDER_ID,
+  FEISHU_AUTHORIZATION_URL,
+  FEISHU_TOKEN_URL,
+  FEISHU_USERINFO_URL,
+  feishuRedirectUri,
+  mapFeishuProfile,
+  syntheticFeishuEmail,
+  exchangeFeishuAuthorizationCode,
+} from "./auth/feishu-oauth";
 import { ZodError } from "zod";
 import { AppError, isAppError, UnauthorizedError, ForbiddenError } from "./errors";
 
 export const TELEGRAM_PROVIDER_ID = "telegram";
 const TELEGRAM_DISCOVERY = "https://oauth.telegram.org/.well-known/openid-configuration";
+
+export { FEISHU_PROVIDER_ID, feishuRedirectUri };
 
 /** The exact redirect URI an admin must register in BotFather → Web Login. */
 export function telegramRedirectUri(origin: string): string {
@@ -44,28 +56,191 @@ export async function getAuth() {
   if (_auth) return _auth as ReturnType<typeof betterAuth>;
   const secret = await getMasterKey();
   const publicUrl = process.env.PUBLIC_URL?.trim() || process.env.BETTER_AUTH_URL?.trim();
+  // Extra origins (LAN IP while PUBLIC_URL is the tunnel hostname). Any http://
+  // entry forces non-Secure cookies so HTTP LAN login can keep a session.
+  const extraTrusted = parseTrustedOrigins(process.env.TRUSTED_ORIGINS);
+  const allowHttpOrigins =
+    extraTrusted.some((o) => o.startsWith("http://")) ||
+    (publicUrl ?? "").startsWith("http://") ||
+    !publicUrl;
   const telegram = await getTelegramOidcConfig();
+  const feishu = await getFeishuOAuthConfig();
+
+  // Hosts Better Auth may derive baseURL from (IP + tunnel). Port is part of host.
+  const allowedHosts = [
+    ...new Set(
+      resolveTrustedAuthOrigins()
+        .map((o) => {
+          try {
+            return new URL(o).host;
+          } catch {
+            return "";
+          }
+        })
+        .filter(Boolean),
+    ),
+  ];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const oauthConfigs: any[] = [];
+  if (telegram.enabled) {
+    oauthConfigs.push({
+      providerId: TELEGRAM_PROVIDER_ID,
+      clientId: telegram.clientId!,
+      clientSecret: telegram.clientSecret!,
+      discoveryUrl: TELEGRAM_DISCOVERY,
+      scopes: ["openid", "profile", "telegram:bot_access"],
+      pkce: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getUserInfo: async (tokens: any) => {
+        const claims = decodeTelegramClaims(tokens?.idToken);
+        if (!claims) return null;
+        pendingUsernames.set(claims.telegramUserId, claims.username);
+        return {
+          id: String(claims.telegramUserId),
+          name: telegramDisplayName(claims),
+          email: syntheticTelegramEmail(claims.telegramUserId),
+          emailVerified: false,
+          image: claims.picture ?? undefined,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      },
+    });
+  }
+  if (feishu.enabled) {
+    const feishuClientId = feishu.clientId!;
+    const feishuClientSecret = feishu.clientSecret!;
+    oauthConfigs.push({
+      providerId: FEISHU_PROVIDER_ID,
+      clientId: feishuClientId,
+      clientSecret: feishuClientSecret,
+      authorizationUrl: FEISHU_AUTHORIZATION_URL,
+      // tokenUrl is unused when getToken is set; kept for discovery/debug clarity.
+      tokenUrl: FEISHU_TOKEN_URL,
+      // Pin absolute redirect when PUBLIC_URL is set — better-auth's dynamic
+      // baseURL can emit a relative `/oauth2/callback/feishu` that Feishu rejects.
+      ...(publicUrl ? { redirectURI: feishuRedirectUri(publicUrl) } : {}),
+      scopes: ["contact:user.base:readonly", "contact:user.email:readonly"],
+      pkce: true,
+      // Feishu's token API requires application/json; better-auth defaults to form body.
+      getToken: async ({
+        code,
+        redirectURI,
+        codeVerifier,
+      }: {
+        code: string;
+        redirectURI: string;
+        codeVerifier?: string;
+      }) =>
+        exchangeFeishuAuthorizationCode({
+          clientId: feishuClientId,
+          clientSecret: feishuClientSecret,
+          code,
+          redirectURI,
+          codeVerifier,
+        }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getUserInfo: async (tokens: any) => {
+        const accessToken = tokens?.accessToken || tokens?.access_token;
+        const rawTok = (tokens?.raw && typeof tokens.raw === "object" ? tokens.raw : tokens) as
+          | Record<string, unknown>
+          | undefined;
+        // Feishu's token payload often already includes open_id — use as fallback
+        // when userinfo is denied (unpublished scopes / missing email permission).
+        const tokenOpenId =
+          (typeof rawTok?.open_id === "string" && rawTok.open_id) ||
+          (typeof rawTok?.data === "object" &&
+            rawTok.data &&
+            typeof (rawTok.data as Record<string, unknown>).open_id === "string" &&
+            ((rawTok.data as Record<string, unknown>).open_id as string)) ||
+          null;
+        const tokenName =
+          (typeof rawTok?.name === "string" && rawTok.name) ||
+          (typeof rawTok?.data === "object" &&
+            rawTok.data &&
+            typeof (rawTok.data as Record<string, unknown>).name === "string" &&
+            ((rawTok.data as Record<string, unknown>).name as string)) ||
+          null;
+
+        if (accessToken) {
+          try {
+            const res = await fetch(FEISHU_USERINFO_URL, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            const raw = await res.json().catch(() => null);
+            if (!res.ok) {
+              console.error("[auth] Feishu userinfo HTTP error:", res.status, raw);
+            } else {
+              const profile = mapFeishuProfile(raw);
+              if (profile) {
+                return {
+                  id: profile.openId,
+                  name: profile.name,
+                  email: profile.email || syntheticFeishuEmail(profile.openId),
+                  emailVerified: !!profile.email,
+                  image: profile.picture,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                };
+              }
+              console.error("[auth] Feishu userinfo missing open_id:", raw);
+            }
+          } catch (e) {
+            console.error("[auth] Feishu userinfo fetch threw:", e);
+          }
+        } else {
+          console.error("[auth] Feishu getUserInfo: no access token", {
+            keys: tokens ? Object.keys(tokens) : [],
+          });
+        }
+
+        if (tokenOpenId) {
+          console.warn("[auth] Feishu userinfo fallback to token open_id");
+          return {
+            id: tokenOpenId,
+            name: tokenName || tokenOpenId,
+            email: syntheticFeishuEmail(tokenOpenId),
+            emailVerified: false,
+            image: undefined,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+        return null;
+      },
+    });
+  }
+
   _auth = betterAuth({
     secret,
-    // Runtime, not build-time: an explicit PUBLIC_URL (operator override) wins;
-    // otherwise leave it unset so better-auth infers the origin per-request from
-    // the (proxy-aware) headers. No domain is ever baked into the image.
-    baseURL: publicUrl || undefined,
+    // Prefer an explicit PUBLIC_URL string so OAuth redirect_uri is always an
+    // absolute https://…/api/auth/oauth2/callback/… (Feishu rejects relative
+    // paths). Only fall back to multi-host {allowedHosts} when PUBLIC_URL is
+    // unset (LAN-only / tunnel-from-Host deploys).
+    baseURL: publicUrl
+      ? publicUrl
+      : allowedHosts.length
+        ? {
+            allowedHosts,
+            fallback: undefined,
+            protocol: "auto" as const,
+          }
+        : undefined,
     advanced: {
       // Tie the Secure-cookie prefix to the PUBLIC origin scheme, NOT NODE_ENV.
       // better-auth otherwise defaults secure cookies on in production even over
       // plain HTTP — so a localhost / HTTP-only deploy sets a `__Secure-` session
       // cookie the browser never sends back, and every authed request 401s
-      // (login AND the setup model picker break). HTTPS public URL → secure;
-      // localhost / HTTP-only / PUBLIC_URL unset → non-secure so auth works.
-      // Behind a TLS-terminating proxy, set PUBLIC_URL=https://… (the Caddy and
-      // Coolify paths do) to restore the Secure flag.
-      useSecureCookies: (publicUrl ?? "").startsWith("https://"),
+      // (login AND the setup model picker break). HTTPS-only PUBLIC_URL → secure;
+      // if TRUSTED_ORIGINS also lists an http:// LAN origin, stay non-secure so
+      // both the tunnel and the LAN IP can keep a session cookie.
+      useSecureCookies: (publicUrl ?? "").startsWith("https://") && !allowHttpOrigins,
     },
-    // CSRF check: trust whatever origin getPublicUrl resolves for this request
-    // (PUBLIC_URL if set, else X-Forwarded-* / Host). Keeps the single domain in
-    // one place instead of a second hardcoded constant.
-    trustedOrigins: async (request?: Request) => [getPublicUrl({ headers: request?.headers })],
+    // CSRF: PUBLIC_URL + TRUSTED_ORIGINS + this request's Host-derived origin so
+    // Cloudflare tunnel and LAN IP logins both work.
+    trustedOrigins: async (request?: Request) =>
+      resolveTrustedAuthOrigins({ headers: request?.headers }),
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
@@ -86,24 +261,33 @@ export async function getAuth() {
     },
     // Account linking is enabled so an already-signed-in user can explicitly link
     // Telegram via /oauth2/link (an authenticated action, gated by the session).
-    // Telegram is deliberately NOT a trustedProvider: trustedProviders would
-    // auto-link a Telegram sign-in to any existing account whose email matches —
-    // and our synthetic tg<id>@telegram.local addresses are predictable, so a
-    // pre-registered email/password account could hijack a victim's Telegram
-    // login. Auto-link-by-email has no legitimate use here (real users never own
-    // an @telegram.local address), so we drop the root cause entirely. The
-    // synthetic domain is also reserved against email sign-up (see the
-    // /api/auth/[...all] gate) so it can't be squatted.
+    // Telegram/Feishu are deliberately NOT trustedProviders: synthetic emails are
+    // predictable and must not auto-link by email. Synthetic domains are also
+    // reserved against email sign-up (see the /api/auth/[...all] gate).
     account: {
       accountLinking: {
         enabled: true,
         updateUserInfoOnLink: true,
+        // Email/password admins are often emailVerified=false (no verification
+        // mailer). Feishu returning the same work email then hit
+        // requireLocalEmailVerified (default true) → account_not_linked and a
+        // bounce to /login with no usable session. Allow linking when the
+        // provider email matches; synthetic @feishu.local addresses never
+        // collide with real sign-ups (reserved in the [...all] gate).
+        requireLocalEmailVerified: false,
       },
+      // Prefer encrypted oauth_state cookie over DB verification + signed
+      // better-auth.state cookie. The dual DB+cookie check failed Feishu
+      // callbacks here with state_mismatch (callback state arrived as the
+      // full signed cookie value, so verification lookup missed). Cookie
+      // strategy keeps PKCE verifier + callbackURL in one round-trippable
+      // cookie (SameSite=Lax survives the Feishu top-level redirect).
+      storeStateStrategy: "cookie",
     },
     databaseHooks: {
       user: {
         create: {
-          // Single registration policy for BOTH new Telegram identities (OAuth
+          // Single registration policy for BOTH new OAuth identities (OAuth
           // callback) and email sign-ups: open → active, approval → pending,
           // closed → rejected (email is also blocked earlier in the [...all]
           // route; this is defense-in-depth). Registration never confers admin —
@@ -146,39 +330,7 @@ export async function getAuth() {
     session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
     plugins: [
       nextCookies(),
-      ...(telegram.enabled
-        ? [
-            genericOAuth({
-              config: [
-                {
-                  providerId: TELEGRAM_PROVIDER_ID,
-                  clientId: telegram.clientId!,
-                  clientSecret: telegram.clientSecret!,
-                  discoveryUrl: TELEGRAM_DISCOVERY,
-                  scopes: ["openid", "profile", "telegram:bot_access"],
-                  pkce: true,
-                  // Telegram has no userinfo endpoint — every claim is in the
-                  // id_token. Decode it ourselves and map onto a better-auth user.
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  getUserInfo: async (tokens: any) => {
-                    const claims = decodeTelegramClaims(tokens?.idToken);
-                    if (!claims) return null;
-                    pendingUsernames.set(claims.telegramUserId, claims.username);
-                    return {
-                      id: String(claims.telegramUserId),
-                      name: telegramDisplayName(claims),
-                      email: syntheticTelegramEmail(claims.telegramUserId),
-                      emailVerified: false,
-                      image: claims.picture ?? undefined,
-                      createdAt: new Date(),
-                      updatedAt: new Date(),
-                    };
-                  },
-                },
-              ],
-            }),
-          ]
-        : []),
+      ...(oauthConfigs.length ? [genericOAuth({ config: oauthConfigs })] : []),
     ],
   });
   return _auth as ReturnType<typeof betterAuth>;

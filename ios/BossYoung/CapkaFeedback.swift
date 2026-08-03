@@ -42,6 +42,12 @@ enum CapkaFeedback {
   }
 
   static func requestNotificationPermissionIfNeeded() {
+    // Screenshot / UI harness must stay unobscured by the system alert.
+    if CapkaFixtures.isEnabled
+      || ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES"] == "1"
+    {
+      return
+    }
     let center = UNUserNotificationCenter.current()
     center.getNotificationSettings { settings in
       guard settings.authorizationStatus == .notDetermined else { return }

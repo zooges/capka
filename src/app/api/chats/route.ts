@@ -1,4 +1,4 @@
-import { eq, gt, desc, and, ilike, isNull, inArray, exists, sql, type SQL } from "drizzle-orm";
+import { eq, gt, desc, and, or, isNull, inArray, exists, sql, type SQL } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { requireSession, requireRole, apiHandler } from "@/lib/auth";
@@ -52,7 +52,31 @@ export const GET = apiHandler(async (req: Request) => {
 
   const conditions: SQL[] = [eq(chats.userId, userId)];
 
-  if (search) conditions.push(ilike(chats.title, `%${search}%`));
+  // Title OR message body (case-insensitive substring). `position` avoids LIKE
+  // metacharacters in user input; cap length so a pasted essay can't explode the
+  // scan. Metadata JSON is included so text that only lives in parts still hits.
+  const term = search?.trim().slice(0, 200);
+  if (term) {
+    conditions.push(
+      or(
+        sql`position(lower(${term}) in lower(coalesce(${chats.title}, ''))) > 0`,
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(messages)
+            .where(
+              and(
+                eq(messages.chatId, chats.id),
+                sql`(
+                  position(lower(${term}) in lower(${messages.content})) > 0
+                  OR position(lower(${term}) in lower(coalesce(${messages.metadata}::text, ''))) > 0
+                )`,
+              ),
+            ),
+        ),
+      )!,
+    );
+  }
   if (archived === "true") conditions.push(eq(chats.archived, true));
   else if (archived !== "all") conditions.push(eq(chats.archived, false));
   if (pinned === "true") conditions.push(eq(chats.pinned, true));

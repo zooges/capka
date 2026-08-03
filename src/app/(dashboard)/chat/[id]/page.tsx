@@ -78,7 +78,6 @@ export default async function ChatIdPage({
       readOnly={existingChat?.source === "telegram"}
       initialHasHistory={!!existingChat?.activeLeafId}
       recentChats={recentChats}
-      userName={session.user.name}
       shareImportEnabled={isShareImportEnabled()}
     />
   );

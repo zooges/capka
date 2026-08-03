@@ -26,6 +26,18 @@ ENV LC_ALL=C.UTF-8
 RUN printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' \
     > /etc/apt/apt.conf.d/80-retries
 
+# Honor HTTP(S)_PROXY build-args for apt (env alone is often ignored by apt-get).
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG http_proxy
+ARG https_proxy
+RUN set -eux; \
+    proxy="${HTTP_PROXY:-${http_proxy:-${HTTPS_PROXY:-${https_proxy:-}}}}"; \
+    if [ -n "$proxy" ]; then \
+      printf 'Acquire::http::Proxy "%s";\nAcquire::https::Proxy "%s";\n' "$proxy" "$proxy" \
+        > /etc/apt/apt.conf.d/01proxy; \
+    fi
+
 # ---------------------------------------------------------------------------
 # 1. Base system packages
 # ---------------------------------------------------------------------------
@@ -100,7 +112,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---------------------------------------------------------------------------
 # 6. Python packages
 # ---------------------------------------------------------------------------
-RUN pip install --break-system-packages --no-cache-dir \
+RUN pip install --break-system-packages --no-cache-dir --default-timeout=300 --retries=10 -i https://pypi.tuna.tsinghua.edu.cn/simple \
     # Data science
     numpy pandas scipy scikit-learn scikit-image \
     matplotlib seaborn plotly sympy networkx \
@@ -156,9 +168,9 @@ ARG DUCKDB_VERSION=v1.5.4
 ARG YQ_VERSION=v4.53.3
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \
-    curl -fsSL "https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb_cli-linux-${arch}.zip" -o /tmp/duckdb.zip; \
+    curl -fsSL --retry 5 --retry-delay 2 "https://ghfast.top/https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/duckdb_cli-linux-${arch}.zip" -o /tmp/duckdb.zip; \
     unzip -d /usr/local/bin /tmp/duckdb.zip; rm /tmp/duckdb.zip; chmod 755 /usr/local/bin/duckdb; \
-    curl -fsSL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${arch}" -o /usr/local/bin/yq; \
+    curl -fsSL --retry 5 --retry-delay 2 "https://ghfast.top/https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${arch}" -o /usr/local/bin/yq; \
     chmod 755 /usr/local/bin/yq
 
 # ---------------------------------------------------------------------------

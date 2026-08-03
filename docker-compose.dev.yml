@@ -67,3 +67,9 @@ services:
       # Experimental share-link import — enabled in dev so it can be exercised
       # locally; stays off by default in prod (operators opt in explicitly).
       - CAPKA_SHARE_IMPORT=true
+      # next dev under Docker is memory-hungry; the base 4g ceiling causes GC thrash
+      # and multi-second click latency when the heap approaches the limit.
+      - NODE_OPTIONS=--max-old-space-size=6144
+      - "NEXT_PUBLIC_PRODUCT_NAME=BOSS & YOUNG"
+      - "NEXT_PUBLIC_PRODUCT_TAGLINE=Shanghai Boss & Young Attorneys-at-Law"
+    mem_limit: ${PLATFORM_MEM_LIMIT:-8g}

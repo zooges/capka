@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPublicUrl } from "../url";
+import { getPublicUrl, resolveTrustedAuthOrigins, parseTrustedOrigins } from "../url";
 
 describe("getPublicUrl", () => {
   it("prefers explicit PUBLIC_URL over everything", () => {
@@ -41,5 +41,30 @@ describe("getPublicUrl", () => {
 
   it("falls back to localhost when there is nothing to derive from", () => {
     expect(getPublicUrl({ env: {} })).toBe("http://localhost:3000");
+  });
+});
+
+describe("resolveTrustedAuthOrigins", () => {
+  it("parses TRUSTED_ORIGINS list", () => {
+    expect(parseTrustedOrigins("http://10.0.40.100:3100, http://127.0.0.1:3100/")).toEqual([
+      "http://10.0.40.100:3100",
+      "http://127.0.0.1:3100",
+    ]);
+  });
+
+  it("includes PUBLIC_URL, extras, and the request Host origin", () => {
+    const headers = new Headers({ host: "10.0.40.100:3100" });
+    expect(
+      resolveTrustedAuthOrigins({
+        env: {
+          PUBLIC_URL: "https://agent.example.com",
+          TRUSTED_ORIGINS: "http://10.0.40.100:3100",
+        },
+        headers,
+      }).sort(),
+    ).toEqual([
+      "http://10.0.40.100:3100",
+      "https://agent.example.com",
+    ].sort());
   });
 });

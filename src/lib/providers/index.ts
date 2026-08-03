@@ -9,6 +9,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createOllama } from "ollama-ai-provider-v2";
 import { createGoogleGenerativeAI, google } from "@ai-sdk/google";
 import { createGuardedFetch } from "@/lib/net/ssrf";
+import { extractDsmlToolMiddleware } from "./dsml";
 
 /**
  * A user-supplied custom base URL is an SSRF surface. Routing the SDK through
@@ -63,6 +64,24 @@ export function withReasoningExtraction(model: WrappableModel): WrappableModel {
   });
 }
 
+/**
+ * Recover DeepSeek V4 DSML tool calls that leaked into assistant text (common
+ * when LiteLLM / raw OpenAI-compatible gateways don't parse V4's proprietary
+ * markup). Applied after reasoning extraction so `<think>` is already peeled.
+ * Safe no-op when the response has no DSML.
+ */
+export function withDsmlToolExtraction(model: WrappableModel): WrappableModel {
+  return wrapLanguageModel({
+    model,
+    middleware: extractDsmlToolMiddleware(),
+  });
+}
+
+/** Reasoning tag peel + DSML tool recovery for OpenAI-compatible endpoints. */
+function withCompatMiddleware(model: WrappableModel): WrappableModel {
+  return withDsmlToolExtraction(withReasoningExtraction(model));
+}
+
 /** OpenAI wire transport. "auto" (the default) picks Chat Completions for a
  *  custom baseUrl and the Responses API for first-party OpenAI; the others
  *  force one regardless. Only the `openai` provider reads it. */
@@ -95,7 +114,9 @@ export function getModel(
       const p = createOpenAICompatible({ name: provider, baseURL, apiKey: config?.apiKey, fetch: guardedFetchFor(config?.baseUrl, blockPrivate) });
       // An endpoint that splits reasoning into `reasoning_content` is handled by the
       // provider above; one that doesn't inlines `<think>` in the text — extract it.
-      return withReasoningExtraction(p(modelId));
+      // DeepSeek V4 may also emit DSML tool calls as text through gateways that
+      // don't parse them — recover those into structured tool-calls.
+      return withCompatMiddleware(p(modelId));
     }
     case "openai": {
       const p = createOpenAI({ apiKey: config?.apiKey, baseURL: config?.baseUrl, fetch: guardedFetchFor(config?.baseUrl, blockPrivate) });
@@ -175,7 +196,7 @@ export function getModel(
       const p = createOllama({ baseURL: config?.baseUrl || "http://localhost:11434/api", fetch: guardedFetchFor(config?.baseUrl, blockPrivate) });
       // Local open-weights reasoning models (DeepSeek-R1, Qwen QwQ, …) emit their
       // chain of thought inline as `<think>…</think>` — pull it into reasoning.
-      return withReasoningExtraction(p(modelId));
+      return withCompatMiddleware(p(modelId));
     }
     default:
       throw new Error(`Unknown provider: ${provider}`);

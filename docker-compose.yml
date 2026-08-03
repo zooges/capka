@@ -112,11 +112,11 @@ services:
 
   sandbox-controller:
     image: ghcr.io/lyosu/capka-controller:${CAPKA_VERSION:-latest}
-    # `up -d`'s default pull policy only fetches an image that's missing
-    # locally — a redeploy that reuses the same tag (e.g. Coolify's git-based
-    # "Redeploy", which never runs `docker compose pull`) would silently keep
-    # running the stale cached bits. Always check the registry instead.
-    pull_policy: always
+    # China-fork / private builds: never auto-pull GHCR on `compose up` — that
+    # overwrites a locally tagged fork image with upstream (branding + patches
+    # vanish). Operators who want registry updates must run `docker compose pull`
+    # explicitly. Upstream Capka historically used `always` for Coolify redeploys.
+    pull_policy: never
     expose:
       - "3001"
     # Reaches the daemon via the restricted socket-proxy (DOCKER_HOST), never the
@@ -144,6 +144,18 @@ services:
       # egress is still firewalled off private/metadata ranges). Set false to
       # hard-forbid egress regardless of the in-app toggle (untrusted tenants).
       - SANDBOX_ALLOW_NETWORK=${SANDBOX_ALLOW_NETWORK:-true}
+      # Optional host Clash/mihomo proxy for bridge sandboxes (IPv4 only, e.g.
+      # http://172.17.0.1:7890). Opens an iptables pinhole to that host:port and
+      # injects HTTP(S)_PROXY / ALL_PROXY into the sandbox. Unset → direct egress
+      # only (private LAN still DROP'd).
+      - SANDBOX_HTTP_PROXY=${SANDBOX_HTTP_PROXY:-}
+      - SANDBOX_HTTPS_PROXY=${SANDBOX_HTTPS_PROXY:-}
+      - SANDBOX_ALL_PROXY=${SANDBOX_ALL_PROXY:-}
+      - SANDBOX_NO_PROXY=${SANDBOX_NO_PROXY:-}
+      - SANDBOX_EGRESS_ALLOW=${SANDBOX_EGRESS_ALLOW:-}
+      # Daemon-host path to sandbox-entrypoint.sh; bind-mounted over /entrypoint.sh
+      # so proxy pinholes ship without rebuilding the sandbox image.
+      - SANDBOX_ENTRYPOINT_HOST=${SANDBOX_ENTRYPOINT_HOST:-}
       # Optional perimeter for host folder mounts (folder access is off by default;
       # server folders are admin-only + confirm-gated). When set (colon-separated
       # roots), only subpaths of these may be mounted, on top of the system-path
@@ -196,7 +208,8 @@ services:
 
   platform:
     image: ghcr.io/lyosu/capka-platform:${CAPKA_VERSION:-latest}
-    pull_policy: always
+    # Same as sandbox-controller: keep fork/local images; do not re-pull on up.
+    pull_policy: never
     # Published on all interfaces by default so it works out of the box with zero
     # config. Behind a reverse proxy (or on a host where Docker publishes past the
     # firewall), set PLATFORM_BIND=127.0.0.1 to bind loopback-only and let the
@@ -217,6 +230,10 @@ services:
       # Public origin. Set it (recommended in prod) so it can't be spoofed via
       # proxy headers; unset → derived from X-Forwarded-*.
       - PUBLIC_URL=${PUBLIC_URL:-}
+      # Extra Better Auth origins (comma-separated), e.g. LAN IP while PUBLIC_URL
+      # is the Cloudflare tunnel hostname:
+      # TRUSTED_ORIGINS=http://10.0.40.100:3100
+      - TRUSTED_ORIGINS=${TRUSTED_ORIGINS:-}
       # Opt-in hardening for the first-run wizard — require this token to claim the
       # admin account on a public deploy. Unset ⇒ frictionless setup.
       - SETUP_TOKEN=${SETUP_TOKEN:-}
@@ -226,6 +243,28 @@ services:
       - USAGE_RETENTION_DAYS=${USAGE_RETENTION_DAYS:-365}
       - AUDIT_RETENTION_DAYS=${AUDIT_RETENTION_DAYS:-365}
       - DB_RETENTION_BATCH_SIZE=${DB_RETENTION_BATCH_SIZE:-1000}
+      # Progressive MCP disclosure: defer when connector schemas exceed
+      # min(pct% of window, MCP_DEFER_TOKEN_MAX). Default pct=10, max=8192 so
+      # ~1M-window models still hide heavy MCP behind find_tool. pct=0 always
+      # defers; max=0 disables the absolute cap.
+      - MCP_DEFER_TOKEN_PCT=${MCP_DEFER_TOKEN_PCT:-10}
+      - MCP_DEFER_TOKEN_MAX=${MCP_DEFER_TOKEN_MAX:-8192}
+      # Keep listed MCP servers always-on under defer (comma-separated names).
+      # Unset + CAPKA_REGION=cn defaults to tavily in code; empty string disables.
+      - MCP_ALWAYS_LOAD=${MCP_ALWAYS_LOAD:-}
+      # DeepSeek V4: low/medium map to high server-side; use off to disable thinking.
+      - REASONING_EFFORT=${REASONING_EFFORT:-}
+      # China-team fork: CAPKA_REGION=cn = China network + domain MCP routing
+      # (overseas URL fetch allowed when sandbox egress/proxy works; see docs/CHINA-FORK.md).
+      # CAPKA_TAVILY_STEER defaults on for cn (Tavily-first open web); set 0 on intranet.
+      # Unset CAPKA_REGION = upstream defaults (no regional steer).
+      - CAPKA_REGION=${CAPKA_REGION:-}
+      - CAPKA_CHINA=${CAPKA_CHINA:-}
+      - CAPKA_TAVILY_STEER=${CAPKA_TAVILY_STEER:-}
+      - CAPKA_WEB_SEARCH=${CAPKA_WEB_SEARCH:-}
+      # iOS shell deep-link for Safari→App Feishu OAuth bridge (邦信阳=bossyoung,
+      # 邦信阳2=bossyoung2). Unset defaults to bossyoung.
+      - CAPKA_IOS_URL_SCHEME=${CAPKA_IOS_URL_SCHEME:-}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s

@@ -33,6 +33,12 @@ describe("classifyLLMError", () => {
     expect(classifyLLMError("maximum context length is 128000 tokens").category).toBe("context_too_long");
   });
 
+  it("maps DeepSeek / provider content-safety refusals", () => {
+    expect(classifyLLMError("Content Exists Risk").category).toBe("content_blocked");
+    expect(classifyLLMError("Error: content_filter triggered").category).toBe("content_blocked");
+    expect(classifyLLMError("Content Exists Risk").userMessage).toMatch(/content-safety|rephras|model/i);
+  });
+
   it("maps network errors", () => {
     expect(classifyLLMError(new Error("fetch failed: ECONNREFUSED")).category).toBe("network");
   });

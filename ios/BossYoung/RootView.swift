@@ -37,6 +37,7 @@ struct RootView: View {
 
 struct MainShellView: View {
   @Environment(SessionStore.self) private var session
+  @Environment(\.scenePhase) private var scenePhase
   @State private var chat = ChatViewModel()
   @State private var list = ChatListViewModel()
   @State private var showSidebar = false
@@ -52,6 +53,10 @@ struct MainShellView: View {
   @State private var showProjectPicker = false
   /// Whether the transcript keeps itself pinned to the newest content.
   @State private var follow = true
+  /// Message ids present when a chat first settled — remount must not replay
+  /// entrance animations on every historical thinking row.
+  @State private var skipEntranceIds: Set<String> = []
+  @State private var awaitingEntranceSeed = false
   @State private var showArchived = false
   @State private var showSettings = false
   @State private var showFiles = false
@@ -59,11 +64,14 @@ struct MainShellView: View {
   @State private var renameText = ""
   @State private var moveTarget: ChatSummary?
   @State private var moveProjects: [ProjectSummary] = []
+  @State private var shareTarget: ChatSummary?
+  @State private var exportItem: ChatExportItem?
   @State private var filesProject: ProjectSummary?
   @State private var starterType = "pdf"
   @State private var voice = VoiceDictation()
   @State private var sidebarDragOffset: CGFloat = 0
   @State private var filesDragOffset: CGFloat = 0
+  @State private var workspaceWarmTask: Task<Void, Never>?
   @FocusState private var composerFocused: Bool
 
   private var isAdmin: Bool { session.user?.role == "admin" }
@@ -157,9 +165,12 @@ struct MainShellView: View {
         openDebugScreen(ProcessInfo.processInfo.environment["CAPKA_UI_FIXTURES_SCREEN"])
         return
       }
+      // The sidebar page and the model catalog are independent fetches — run
+      // them together instead of paying two round trips back to back.
+      async let sidebar: Void = list.refreshQuietly()
       await chat.load()
       await chat.flushOutbox()
-      await list.refreshQuietly()
+      await sidebar
       // Real-session screen jumps for offline/online QA (Debug launchctl only).
       openDebugScreen(ProcessInfo.processInfo.environment["CAPKA_OPEN_SCREEN"])
       if let raw = ProcessInfo.processInfo.environment["CAPKA_OPEN_CHAT"], !raw.isEmpty {
@@ -181,10 +192,51 @@ struct MainShellView: View {
       showSidebar = false
       Task { await chat.openChat(id) }
     }
+    // Agent wrote / user uploaded — pull the new bytes into the phone cache so
+    // the next open or thumbnail is local. Trailing debounce: a long turn posts
+    // one of these per tool call, and each pass may warm a dozen downloads.
+    .onReceive(NotificationCenter.default.publisher(for: AppConfig.workspaceDidChangeNotification)) { note in
+      // The object may be a chatId or a projectId — either way it must be ours.
+      if let scope = note.object as? String,
+         scope != chat.chatId, scope != chat.projectId { return }
+      let chatId = chat.chatId
+      let projectId = chat.projectId
+      guard chatId != nil || projectId != nil else { return }
+      workspaceWarmTask?.cancel()
+      workspaceWarmTask = Task {
+        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        guard !Task.isCancelled else { return }
+        let entries = (try? await CapkaAPIClient.shared.listFiles(
+          chatId: chatId,
+          projectId: projectId,
+          path: "."
+        )) ?? []
+        guard !entries.isEmpty else { return }
+        ChatDiskCache.shared.saveListing(
+          chatId: chatId,
+          projectId: projectId,
+          path: ".",
+          entries: entries
+        )
+        CapkaAPIClient.shared.warmWorkspaceFiles(
+          chatId: chatId,
+          projectId: projectId,
+          entries: entries
+        )
+      }
+    }
     .onChange(of: session.eventSeq) { _, _ in
-      if let event = session.lastEvent {
+      // Drain the whole backlog — do not read only `lastEvent`, or a burst of
+      // SSE (ask → finish) collapses to the last item and the ask card never paints.
+      for event in session.drainEvents() {
         chat.applyEvent(event)
         list.applyEvent(event)
+      }
+    }
+    .onChange(of: chat.isEmptyChat) { _, isEmpty in
+      if isEmpty {
+        follow = true
+        dismissComposer()
       }
     }
     .fileImporter(
@@ -245,6 +297,12 @@ struct MainShellView: View {
       )
       .presentationDetents([.medium, .large])
       .presentationDragIndicator(.visible)
+      // Always re-fetch when the picker opens — admin may have changed providers.
+      .task { await chat.refreshModels(force: true) }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .active, session.isAuthenticated, !CapkaFixtures.isEnabled else { return }
+      Task { await chat.refreshModels() }
     }
     .sheet(isPresented: $showProjectPicker) {
       ProjectContextSheet(
@@ -332,6 +390,19 @@ struct MainShellView: View {
       }
       Button("取消", role: .cancel) { renameTarget = nil }
     }
+    .sheet(item: $shareTarget) { row in
+      ChatShareSheet(chat: row) { updated in
+        if let idx = list.chats.firstIndex(where: { $0.id == updated.id }) {
+          list.chats[idx] = updated
+        }
+      }
+      .presentationDetents([.medium, .large])
+    }
+    #if os(iOS)
+    .sheet(item: $exportItem) { item in
+      ActivityShareSheet(items: [item.url])
+    }
+    #endif
     .confirmationDialog("移至项目", isPresented: Binding(
       get: { moveTarget != nil },
       set: { if !$0 { moveTarget = nil } }
@@ -416,7 +487,11 @@ struct MainShellView: View {
       if !chat.isEmptyChat {
         circleButton("folder") { openWorkspace() }
       }
-      circleButton("square.and.pencil") { chat.startNewChat() }
+      circleButton("square.and.pencil") {
+        follow = true
+        dismissComposer()
+        chat.startNewChat()
+      }
     }
     .padding(.horizontal, 14)
     .padding(.vertical, 8)
@@ -462,70 +537,80 @@ struct MainShellView: View {
   // MARK: - Empty home
 
   private func emptyHome(chat: ChatViewModel) -> some View {
-    ScrollView {
-      VStack(spacing: 0) {
-        Color.clear
-          .frame(height: composerFocused ? 28 : 72)
-          .frame(maxWidth: .infinity)
-          .contentShape(Rectangle())
-          .onTapGesture { dismissComposer() }
-
-        Image("BrandWordmark")
-          .resizable()
-          .scaledToFit()
-          .frame(height: 46)
-          .padding(.bottom, composerFocused ? 22 : 34)
-          .capkaEntrance(.blurRise)
-          .onTapGesture { dismissComposer() }
-
-        composerCard(chat: chat, homeStyle: true)
-          .padding(.horizontal, 18)
-          .capkaEntrance(.blurRise, delay: 0.06)
-
-        Button { showModelPicker = true } label: {
-          HStack(spacing: 6) {
-            if let model = chat.models.first(where: { $0.id == chat.selectedModelId }) {
-              ProviderIconView(slug: model.iconSlug, size: 13)
-            }
-            if modelFeatured {
-              Image(systemName: "star.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(Brand.burgundy)
-            }
-            Text(currentModelName)
-              .font(.system(size: 13, weight: .medium))
-            Image(systemName: "chevron.down")
-              .font(.system(size: 9, weight: .semibold))
-          }
-          .foregroundStyle(Brand.ink.opacity(0.8))
-          .padding(.horizontal, 14)
-          .padding(.vertical, 8)
-          .capkaCard(radius: 999)
-        }
-        .padding(.top, 14)
-
-        if !composerFocused {
-          homeSuggestions
-            .padding(.top, 32)
-            .transition(.opacity.combined(with: .offset(y: 6)))
-            .capkaEntrance(.blurRise, delay: 0.12)
-        } else {
+    GeometryReader { geo in
+      ScrollView {
+        VStack(spacing: 0) {
+          // Focused: the top band turns flexible and splits the leftover height
+          // with its twin below, so the composer block floats centered in the
+          // space above the keyboard instead of hugging the top edge.
           Color.clear
-            .frame(minHeight: 120)
             .frame(maxWidth: .infinity)
+            .frame(
+              minHeight: composerFocused ? 16 : 72,
+              maxHeight: composerFocused ? .infinity : 72
+            )
             .contentShape(Rectangle())
             .onTapGesture { dismissComposer() }
-        }
 
-        Spacer(minLength: 60)
-          .contentShape(Rectangle())
-          .onTapGesture { dismissComposer() }
+          Image("BrandWordmark")
+            .resizable()
+            .scaledToFit()
+            .frame(height: 46)
+            .padding(.bottom, composerFocused ? 22 : 34)
+            .capkaEntrance(.blurRise)
+            .onTapGesture { dismissComposer() }
+
+          composerCard(chat: chat, homeStyle: true)
+            .padding(.horizontal, 18)
+            .capkaEntrance(.blurRise, delay: 0.06)
+
+          Button { showModelPicker = true } label: {
+            HStack(spacing: 6) {
+              if let model = chat.models.first(where: { $0.id == chat.selectedModelId }) {
+                ProviderIconView(slug: model.iconSlug, size: 13)
+              }
+              if modelFeatured {
+                Image(systemName: "star.fill")
+                  .font(.system(size: 10))
+                  .foregroundStyle(Brand.burgundy)
+              }
+              Text(currentModelName)
+                .font(.system(size: 13, weight: .medium))
+              Image(systemName: "chevron.down")
+                .font(.system(size: 9, weight: .semibold))
+            }
+            .foregroundStyle(Brand.ink.opacity(0.8))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .capkaCard(radius: 999)
+          }
+          .padding(.top, 14)
+
+          if !composerFocused {
+            homeSuggestions
+              .padding(.top, 32)
+              .transition(.opacity.combined(with: .offset(y: 6)))
+              .capkaEntrance(.blurRise, delay: 0.12)
+
+            Spacer(minLength: 60)
+              .contentShape(Rectangle())
+              .onTapGesture { dismissComposer() }
+          } else {
+            Color.clear
+              .frame(maxWidth: .infinity)
+              .frame(minHeight: 16, maxHeight: .infinity)
+              .contentShape(Rectangle())
+              .onTapGesture { dismissComposer() }
+          }
+        }
+        .frame(maxWidth: .infinity)
+        // Focused: fill exactly the height above the keyboard so the flexible
+        // bands can center the block; otherwise keep the tall scrollable page.
+        .frame(minHeight: composerFocused ? geo.size.height : Platform.referenceHeight * 0.68)
+        .animation(Motion.easeOut(0.32), value: composerFocused)
       }
-      .frame(maxWidth: .infinity)
-      .frame(minHeight: Platform.referenceHeight * 0.68)
-      .animation(Motion.easeOut(0.32), value: composerFocused)
+      .scrollDismissesKeyboard(.interactively)
     }
-    .scrollDismissesKeyboard(.interactively)
   }
 
   private var modelFeatured: Bool {
@@ -646,12 +731,28 @@ struct MainShellView: View {
     return f
   }()
 
+  /// Apply the message entrance only when the row is settled — streaming rows
+  /// change identity (pending → server id) and must not re-animate.
+  private struct StreamingAwareEntrance: ViewModifier {
+    let active: Bool
+    func body(content: Content) -> some View {
+      if active {
+        content.capkaEntrance(.message)
+      } else {
+        content
+      }
+    }
+  }
+
   // MARK: - Messages
 
   private func messageList(chat: ChatViewModel) -> some View {
     ScrollViewReader { proxy in
       ScrollView {
-        LazyVStack(alignment: .leading, spacing: 2) {
+        // Eager VStack: LazyVStack's estimated heights make scrollTo(end) land
+        // past the real content (blank screen; user has to scroll up). Chat
+        // transcripts are short enough that lazy loading isn't worth that bug.
+        VStack(alignment: .leading, spacing: 2) {
           if chat.isLoading && chat.messages.isEmpty {
             ProgressView()
               .tint(Brand.primary)
@@ -693,7 +794,12 @@ struct MainShellView: View {
               onSwitchBranch: branchHandler(chat: chat, message: msg)
             )
             .id(msg.id)
-            .capkaEntrance(.message)
+            // Skip entrance while a turn streams — promoting pending→real id
+            // would otherwise re-run the rise animation and bounce「思考」.
+            // Also skip anything that was already on screen when the chat opened.
+            .modifier(StreamingAwareEntrance(
+              active: !msg.isStreaming && !skipEntranceIds.contains(msg.id)
+            ))
           }
         }
         .padding(.top, 4)
@@ -702,35 +808,50 @@ struct MainShellView: View {
       .scrollDismissesKeyboard(.interactively)
       .simultaneousGesture(TapGesture().onEnded { dismissComposer() })
       // Reading back over a reply while it streams must win over following it.
-      // Any drag hands control to the reader until they return to the bottom.
+      // A deliberate upward scroll (finger down > 36pt) hands control to the reader.
       .simultaneousGesture(
-        DragGesture(minimumDistance: 12).onChanged { value in
-          if value.translation.height > 0 { follow = false }
+        DragGesture(minimumDistance: 36).onChanged { value in
+          if value.translation.height > 36 { follow = false }
         }
       )
       .refreshable { await chat.load() }
-      .onChange(of: chat.messages.last?.text) { _, _ in
-        // Deltas arrive many times a second; animating each one makes the text
-        // shiver. Plain scrollTo keeps the tail pinned without the jitter.
-        guard follow, let id = chat.messages.last?.id else { return }
-        proxy.scrollTo(id, anchor: .bottom)
+      .onChange(of: chat.chatId) { _, _ in
+        awaitingEntranceSeed = true
+        skipEntranceIds = []
+        seedEntrancesIfReady(chat: chat)
       }
-      .onChange(of: chat.messages.last?.steps.count) { _, _ in
-        guard follow, let id = chat.messages.last?.id else { return }
-        withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
+      .onChange(of: chat.isLoading) { _, _ in
+        seedEntrancesIfReady(chat: chat)
+      }
+      .onChange(of: chat.messages.map(\.id)) { _, _ in
+        seedEntrancesIfReady(chat: chat)
+      }
+      .onAppear {
+        awaitingEntranceSeed = true
+        seedEntrancesIfReady(chat: chat)
+      }
+      .onChange(of: chat.transcriptPinToken) { _, _ in
+        // Deltas arrive many times a second; animating each one makes the text
+        // shiver. Pin the *last message* bottom after layout settles — an end
+        // spacer under LazyVStack used to overshoot into blank space.
+        guard follow else { return }
+        pinTranscriptTail(proxy: proxy, chat: chat, animated: false)
       }
       .onChange(of: chat.messages.count) { _, _ in
         // A new turn always pulls the view back: the reader just sent it.
         follow = true
-        guard let id = chat.messages.last?.id else { return }
-        withAnimation(Motion.easeOut(0.24)) { proxy.scrollTo(id, anchor: .bottom) }
+        pinTranscriptTail(proxy: proxy, chat: chat, animated: true)
+      }
+      .onChange(of: chat.messages.last?.id) { _, _ in
+        // Placeholder → real messageId: re-pin so we don't stay on the old cell.
+        guard follow else { return }
+        pinTranscriptTail(proxy: proxy, chat: chat, animated: false)
       }
       .overlay(alignment: .bottom) {
         if !follow {
           Button {
             follow = true
-            guard let id = chat.messages.last?.id else { return }
-            withAnimation(Motion.easeOut(0.3)) { proxy.scrollTo(id, anchor: .bottom) }
+            pinTranscriptTail(proxy: proxy, chat: chat, animated: true)
           } label: {
             HStack(spacing: 5) {
               Image(systemName: "arrow.down")
@@ -752,6 +873,36 @@ struct MainShellView: View {
       }
       .animation(Motion.easeOut(0.2), value: follow)
     }
+  }
+
+  /// Scroll so the newest message's bottom sits on the visible bottom. Yields
+  /// one frame first so SwiftUI has measured the just-appended / grown row.
+  private func pinTranscriptTail(proxy: ScrollViewProxy, chat: ChatViewModel, animated: Bool) {
+    guard let target = chat.messages.last?.id else { return }
+    Task { @MainActor in
+      await Task.yield()
+      guard follow else { return }
+      // Still the same tail — a newer send may have moved on while we yielded.
+      guard chat.messages.last?.id == target else { return }
+      if animated {
+        withAnimation(Motion.easeOut(0.24)) {
+          proxy.scrollTo(target, anchor: .bottom)
+        }
+      } else {
+        proxy.scrollTo(target, anchor: .bottom)
+      }
+    }
+  }
+
+  /// Snapshot whatever is already on screen when a chat opens so remounts don't
+  /// replay message/step entrances on the whole transcript.
+  private func seedEntrancesIfReady(chat: ChatViewModel) {
+    guard awaitingEntranceSeed else { return }
+    if chat.isLoading { return }
+    // Existing chat: wait for cache/network paint before seeding.
+    if chat.chatId != nil && chat.messages.isEmpty { return }
+    skipEntranceIds = Set(chat.messages.map(\.id))
+    awaitingEntranceSeed = false
   }
 
   /// Only user turns are editable, and only messages with alternatives get the
@@ -780,6 +931,8 @@ struct MainShellView: View {
               AttachmentTile(
                 name: file.name,
                 kind: .of(name: file.name, mime: file.type),
+                chatId: chat.chatId,
+                workspacePath: file.name,
                 onRemove: { chat.removeAttachment(at: index) }
               )
             }
@@ -944,7 +1097,10 @@ struct MainShellView: View {
         SidebarView(
           list: list,
           currentChatId: chat.chatId,
+          safeAreaBottom: geo.safeAreaInsets.bottom,
           onNewChat: {
+            follow = true
+            dismissComposer()
             chat.startNewChat()
             closeSidebar()
           },
@@ -967,11 +1123,31 @@ struct MainShellView: View {
               moveProjects = (try? await CapkaAPIClient.shared.listProjects()) ?? []
               moveTarget = row
             }
+          },
+          onShare: { row in
+            shareTarget = row
+          },
+          onExport: { row in
+            Task {
+              do {
+                let url = try await CapkaAPIClient.shared.exportChatMarkdown(
+                  chatId: row.id,
+                  title: row.title
+                )
+                exportItem = ChatExportItem(url: url)
+              } catch CapkaAPIError.unauthorized {
+                await session.noteUnauthorized()
+              } catch {
+                list.error = "导出失败：\(error.localizedDescription)"
+              }
+            }
           }
         )
         .frame(width: width)
         .frame(maxHeight: .infinity)
         .background(Brand.sidebar.ignoresSafeArea())
+        // Draw into the home-indicator band; the account row pads itself once.
+        .ignoresSafeArea(edges: .bottom)
         .gesture(
           DragGesture(minimumDistance: 8, coordinateSpace: .global)
             .onChanged { value in
@@ -987,6 +1163,7 @@ struct MainShellView: View {
         )
       }
     }
+    .ignoresSafeArea(edges: .bottom)
     .ignoresSafeArea(.keyboard, edges: .bottom)
   }
 
@@ -999,13 +1176,21 @@ struct MainShellView: View {
           .onTapGesture { closeWorkspace() }
 
         NavigationStack {
-          WorkspaceFilesView(chatId: chat.chatId, projectId: nil, title: "工作区文件")
-            .toolbar {
-              ToolbarItem(placement: .topBarTrailing) {
-                Button("完成") { closeWorkspace() }
-                  .foregroundStyle(Brand.primary)
-              }
+          WorkspaceFilesView(
+            chatId: chat.chatId,
+            projectId: nil,
+            title: "工作区文件",
+            onAttachToChat: { entry in
+              chat.attachWorkspaceFile(path: entry.path, name: entry.name)
+              closeWorkspace()
             }
+          )
+          .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+              Button("完成") { closeWorkspace() }
+                .foregroundStyle(Brand.primary)
+            }
+          }
         }
         .frame(width: width)
         .frame(maxHeight: .infinity)

@@ -37,7 +37,7 @@ export const POST = apiHandler(async (req: Request) => {
   const { userId } = await requireActive();
   const rl = take(`mcp-test:${userId}`);
   if (!rl.ok) return Response.json({ error: "Too many requests — please slow down." }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } });
-  const { url, headers } = await req.json();
+  const { url, headers, transport: rawTransport } = await req.json();
   if (typeof url !== "string" || !url.trim()) {
     return Response.json({ error: "url required" }, { status: 400 });
   }
@@ -46,8 +46,9 @@ export const POST = apiHandler(async (req: Request) => {
   }
   const hasToken = headers && typeof headers === "object";
   const secrets = hasToken ? { headers } : undefined;
+  const transport = rawTransport === "sse" || rawTransport === "http" ? rawTransport : undefined;
   const blockPrivate = await getBlockPrivateProviderUrls();
-  const health = await probeConfig({ name: "probe", url, secrets }, blockPrivate);
+  const health = await probeConfig({ name: "probe", url, secrets, transport }, blockPrivate);
   // ok without a token → open; ok with a token, or a rejection, → token. Unreachable
   // leaves the method unset so the form keeps the user's (or default) choice.
   const method: AuthMethod | undefined =

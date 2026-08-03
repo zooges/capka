@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { ElicitRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
@@ -7,6 +8,7 @@ import { assertSafeUrl, createGuardedFetch } from "@/lib/net/ssrf";
 import { makeElicitHandler } from "./elicitation";
 import { SandboxStdioTransport } from "./stdio-transport";
 import type { McpServerConfig } from "./types";
+import { inferRemoteTransport } from "./types";
 
 /** Run context a connector needs to elicit input from the user mid-tool-call.
  *  Present only during a live turn (loadMcpTools threads it through). `origin` lets
@@ -95,10 +97,21 @@ export async function connectMcpServer(
     const authedFetch = createGuardedFetch({ blockPrivate, timeoutMs: REQUEST_TIMEOUT_MS, headers });
     // OAuth connectors attach `authProvider` (per-user tokens + auto-refresh); token
     // connectors rely on the static headers injected by authedFetch above.
-    transport = new StreamableHTTPClientTransport(new URL(cfg.url), {
-      fetch: authedFetch,
-      ...(opts.authProvider ? { authProvider: opts.authProvider } : {}),
-    });
+    const remoteKind = cfg.transport === "sse" ? "sse" : cfg.transport === "http" ? "http" : inferRemoteTransport(cfg.url);
+    if (remoteKind === "sse") {
+      // Legacy SSE transport — still common on older / China-hosted MCP servers.
+      // Prefer Streamable HTTP when the URL does not look like /sse.
+      transport = new SSEClientTransport(new URL(cfg.url), {
+        fetch: authedFetch,
+        requestInit: Object.keys(headers).length ? { headers } : undefined,
+        ...(opts.authProvider ? { authProvider: opts.authProvider } : {}),
+      });
+    } else {
+      transport = new StreamableHTTPClientTransport(new URL(cfg.url), {
+        fetch: authedFetch,
+        ...(opts.authProvider ? { authProvider: opts.authProvider } : {}),
+      });
+    }
   }
   try {
     await withTimeout(client.connect(transport), timeoutMs, `mcp connect "${cfg.name}"`);

@@ -25,7 +25,8 @@ describe("manage/controls", () => {
 
   it("locale control accepts a supported locale and rejects an unknown one", () => {
     const locale = reg.get("user.locale")!;
-    expect(locale.schema.safeParse("uk").success).toBe(true);
+    expect(locale.schema.safeParse("zh-CN").success).toBe(true);
+    expect(locale.schema.safeParse("uk").success).toBe(false);
     expect(locale.schema.safeParse("de").success).toBe(false);
   });
 
@@ -54,7 +55,7 @@ describe("manage/controls", () => {
     const nonAscii = /[^\x00-\x7F]/;
     for (const c of reg.all()) {
       const strings = [c.title, c.description, c.format?.("true") ?? "", c.format?.("false") ?? ""].join(" ");
-      expect(nonAscii.test(strings), `${c.id} must be English in code (localize via messages/uk.json)`).toBe(false);
+      expect(nonAscii.test(strings), `${c.id} must be English in code (localize via messages/zh-CN.json)`).toBe(false);
     }
   });
 });

@@ -9,6 +9,7 @@ import { assertSafeUrl } from "@/lib/net/ssrf";
 import { ValidationError } from "@/lib/errors";
 import { mutedIds } from "@/lib/muted-resources";
 import type { McpAuthKind, McpScope, McpSecrets, McpServerConfig, McpServerInfo } from "./types";
+import { inferRemoteTransport } from "./types";
 
 const SCOPE_RANK: Record<McpScope, number> = { system: 0, user: 1, project: 2 };
 const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -60,9 +61,9 @@ export async function listEnabledServerConfigs(userId: string, projectId?: strin
   const out: McpServerConfig[] = [];
   for (const r of rows) {
     if (!winnerIds.has(r.id)) continue;
-    const isHttp = r.transport === "http" && r.url;
+    const isRemote = (r.transport === "http" || r.transport === "sse") && r.url;
     const isStdio = r.transport === "stdio" && r.command;
-    if (!isHttp && !isStdio) continue; // sse not served yet
+    if (!isRemote && !isStdio) continue;
     let secrets: McpSecrets | undefined;
     if (r.secrets) {
       try { secrets = JSON.parse(decrypt(r.secrets, key)) as McpSecrets; } catch { secrets = undefined; }
@@ -124,6 +125,8 @@ export interface UpsertServerInput {
   projectId: string | null;
   name: string;
   url: string;
+  /** Remote protocol. Defaults from URL (`/sse` → sse, else http). */
+  transport?: "http" | "sse";
   secrets?: McpSecrets;
   authKind?: McpAuthKind;
   source?: string; // 'manual' | 'catalog:<installId>'
@@ -158,12 +161,13 @@ export async function upsertServer(input: UpsertServerInput): Promise<string> {
     // assertSafeUrl already produces friendly, non-jargon messages — surface as 400.
     throw new ValidationError(e instanceof Error ? e.message : "That URL can't be used.");
   }
+  const transport = input.transport ?? inferRemoteTransport(input.url);
   const key = await getMasterKey();
   const matchedId = await existingServerId({ id: input.id, scope: input.scope, userId: input.userId, projectId: input.projectId, name, source: input.source });
   const id = matchedId ?? nanoid();
   const values = {
     id, scope: input.scope, userId: input.userId, projectId: input.projectId,
-    name, transport: "http" as const, url: input.url,
+    name, transport, url: input.url,
     secrets: input.secrets ? encrypt(JSON.stringify(input.secrets), key) : null,
     ...(input.authKind ? { authKind: input.authKind } : {}),
     ...(input.source ? { source: input.source } : {}),
@@ -231,6 +235,16 @@ export async function getAccessibleServer(userId: string, serverId: string) {
 
 export async function setEnabled(id: string, enabled: boolean): Promise<void> {
   await db.update(mcpServers).set({ enabled, updatedAt: new Date() }).where(eq(mcpServers.id, id));
+}
+
+/** Replace encrypted secrets (e.g. Bearer token) on an existing connector. */
+export async function updateServerSecrets(id: string, secrets: McpSecrets): Promise<void> {
+  const key = await getMasterKey();
+  await db.update(mcpServers).set({
+    secrets: encrypt(JSON.stringify(secrets), key),
+    authKind: "token",
+    updatedAt: new Date(),
+  }).where(eq(mcpServers.id, id));
 }
 
 export async function deleteServer(id: string): Promise<void> {

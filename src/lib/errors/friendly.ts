@@ -15,6 +15,7 @@ export type LLMErrorCategory =
   | "rate_limited"
   | "model_unavailable"
   | "context_too_long"
+  | "content_blocked"
   | "network"
   | "timed_out"
   | "provider_unresponsive"
@@ -75,6 +76,15 @@ const RULES: Rule[] = [
     test: /\b(model).*(not found|not a valid model|does not exist|is not available|no endpoints|unsupported|not supported|deprecated|no longer (available|supported))\b/i,
     userMessage:
       "The selected AI model isn't available right now. Try a different model, or ask your administrator.",
+  },
+  {
+    category: "content_blocked",
+    // Provider content-safety hard refusals (e.g. DeepSeek's "Content Exists Risk",
+    // OpenAI content_filter / ResponsibleAIPolicyViolation). Not transient — retrying
+    // the same prompt usually fails again; advise rephrase or another model.
+    test: /\b(content exists risk|content[_\s-]?filter|content[_\s-]?policy|responsible[_\s-]?ai|policy[_\s-]?violation|unsafe content|flagged by|moderation)\b|内容.*(违规|风险|审核)|敏感内容/i,
+    userMessage:
+      "The AI provider blocked this reply for content-safety reasons. Try rephrasing, narrowing the topic, or switching to a different model.",
   },
   {
     category: "network",

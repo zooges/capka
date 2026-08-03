@@ -1,7 +1,19 @@
 import type { SecretDescriptor } from "@/lib/skills/types";
 
 export type McpScope = "system" | "user" | "project";
-export type McpTransport = "http" | "sse" | "stdio"; // B1 implements 'http' only
+export type McpTransport = "http" | "sse" | "stdio";
+
+/** Infer remote transport from a URL path. `/sse` endings are the legacy SSE
+ *  convention; everything else defaults to Streamable HTTP. */
+export function inferRemoteTransport(url: string): "http" | "sse" {
+  try {
+    const path = new URL(url).pathname.replace(/\/+$/, "").toLowerCase();
+    if (path.endsWith("/sse") || path === "sse") return "sse";
+  } catch {
+    /* ignore */
+  }
+  return "http";
+}
 
 /** Decrypted secrets used at connect time. `env` is for stdio (B2). */
 export interface McpSecrets {

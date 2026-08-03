@@ -20,6 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { productName } from "@/lib/brand";
 import {
   Sidebar,
   SidebarContent,
@@ -48,7 +49,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ClawMark } from "@/components/brand/claw-mark";
+import { BrandMark } from "@/components/brand/brand-lockup";
 import { useTheme } from "@/components/providers";
 import { useBackDismiss } from "@/hooks/use-back-dismiss";
 import { ProjectsNav } from "@/components/projects/projects-nav";
@@ -574,11 +575,11 @@ export function AppSidebar() {
               className={cn("shrink-0 rounded-md transition-opacity", sidebarState === "collapsed" && "hover:opacity-70 cursor-pointer")}
               title={sidebarState === "collapsed" ? t("expandSidebar") : undefined}
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#0a0a0a] text-[#fafafa]" aria-label="Capka">
-                <ClawMark className="h-3.5 w-3.5" />
+              <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-md" aria-label={productName()}>
+                <BrandMark size="sm" />
               </span>
             </button>
-            <span className="text-base font-medium group-data-[collapsible=icon]:hidden">Capka</span>
+            <span className="text-base font-semibold group-data-[collapsible=icon]:hidden">{productName()}</span>
           </div>
           <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
         </div>
@@ -718,7 +719,7 @@ export function AppSidebar() {
 
         {loaded && chats.length === 0 && (
           <div className="animate-blur-rise flex flex-col items-center px-4 py-10 text-center">
-            <ClawMark className="mb-3 h-9 w-9 text-foreground opacity-15" />
+            <BrandMark size="md" className="mb-3 opacity-80" />
             <p className="text-xs text-muted-foreground">
               {debouncedSearch ? t("noChatsFound") : t("startNewChat")}
             </p>

@@ -80,12 +80,12 @@ describe("manage/dispatch", () => {
     const { control, cell } = memControl({ id: "user.locale", scope: "user", requiredRole: "user", risk: "safe" });
     const reg = createRegistry([control]);
     const audit = vi.fn();
-    const res = await dispatch(reg, ctx({ audit }), { action: "set", target: "user.locale", value: "uk" });
-    expect(cell.value).toBe("uk");
+    const res = await dispatch(reg, ctx({ audit }), { action: "set", target: "user.locale", value: "zh-CN" });
+    expect(cell.value).toBe("zh-CN");
     expect(res.status).toBe("ok");
     if (res.status === "ok" && res.render === "setting") {
       expect(res.data.before).toBe("user.locale:init");
-      expect(res.data.after).toBe("uk");
+      expect(res.data.after).toBe("zh-CN");
       expect(res.data.undoPendingId).toBeTruthy();
     }
     expect(audit).toHaveBeenCalledOnce();
@@ -96,7 +96,7 @@ describe("manage/dispatch", () => {
     const reloads = memControl({ id: "user.locale", scope: "user", requiredRole: "user", risk: "safe", reloadOnApply: true });
     const reg = createRegistry([plain.control, reloads.control]);
     const a = await dispatch(reg, ctx(), { action: "set", target: "user.x", value: "1" });
-    const b = await dispatch(reg, ctx(), { action: "set", target: "user.locale", value: "uk" });
+    const b = await dispatch(reg, ctx(), { action: "set", target: "user.locale", value: "zh-CN" });
     if (a.status !== "ok" || a.render !== "setting") throw new Error("expected setting");
     if (b.status !== "ok" || b.render !== "setting") throw new Error("expected setting");
     expect(a.data.reload).toBeUndefined(); // ordinary settings don't force a refresh
@@ -142,7 +142,7 @@ describe("manage/dispatch", () => {
   it("requiresApproval waives a safe change (no approval for a trivial personal pref)", async () => {
     const { control } = memControl({ id: "user.locale", scope: "user", requiredRole: "user", risk: "safe" });
     const reg = createRegistry([control]);
-    expect(await requiresApproval(reg, ctx(), { action: "set", target: "user.locale", value: "uk" })).toBe(false);
+    expect(await requiresApproval(reg, ctx(), { action: "set", target: "user.locale", value: "zh-CN" })).toBe(false);
   });
 
   // The pending store now backs only Undo — its safety semantics (single-use,
@@ -208,9 +208,9 @@ describe("manage/dispatch", () => {
   it("undo restores the previous value via its staged pendingId", async () => {
     const { control, cell } = memControl({ id: "user.locale", scope: "user", requiredRole: "user", risk: "safe" });
     const reg = createRegistry([control]);
-    const applied = await dispatch(reg, ctx(), { action: "set", target: "user.locale", value: "uk" });
+    const applied = await dispatch(reg, ctx(), { action: "set", target: "user.locale", value: "zh-CN" });
     if (applied.status !== "ok" || applied.render !== "setting") throw new Error("expected setting");
-    expect(cell.value).toBe("uk");
+    expect(cell.value).toBe("zh-CN");
     const undone = await applyPending(reg, ctx(), applied.data.undoPendingId!);
     expect(undone.status).toBe("ok");
     expect(cell.value).toBe("user.locale:init");

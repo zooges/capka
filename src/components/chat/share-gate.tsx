@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import { ClawMark } from "@/components/brand/claw-mark";
+import { BrandHero } from "@/components/brand/brand-lockup";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +14,9 @@ export function ShareGate() {
   const t = useTranslations("chat.share");
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-      <ClawMark className="mb-6 size-12 text-muted-foreground" />
-      <h1 className="text-lg font-medium">{t("gateTitle")}</h1>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t("gateDescription")}</p>
+      <BrandHero className="mb-6" size="sm" />
+      <h1 className="font-sans text-lg font-semibold">{t("gateTitle")}</h1>
+      <p className="mt-2 max-w-sm font-sans text-sm text-muted-foreground">{t("gateDescription")}</p>
       <Link href="/login" className={cn(buttonVariants(), "mt-6")}>
         {t("signIn")}
       </Link>

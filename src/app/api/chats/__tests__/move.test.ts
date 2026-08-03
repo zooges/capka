@@ -62,6 +62,7 @@ describe("PATCH /api/chats/[id] move — listing failure aborts", () => {
     const res = await PATCH(req({ projectId: "p1" }), params);
     expect(res.status).toBe(200);
     expect(copyWorkspace).toHaveBeenCalledTimes(1);
+    expect(copyWorkspace.mock.calls[0][2]).toBe("来自对话「My chat」（c1）");
     expect(h.update).toHaveBeenCalledTimes(1); // projectId written after copy
   });
 });

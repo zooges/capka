@@ -6,7 +6,10 @@ import { locales } from "@/i18n/config";
 import { isValidTimezone } from "@/lib/timezone";
 import type { Control } from "../types";
 
-const LOCALE_NAMES: Record<string, string> = { en: "English", uk: "Ukrainian" };
+const LOCALE_NAMES: Record<string, string> = {
+  en: "English",
+  "zh-CN": "简体中文",
+};
 
 const locale: Control = {
   id: "user.locale",

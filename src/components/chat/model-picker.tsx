@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useId, createElement } from "react";
 import { createPortal } from "react-dom";
 import { useBackDismiss } from "@/hooks/use-back-dismiss";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslations } from "next-intl";
 import { Search, ChevronDown, X, Eye, Brain, Star, Loader2, KeyRound, AlertCircle, FileText, AudioLines, Video, SlidersHorizontal, Sparkles, Layers } from "lucide-react";
 import { iconForSlug } from "./provider-icons";
@@ -777,7 +778,9 @@ function ModelList({
           aria-controls={listboxId}
           aria-activedescendant={visible.length ? optionId(activeIndex) : undefined}
           aria-label={t("search")}
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          // 16px on mobile — iOS/WKWebView auto-zooms focused <16px inputs
+          // and the homepage model sheet blows past the screen edge.
+          className="flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
         />
         {searching && <span className="text-[10px] text-muted-foreground tabular-nums">{visible.length}</span>}
         <button
@@ -867,9 +870,9 @@ function ModelList({
                       name length. Context + capabilities reveal on hover / keyboard
                       focus (the funnel filters cover "only models that hear audio");
                       the price sits last and stays put whether or not caps show. */}
-                  <span className="ml-auto flex shrink-0 items-center gap-3">
+                  <span className="ml-auto flex max-w-[48%] shrink-0 items-center justify-end gap-2 overflow-hidden sm:max-w-none sm:gap-3">
                     <span
-                      className={`flex items-center gap-2 text-[11px] text-muted-foreground transition-opacity duration-150 group-hover/row:opacity-100 ${
+                      className={`hidden items-center gap-2 text-[11px] text-muted-foreground transition-opacity duration-150 sm:flex group-hover/row:opacity-100 ${
                         isActive ? "opacity-100" : "opacity-0"
                       }`}
                     >
@@ -988,7 +991,9 @@ export function ModelPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  // Align with the rest of the app (768), not a one-off 640 — otherwise phones /
+  // large phones in landscape get the desktop 34rem panel and overflow the screen.
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -1017,13 +1022,6 @@ export function ModelPicker({
       : { mode: "active" };
 
   const state = useModels(source, value, t("loadError"));
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
 
   useEffect(() => {
     if (!open || isMobile) return;
@@ -1074,7 +1072,9 @@ export function ModelPicker({
       const panelH = 480; // h-[30rem]
       const vw = document.documentElement.clientWidth;
       const vh = document.documentElement.clientHeight;
-      const width = Math.min(576 /* 36rem */, vw - margin * 2);
+      // Never wider than the viewport (old 36rem panel overflowed phones that
+      // briefly reported as "desktop" before the mobile hook settled).
+      const width = Math.min(576 /* 36rem */, Math.max(240, vw - margin * 2));
       const r = trigger.getBoundingClientRect();
       const left = Math.max(margin, Math.min(r.left, vw - width - margin));
       // Open downward; flip above the trigger if it would run off the bottom.
@@ -1132,7 +1132,9 @@ export function ModelPicker({
       setFieldPos({
         up,
         maxH: Math.round(Math.min(panelH, Math.max(240, up ? above : below))),
-        maxW: Math.round(Math.max(240, clipRight - r.left - margin)),
+        // Cap to the visible clip width so a 34rem panel never spills past the
+        // right edge of a narrow settings / dialog scroller.
+        maxW: Math.round(Math.min(544, Math.max(240, clipRight - r.left - margin))),
       });
     };
     compute();
@@ -1338,8 +1340,8 @@ export function ModelPicker({
       {open && !isMobile && variant === "field" && fieldPos && (
         <div
           onKeyDown={(e) => { if (e.key === "Escape") close(); }}
-          style={{ height: fieldPos.maxH, maxWidth: fieldPos.maxW }}
-          className={`absolute left-0 z-50 flex w-[34rem] min-w-full overflow-hidden rounded-xl border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 duration-150 ${
+          style={{ height: fieldPos.maxH, width: "100%", maxWidth: fieldPos.maxW }}
+          className={`absolute left-0 z-50 flex max-w-[calc(100vw-1rem)] min-w-0 overflow-hidden rounded-xl border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 duration-150 ${
             fieldPos.up ? "bottom-full mb-1" : "top-full mt-1"
           }`}
         >
@@ -1353,8 +1355,8 @@ export function ModelPicker({
         <div
           ref={popoverRef}
           onKeyDown={(e) => { if (e.key === "Escape") close(); }}
-          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width }}
-          className="z-50 flex h-[30rem] overflow-hidden rounded-xl border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 duration-150"
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, maxWidth: "calc(100vw - 1rem)" }}
+          className="z-50 flex h-[min(30rem,calc(100dvh-2rem))] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 duration-150"
         >
           {renderList("vertical")}
         </div>,
@@ -1369,15 +1371,17 @@ export function ModelPicker({
         // the full screen again.
         <div
           onKeyDown={(e) => { if (e.key === "Escape") close(); }}
-          className="fixed inset-0 z-50 flex flex-col bg-background"
+          className="fixed inset-0 z-50 flex max-h-[100dvh] max-w-[100vw] flex-col overflow-hidden bg-background"
         >
-          <div className="flex items-center justify-between border-b px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="flex shrink-0 items-center justify-between border-b px-4 py-3 pt-[max(0.75rem,var(--capka-sat,env(safe-area-inset-top,0px)))] pl-[max(1rem,var(--capka-sal,env(safe-area-inset-left,0px)))] pr-[max(1rem,var(--capka-sar,env(safe-area-inset-right,0px)))]">
             <span className="text-sm font-medium">{t("selectModel")}</span>
             <button onClick={close} aria-label={t("close")} className="rounded-md p-1 hover:bg-muted">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex flex-1 flex-col min-h-0">{renderList("horizontal")}</div>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-[var(--capka-sab,env(safe-area-inset-bottom,0px))]">
+            {renderList("horizontal")}
+          </div>
         </div>,
         document.body,
       )}

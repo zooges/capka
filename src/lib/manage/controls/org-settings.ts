@@ -151,7 +151,7 @@ export const orgControls: Control[] = [
     title: "Platform name",
     description: "The installation name shown in the browser tab, the sidebar header, and the sign-in page.",
     schema: z.string().min(1, "Name can't be empty.").max(60, "Name too long (max 60)."),
-    def: "Capka",
+    def: "BOSS & YOUNG",
   }),
   // NOTE: no `sandbox_enabled` control any more. That key was never read outside
   // the settings UI, so setting it from chat reported success and changed nothing;

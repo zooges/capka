@@ -145,7 +145,7 @@
   },
   "chat": {
     "untitled": "Новий чат",
-    "searchChats": "Пошук чатів…",
+    "searchChats": "Пошук за назвою чи текстом…",
     "fileType": {
       "image": "Зображення",
       "file": "Файл"
@@ -1702,7 +1702,7 @@
     "toggleSidebar": "Бічна панель",
     "toggleTheme": "Тема",
     "commandPalette": "Палітра команд",
-    "searchChats": "Пошук чатів"
+    "searchChats": "Пошук за назвою чи текстом"
   },
   "auth": {
     "emailLabel": "Пошта",

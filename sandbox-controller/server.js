@@ -7,7 +7,7 @@ import pg from "pg";
 import { sanitize } from "./path-safety.js";
 import { resolveOwnerDecision, safeEqual } from "./owner.js";
 import { parseMultipart } from "./multipart.js";
-import { resolveNetworkMode } from "./sandbox-spec.js";
+import { resolveNetworkMode, resolveSandboxDns, dnsEqual, resolveSandboxProxy, proxyEqual } from "./sandbox-spec.js";
 import { validateMountPath } from "./mount-safety.js";
 import { makeComputeBackend } from "./backends/backend-factory.js";
 import { makeWorkspaceStore } from "./stores/workspace-factory.js";
@@ -99,6 +99,24 @@ const DATA_ROOT = process.env.DATA_ROOT || "/data/storage";
 // only paths under one of these may be mounted. Unset ⇒ any path passing the
 // denylist is allowed, with the in-chat admin confirm as the final gate.
 const MOUNT_ALLOW_ROOTS = (process.env.SANDBOX_MOUNT_ALLOW || "").split(":").filter(Boolean);
+// Host path of sandbox-entrypoint.sh (daemon-visible). When set, bind-mounted
+// over /entrypoint.sh so egress-allow / proxy pinholes can ship without a
+// multi-GB sandbox image rebuild.
+const SANDBOX_ENTRYPOINT_HOST = String(process.env.SANDBOX_ENTRYPOINT_HOST || "").trim();
+let SANDBOX_PROXY;
+try {
+  SANDBOX_PROXY = resolveSandboxProxy();
+} catch (e) {
+  console.error(`[sandbox-controller] FATAL: ${e.message}`);
+  process.exit(1);
+}
+if (SANDBOX_PROXY.fingerprint) {
+  log("sandbox.proxy.enabled", {
+    allow: SANDBOX_PROXY.allow,
+    http: SANDBOX_PROXY.http ? "(set)" : "",
+    all: SANDBOX_PROXY.all ? "(set)" : "",
+  });
+}
 const MAX_SESSIONS_PER_USER = posIntEnv("MAX_SESSIONS_PER_USER", 5);
 const MAX_WORKSPACE_MB = intEnv("MAX_WORKSPACE_MB", 500);
 // Hard per-file size cap (RLIMIT_FSIZE), kernel-enforced. Defaults to the whole
@@ -286,14 +304,49 @@ const server = createServer(async (req, res) => {
       const pre = await store.get(sid);
       if (pre && pre.userId !== uid) return jsonRes(res, 403, { error: "Session belongs to another user" });
 
-      // Hot path — a live container is already up with the SAME mounts → reuse
-      // without taking the lock. (Mid-op invalidation on the next exec handles a
-      // container that vanished.) Different mounts fall through to the lock path,
-      // which tears the container down and recreates it with the new set.
-      if (pre && pre.handle && mountKey(pre.mounts || []) === reqKey) {
-        await workspace.ensure(uid, sid);
-        store.touch(sid);
-        return jsonRes(res, 200, { sessionId: sid, status: "reused" });
+      // Desired egress after the deployment kill-switch. Compared on the reuse
+      // path so flipping Settings → Internet access (none↔bridge) recreates the
+      // container instead of leaving a live "none" sandbox that can't reach the
+      // net while the platform prompt claims it can.
+      const requestedNet = resolveNetworkMode(networkMode);
+      const desiredNet = ALLOW_NETWORK ? requestedNet : "none";
+      const desiredDns = desiredNet === "bridge" ? resolveSandboxDns() : [];
+      const desiredProxy = desiredNet === "bridge" ? SANDBOX_PROXY : { fingerprint: "", allow: [] };
+      if (requestedNet === "bridge" && desiredNet === "none") {
+        log("session.network.denied", { sessionId: sid, userId: uid, reason: "SANDBOX_ALLOW_NETWORK not set" });
+      }
+
+      // True when a live bridge container still inherits host fake-ip DNS (no
+      // HostConfig.Dns) — must recreate so public hosts resolve to real IPs.
+      const dnsDrift = async (handle) => {
+        if (desiredNet !== "bridge" || !desiredDns.length || !backend.inspectDns) return false;
+        const liveDns = await backend.inspectDns(handle).catch(() => null);
+        if (liveDns == null) return true;
+        return !dnsEqual(liveDns, desiredDns);
+      };
+
+      // True when host proxy / egress-allow settings changed since this container
+      // was created (HTTP_PROXY + iptables pinholes are bake-at-create).
+      const proxyDrift = async (handle) => {
+        if (desiredNet !== "bridge" || !backend.inspectProxyFingerprint) return false;
+        const live = await backend.inspectProxyFingerprint(handle).catch(() => null);
+        if (live == null) return true;
+        return !proxyEqual(live, desiredProxy.fingerprint || "");
+      };
+
+      const configDrift = async (handle) => (await dnsDrift(handle)) || (await proxyDrift(handle));
+
+      // Hot path — a live container is already up with the SAME mounts AND the
+      // SAME network mode (and bridge DNS / proxy) → reuse without taking the lock.
+      // Different mounts, network mode, DNS, or proxy fall through to recreate.
+      if (pre && pre.handle && mountKey(pre.mounts || []) === reqKey && (pre.networkMode || "none") === desiredNet) {
+        if (!(await configDrift(pre.handle))) {
+          await workspace.ensure(uid, sid);
+          store.touch(sid);
+          return jsonRes(res, 200, { sessionId: sid, status: "reused" });
+        }
+        if (await dnsDrift(pre.handle)) log("session.dns.changed", { sessionId: sid, userId: uid, to: desiredDns });
+        if (await proxyDrift(pre.handle)) log("session.proxy.changed", { sessionId: sid, userId: uid, allow: desiredProxy.allow });
       }
 
       // A fresh container is needed below — but on a first-boot box the sandbox
@@ -318,18 +371,29 @@ const server = createServer(async (req, res) => {
       const out = await store.withSessionLock(sid, async () => {
         const existing = await store.get(sid);
         if (existing && existing.handle) {
-          if (mountKey(existing.mounts || []) === reqKey) {
+          const sameMounts = mountKey(existing.mounts || []) === reqKey;
+          const sameNet = (existing.networkMode || "none") === desiredNet;
+          if (sameMounts && sameNet && !(await configDrift(existing.handle))) {
             await workspace.ensure(uid, sid);
             store.touch(sid);
             return { code: 200, body: { sessionId: sid, status: "reused" } };
           }
-          // Mount set changed since the container came up → destroy and recreate
-          // with the new mounts. Workspace files live on the host and survive;
-          // running processes die (the confirm card warns about this).
+          // Mounts, network mode, DNS, and/or proxy changed → destroy and recreate.
+          // Workspace files live on the host and survive; running processes die.
+          const mountsChanged = !sameMounts;
+          const networkChanged = !sameNet;
           await backend.destroy(existing.handle).catch(() => {});
           await store.setStopped(sid);
           liveCount = Math.max(0, liveCount - 1);
-          log("session.mounts.changed", { sessionId: sid, userId: uid });
+          if (mountsChanged) log("session.mounts.changed", { sessionId: sid, userId: uid });
+          if (networkChanged) {
+            log("session.network.changed", {
+              sessionId: sid,
+              userId: uid,
+              from: existing.networkMode || "none",
+              to: desiredNet,
+            });
+          }
         }
 
         // The per-user cap limits CONCURRENT LIVE containers (RAM), not stored
@@ -343,13 +407,7 @@ const server = createServer(async (req, res) => {
         }
 
         const { wsHostPath, sharedHostPath } = await workspace.ensure(uid, sid);
-        // Honor the deployment kill-switch: a bridge request is downgraded to
-        // "none" unless the operator opted the whole deployment into egress.
-        const requestedNet = resolveNetworkMode(networkMode);
-        const net = ALLOW_NETWORK ? requestedNet : "none";
-        if (requestedNet === "bridge" && net === "none") {
-          log("session.network.denied", { sessionId: sid, userId: uid, reason: "SANDBOX_ALLOW_NETWORK not set" });
-        }
+        const net = desiredNet;
         const { handle } = await backend.create({
           sessionId: sid, userId: uid, wsHostPath, sharedHostPath,
           networkMode: net, memoryBytes: MEMORY_LIMIT, nanoCpus: CPU_LIMIT,
@@ -357,11 +415,17 @@ const server = createServer(async (req, res) => {
           tmpMb: TMP_MB, mcpTmpMb: MCP_TMP_MB,
           fsizeBytes: MAX_FILE_MB * 1024 * 1024,
           mounts: reqMounts,
+          dns: desiredDns,
+          proxy: desiredProxy.fingerprint ? desiredProxy : null,
+          entrypointHostPath: SANDBOX_ENTRYPOINT_HOST,
         });
         const now = Date.now();
         await store.upsert({ sessionId: sid, userId: uid, handle, networkMode: net, mounts: reqMounts, lastActivity: now, createdAt: existing?.createdAt ?? now });
         liveCount++;
-        log(existing ? "session.resume" : "session.create", { sessionId: sid, userId: uid, handle, image: SANDBOX_IMAGE });
+        log(existing ? "session.resume" : "session.create", {
+          sessionId: sid, userId: uid, handle, image: SANDBOX_IMAGE, networkMode: net, dns: desiredDns,
+          proxyAllow: desiredProxy.allow,
+        });
         return { code: 201, body: { sessionId: sid, status: existing ? "resumed" : "created" } };
       });
       return jsonRes(res, out.code, out.body);

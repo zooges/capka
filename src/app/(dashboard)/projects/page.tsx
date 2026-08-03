@@ -45,7 +45,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="animate-fade-in mx-auto max-w-4xl px-4 py-8">
+    <div className="animate-fade-in mx-auto max-w-4xl px-4 py-8 pt-[max(2rem,calc(0.75rem+var(--capka-sat,env(safe-area-inset-top,0px))))] pb-[max(2rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))] md:pt-[max(2rem,calc(0.5rem+var(--capka-sat,env(safe-area-inset-top,0px))))] md:pb-8">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex min-w-0 items-center gap-2">
           <SidebarTrigger className="-ml-1 size-9 shrink-0 md:hidden" />

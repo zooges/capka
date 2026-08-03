@@ -43,6 +43,8 @@ d("controller HTTP API (lifecycle)", () => {
     process.env.MAX_SESSIONS_PER_USER = "2";
     process.env.MAX_WORKSPACE_MB = "1"; // tiny cap so a 2MB file trips the quota gate
     process.env.QUOTA_CACHE_TTL_MS = "0"; // no caching in tests — measure every exec
+    // Must be set before importing server.js (ALLOW_NETWORK is read at module load).
+    process.env.SANDBOX_ALLOW_NETWORK = "true";
     await mkdir(DATA_ROOT, { recursive: true });
 
     const mod = await import("./server.js");
@@ -228,6 +230,29 @@ d("controller HTTP API (lifecycle)", () => {
     const h2 = (await store.get("sdrift")).handle;
     expect(h2).not.toBe(h1);
     expect(containers.has(h1)).toBe(false); // old container torn down
+  });
+
+  it("recreates the container when networkMode changes (none↔bridge), reuses when identical", async () => {
+    const postNet = (sid, uid, networkMode) =>
+      fetch(`${base}/sessions`, {
+        method: "POST",
+        headers: auth,
+        body: JSON.stringify({ sessionId: sid, userId: uid, networkMode }),
+      });
+    expect((await postNet("snet", "unet", "none")).status).toBe(201);
+    const h1 = (await store.get("snet")).handle;
+    expect((await store.get("snet")).networkMode).toBe("none");
+    // Same network → reuse.
+    const same = await postNet("snet", "unet", "none");
+    expect((await same.json()).status).toBe("reused");
+    expect((await store.get("snet")).handle).toBe(h1);
+    // Flip to bridge → recreate with new networkMode.
+    const flipped = await postNet("snet", "unet", "bridge");
+    expect((await flipped.json()).status).toBe("resumed");
+    const h2 = (await store.get("snet")).handle;
+    expect(h2).not.toBe(h1);
+    expect((await store.get("snet")).networkMode).toBe("bridge");
+    expect(containers.has(h1)).toBe(false);
   });
 
   it("lists files by HMAC token without a live container, honoring depth", async () => {

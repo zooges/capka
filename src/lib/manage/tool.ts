@@ -56,7 +56,7 @@ const inputSchema = jsonSchema<ManageArgs>({
     },
     value: {
       type: "string",
-      description: 'New value for `set`, always as a string (e.g. "uk", "true", "bridge", "200000").',
+      description: 'New value for `set`, always as a string (e.g. "zh-CN", "true", "bridge", "200000").',
     },
     itemId: {
       type: "string",

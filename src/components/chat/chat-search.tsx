@@ -43,7 +43,10 @@ export function ChatSearch({
             }
           }}
           placeholder={t("searchChats")}
-          className="pl-7 h-7 text-sm pr-7"
+          // text-base (16px) on narrow viewports — iOS/WKWebView auto-zooms
+          // focused inputs under 16px, which blows the whole shell past the
+          // screen edge. Desktop keeps the compact text-sm.
+          className="h-8 pl-7 pr-7 text-base md:h-7 md:text-sm"
         />
         {value && (
           <button

@@ -106,7 +106,7 @@ export function ProjectHub({
       {/* w-full is load-bearing: the dashboard main is a flex column, and mx-auto
           disables its cross-axis stretch — without an explicit width the hub
           collapses to the header's max-content (~420px). */}
-      <div className="animate-fade-in mx-auto flex h-full w-full max-w-4xl flex-col px-4 py-6">
+      <div className="animate-fade-in mx-auto flex h-full w-full max-w-4xl flex-col px-4 py-6 pt-[max(1.5rem,calc(0.75rem+var(--capka-sat,env(safe-area-inset-top,0px))))] pb-[max(1.5rem,var(--capka-sab,env(safe-area-inset-bottom,0px)))] md:pt-[max(1.5rem,calc(0.5rem+var(--capka-sat,env(safe-area-inset-top,0px))))] md:pb-6">
         {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-2">

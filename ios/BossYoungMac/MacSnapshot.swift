@@ -37,7 +37,8 @@ import SwiftUI
             currentChatId: list.chats.first?.id,
             onNewChat: {}, onOpenChat: { _ in }, onOpenProjects: {},
             onOpenArchived: {}, onOpenSettings: {}, onClose: {},
-            onRename: { _ in }, onMove: { _ in }
+            onRename: { _ in }, onMove: { _ in },
+            onShare: { _ in }, onExport: { _ in }
           )
           .environment(session)
           .capkaMacControlChrome(),

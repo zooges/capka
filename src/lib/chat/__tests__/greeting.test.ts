@@ -5,10 +5,10 @@ import { getMoment, firstName, pickGreeting, type Greeting } from "@/lib/chat/gr
 // A tiny, fully-controlled catalog so selection is deterministic and doesn't
 // depend on whatever the shipped one happens to contain.
 const catalog: Greeting[] = [
-  { id: "morning", time: ["morning"], text: { uk: "Ранок", en: "Morning" } },
-  { id: "morning-name", time: ["morning"], text: { uk: "Привіт, {name}", en: "Hi, {name}" } },
-  { id: "evening", time: ["evening"], text: { uk: "Вечір", en: "Evening" } },
-  { id: "friday-eve", time: ["evening"], weekdays: [5], text: { uk: "П'ятниця ввечері", en: "Friday eve" } },
+  { id: "morning", time: ["morning"], text: { "zh-CN": "早上", uk: "Ранок", en: "Morning" } },
+  { id: "morning-name", time: ["morning"], text: { "zh-CN": "你好，{name}", uk: "Привіт, {name}", en: "Hi, {name}" } },
+  { id: "evening", time: ["evening"], text: { "zh-CN": "晚上", uk: "Вечір", en: "Evening" } },
+  { id: "friday-eve", time: ["evening"], weekdays: [5], text: { "zh-CN": "周五晚上", uk: "П'ятниця ввечері", en: "Friday eve" } },
 ];
 
 // 2026-06-08 is a Monday; 2026-06-12 a Friday. Local time via the Date ctor.
@@ -47,36 +47,45 @@ describe("firstName", () => {
 describe("pickGreeting", () => {
   it("only offers lines matching the current moment", () => {
     // rng→0 picks the first eligible line; at Monday morning that's "morning".
+    // Default locale for this fork is zh-CN.
     const g = pickGreeting({ now: monMorning, catalog, random: () => 0 });
-    expect(g).toBe("Ранок");
+    expect(g).toBe("早上");
   });
 
   it("excludes {name} lines when no name is known", () => {
     // Force the last eligible line; without a name, morning-name is filtered out
     // so the only morning line left is the plain one.
     const g = pickGreeting({ now: monMorning, catalog, random: () => 0.999 });
-    expect(g).toBe("Ранок");
+    expect(g).toBe("早上");
   });
 
   it("substitutes the first name into a {name} line", () => {
-    const g = pickGreeting({ now: monMorning, name: "Олег Петренко", catalog, random: () => 0.999 });
-    expect(g).toBe("Привіт, Олег");
+    const g = pickGreeting({ now: monMorning, name: "张三", catalog, random: () => 0.999 });
+    expect(g).toBe("你好，张三");
   });
 
   it("respects locale", () => {
     expect(pickGreeting({ now: monMorning, catalog, locale: "en", random: () => 0 })).toBe("Morning");
+    // Legacy uk preference maps to zh-CN on this fork (no Ukrainian UI).
+    expect(pickGreeting({ now: monMorning, catalog, locale: "uk", random: () => 0 })).toBe("早上");
   });
 
   it("favours the more specific line when its moment comes", () => {
     // Friday evening: both "evening" and the Friday-evening line are eligible.
     // The specific one carries extra weight, so a midpoint draw lands on it.
     const g = pickGreeting({ now: friEvening, catalog, random: () => 0.99 });
-    expect(g).toBe("П'ятниця ввечері");
+    expect(g).toBe("周五晚上");
   });
 
   it("falls back to any localized line when nothing matches the moment", () => {
-    const onlyMorning: Greeting[] = [{ id: "m", time: ["morning"], text: { uk: "Ранок" } }];
+    const onlyMorning: Greeting[] = [{ id: "m", time: ["morning"], text: { "zh-CN": "早上", uk: "Ранок" } }];
     const g = pickGreeting({ now: friEvening, catalog: onlyMorning });
-    expect(g).toBe("Ранок");
+    expect(g).toBe("早上");
+  });
+
+  it("never falls through to Ukrainian for zh-CN UI", () => {
+    const onlyUk: Greeting[] = [{ id: "m", time: ["morning"], text: { uk: "Ранок", en: "Morning" } }];
+    // zh-CN missing → prefer en over uk
+    expect(pickGreeting({ now: monMorning, catalog: onlyUk, locale: "zh-CN", random: () => 0 })).toBe("Morning");
   });
 });

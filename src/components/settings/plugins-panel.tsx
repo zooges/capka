@@ -34,19 +34,19 @@ export default function PluginsPanel({ view, onView }: { view: PluginsView; onVi
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="inline-flex rounded-lg border bg-muted/40 p-1">
+    <div className="w-full min-w-0 space-y-4">
+      <div className="flex w-full min-w-0 flex-wrap gap-1 rounded-lg border bg-muted/40 p-1">
         {views.map((v) => (
           <button
             key={v.key}
             onClick={() => onView(v.key)}
             className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
+              "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors sm:flex-none sm:px-3",
               view === v.key ? "bg-card font-medium shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <v.icon className="h-4 w-4" />
-            {v.label}
+            <v.icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{v.label}</span>
           </button>
         ))}
       </div>

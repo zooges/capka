@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ModelPicker } from "@/components/chat/model-picker";
-import { ClawMark } from "@/components/brand/claw-mark";
+import { BrandMark } from "@/components/brand/brand-lockup";
+import { productName } from "@/lib/brand";
 import { iconForSlug } from "@/components/chat/provider-icons";
 import { PROVIDER_OPTIONS, PROVIDER_META, type ProviderName } from "@/lib/providers/registry";
 import { SETUP_STEPS, type SetupStep } from "@/lib/setup-steps";
@@ -243,19 +244,19 @@ export function SetupWizard({
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-background">
+    <div className="relative min-h-dvh overflow-hidden bg-background font-sans">
       {/* Calm claw monogram, far behind. Solid stroke + element-level opacity so the
           overlapping strokes flatten into one layer (no darker intersections), and the
           opaque card on top keeps it a clean backdrop that never tangles with content. */}
-      <ClawMark className="pointer-events-none absolute left-1/2 top-1/2 h-[165vmin] w-[165vmin] -translate-x-1/2 -translate-y-1/2 text-foreground opacity-[0.03]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[40vmin] w-[40vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_oklch,#8B1E23_12%,transparent),transparent_70%)] opacity-50" />
 
       <div className="relative flex min-h-dvh items-center justify-center px-5 py-12">
         <div className="animate-card-morph w-full max-w-md rounded-[1.75rem] border border-border/60 bg-card p-7 shadow-[0_1px_2px_oklch(0_0_0/0.05),0_28px_60px_-32px_oklch(0.2_0.01_60/0.28)] sm:p-8">
           <div className="flex flex-col items-center gap-2.5 text-center">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-              <ClawMark className="h-[22px] w-[22px]" />
+            <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl shadow-sm">
+              <BrandMark size="md" className="h-11 w-11 rounded-2xl" />
             </span>
-            <span className="text-sm font-medium tracking-tight text-muted-foreground">{t("brand.wordmark")}</span>
+            <span className="font-sans text-sm font-medium tracking-tight text-muted-foreground">{productName()}</span>
           </div>
 
           <div className="mt-7">
@@ -264,10 +265,10 @@ export function SetupWizard({
 
             <div key={step} className="animate-blur-rise mt-6 space-y-6">
               <div className="space-y-1.5">
-                <h1 className="font-display text-[1.75rem] leading-tight tracking-tight text-balance">
+                <h1 className="font-sans text-[1.75rem] font-semibold leading-snug tracking-tight text-balance">
                   {step === 0 ? (signedIn ? t("account.claimTitle") : t("account.title")) : t("provider.title")}
                 </h1>
-                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+                <p className="font-sans text-sm leading-relaxed text-muted-foreground text-pretty">
                   {step === 0 ? (signedIn ? t("account.claimSubtitle") : t("account.subtitle")) : t("provider.subtitle")}
                 </p>
               </div>
@@ -443,7 +444,6 @@ export function SetupWizard({
               )}
             </div>
 
-            <p className="mt-7 text-center text-xs text-muted-foreground">{t("brand.footnote")}</p>
           </div>
         </div>
       </div>

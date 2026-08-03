@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Tool } from "ai";
-import { planToolSearch, FIND_TOOL_NAME } from "../tool-search";
+import { planToolSearch, FIND_TOOL_NAME, deferTokenBudget } from "../tool-search";
 
 /** A structural stand-in for an adapted tool — planToolSearch only reads
  *  `.description` and `.inputSchema.jsonSchema`. */
@@ -33,7 +33,8 @@ describe("planToolSearch — gating", () => {
   it("does not defer when the connector block fits under the threshold", () => {
     const plan = planToolSearch({
       tools: { bash: fakeTool("x"), mcp__grok__search: fakeTool("search the web") },
-      effectiveLimit: 1_000_000, // budget ~100k tokens — one tiny tool never trips it
+      effectiveLimit: 1_000_000, // clamped budget is still far above one tiny tool
+      maxTokens: 8192,
     });
     expect(plan.defer).toBe(false);
     expect(plan.activeToolNames()).toBeUndefined();
@@ -47,6 +48,43 @@ describe("planToolSearch — gating", () => {
     expect(plan.extraTools[FIND_TOOL_NAME]).toBeDefined();
     expect(plan.indexText).toContain("firecrawl");
   });
+
+  it("defers on a 1M window when the absolute max is crossed (percent alone would not)", () => {
+    // 10% of 1M = 100k — bulky tools fit under that, but not under maxTokens=500.
+    const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
+    for (let i = 0; i < 8; i++) tools[`mcp__firecrawl__firecrawl_tool_${i}`] = fakeTool(bulky(`tool ${i}`));
+    const plan = planToolSearch({ tools, effectiveLimit: 1_000_000, thresholdPct: 10, maxTokens: 500 });
+    expect(plan.defer).toBe(true);
+    expect(plan.extraTools[FIND_TOOL_NAME]).toBeDefined();
+  });
+
+  it("always defers when thresholdPct is 0 (even a tiny connector set)", () => {
+    const plan = planToolSearch({
+      tools: { bash: fakeTool("x"), mcp__grok__search: fakeTool("search the web") },
+      effectiveLimit: 1_000_000,
+      thresholdPct: 0,
+    });
+    expect(plan.defer).toBe(true);
+    expect(plan.extraTools[FIND_TOOL_NAME]).toBeDefined();
+  });
+});
+
+describe("deferTokenBudget", () => {
+  it("clamps the percent budget to the absolute max", () => {
+    expect(deferTokenBudget(1_000_000, 10, 8192)).toBe(8192);
+  });
+
+  it("uses the percent budget when it is smaller than the max", () => {
+    expect(deferTokenBudget(20_000, 10, 8192)).toBe(2000);
+  });
+
+  it("returns 0 when thresholdPct is 0 (always defer)", () => {
+    expect(deferTokenBudget(1_000_000, 0, 8192)).toBe(0);
+  });
+
+  it("skips the absolute cap when maxTokens is 0", () => {
+    expect(deferTokenBudget(1_000_000, 10, 0)).toBe(100_000);
+  });
 });
 
 describe("planToolSearch — active-tool accounting", () => {
@@ -57,11 +95,51 @@ describe("planToolSearch — active-tool accounting", () => {
   };
 
   it("starts with only the eager core + find_tool active (connector tools hidden)", () => {
-    const active = build().activeToolNames();
-    expect(active).toContain("bash");
-    expect(active).toContain("skill");
-    expect(active).toContain(FIND_TOOL_NAME);
-    expect(active!.some((n) => n.startsWith("mcp__"))).toBe(false);
+    const prevRegion = process.env.CAPKA_REGION;
+    const prevChina = process.env.CAPKA_CHINA;
+    const prevAlways = process.env.MCP_ALWAYS_LOAD;
+    delete process.env.CAPKA_REGION;
+    delete process.env.CAPKA_CHINA;
+    process.env.MCP_ALWAYS_LOAD = "none";
+    try {
+      const active = build().activeToolNames();
+      expect(active).toContain("bash");
+      expect(active).toContain("skill");
+      expect(active).toContain(FIND_TOOL_NAME);
+      expect(active!.some((n) => n.startsWith("mcp__"))).toBe(false);
+    } finally {
+      if (prevRegion === undefined) delete process.env.CAPKA_REGION;
+      else process.env.CAPKA_REGION = prevRegion;
+      if (prevChina === undefined) delete process.env.CAPKA_CHINA;
+      else process.env.CAPKA_CHINA = prevChina;
+      if (prevAlways === undefined) delete process.env.MCP_ALWAYS_LOAD;
+      else process.env.MCP_ALWAYS_LOAD = prevAlways;
+    }
+  });
+
+  it("preloads MCP_ALWAYS_LOAD / China-default tavily into activeTools", () => {
+    const prevAlways = process.env.MCP_ALWAYS_LOAD;
+    const prevRegion = process.env.CAPKA_REGION;
+    delete process.env.CAPKA_REGION;
+    delete process.env.CAPKA_CHINA;
+    process.env.MCP_ALWAYS_LOAD = "tavily";
+    try {
+      const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
+      for (let i = 0; i < 6; i++) tools[`mcp__firecrawl__firecrawl_tool_${i}`] = fakeTool(bulky(`tool ${i}`));
+      tools["mcp__tavily__tavily_search"] = fakeTool(bulky("Search the web with Tavily"));
+      tools["mcp__tavily__tavily_extract"] = fakeTool(bulky("Extract content from URLs"));
+      const plan = planToolSearch({ tools, effectiveLimit: 2000 });
+      const active = plan.activeToolNames()!;
+      expect(active).toContain("mcp__tavily__tavily_search");
+      expect(active).toContain("mcp__tavily__tavily_extract");
+      expect(active.some((n) => n.startsWith("mcp__firecrawl__"))).toBe(false);
+      expect(plan.indexText).toMatch(/tavily.*already configured/i);
+    } finally {
+      if (prevAlways === undefined) delete process.env.MCP_ALWAYS_LOAD;
+      else process.env.MCP_ALWAYS_LOAD = prevAlways;
+      if (prevRegion === undefined) delete process.env.CAPKA_REGION;
+      else process.env.CAPKA_REGION = prevRegion;
+    }
   });
 
   it("expands matched tools append-only across find_tool calls", async () => {
@@ -89,6 +167,66 @@ describe("find_tool — BM25", () => {
     expect(r.matched[0]?.name).toBe("mcp__firecrawl__firecrawl_scrape");
   });
 
+  it("expands Chinese search intents so find_tool hits tavily", async () => {
+    const prevAlways = process.env.MCP_ALWAYS_LOAD;
+    process.env.MCP_ALWAYS_LOAD = "none";
+    try {
+      const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
+      for (let i = 0; i < 4; i++) tools[`mcp__firecrawl__firecrawl_tool_${i}`] = fakeTool(bulky(`other ${i}`));
+      tools["mcp__tavily__tavily_search"] = fakeTool(bulky("Search the web and return ranked results"));
+      const plan = planToolSearch({ tools, effectiveLimit: 2000, thresholdPct: 0 });
+      const r = await callFind(plan, "搜索网页");
+      expect(r.matched.map((m) => m.name)).toContain("mcp__tavily__tavily_search");
+    } finally {
+      if (prevAlways === undefined) delete process.env.MCP_ALWAYS_LOAD;
+      else process.env.MCP_ALWAYS_LOAD = prevAlways;
+    }
+  });
+
+  it("expands Chinese legal intents to chineselaw, not tavily", async () => {
+    const prevAlways = process.env.MCP_ALWAYS_LOAD;
+    process.env.MCP_ALWAYS_LOAD = "none";
+    try {
+      const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
+      for (let i = 0; i < 4; i++) tools[`mcp__noise__noise_tool_${i}`] = fakeTool(bulky(`noise ${i}`));
+      tools["mcp__tavily__tavily_search"] = fakeTool(bulky("Search the web and return ranked results"));
+      tools["mcp__chineselaw__search_cases"] = fakeTool(bulky("Search Chinese law cases and statutes"));
+      tools["mcp__yuandian-case__search"] = fakeTool(bulky("Search 元典 case database"));
+      const plan = planToolSearch({ tools, effectiveLimit: 2000, thresholdPct: 0 });
+      const r = await callFind(plan, "检索法律案例");
+      const names = r.matched.map((m) => m.name);
+      expect(names.some((n) => n.includes("chineselaw") || n.includes("yuandian"))).toBe(true);
+      expect(names).not.toContain("mcp__tavily__tavily_search");
+    } finally {
+      if (prevAlways === undefined) delete process.env.MCP_ALWAYS_LOAD;
+      else process.env.MCP_ALWAYS_LOAD = prevAlways;
+    }
+  });
+
+  it("expands 企查查 / wechat Chinese intents to domain connectors", async () => {
+    const prevAlways = process.env.MCP_ALWAYS_LOAD;
+    process.env.MCP_ALWAYS_LOAD = "none";
+    try {
+      const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
+      for (let i = 0; i < 4; i++) tools[`mcp__noise__noise_tool_${i}`] = fakeTool(bulky(`noise ${i}`));
+      tools["mcp__tavily__tavily_search"] = fakeTool(bulky("Search the web and return ranked results"));
+      tools["mcp__qcc-company__company_info"] = fakeTool(bulky("Look up company registry and business credit"));
+      tools["mcp__wx-article__fetch"] = fakeTool(bulky("Fetch a weixin public account article by URL"));
+      const plan = planToolSearch({ tools, effectiveLimit: 2000, thresholdPct: 0 });
+
+      const qcc = await callFind(plan, "企查查查公司信息");
+      expect(qcc.matched.map((m) => m.name)).toContain("mcp__qcc-company__company_info");
+      expect(qcc.matched.map((m) => m.name)).not.toContain("mcp__tavily__tavily_search");
+
+      const wx = await callFind(plan, "读取微信公众号文章");
+      expect(wx.matched.map((m) => m.name)).toContain("mcp__wx-article__fetch");
+      expect(wx.matched.map((m) => m.name)).not.toContain("mcp__tavily__tavily_search");
+    } finally {
+      if (prevAlways === undefined) delete process.env.MCP_ALWAYS_LOAD;
+      else process.env.MCP_ALWAYS_LOAD = prevAlways;
+    }
+  });
+
   it("matches an English query against a NON-English description via the tool name", async () => {
     // The corpus is mixed-language: an image server described in Ukrainian. The
     // English query has zero lexical overlap with the description, so the match
@@ -113,8 +251,8 @@ describe("find_tool — BM25", () => {
   });
 });
 
-describe("connector index — capability summary", () => {
-  it("describes what a connector CAN DO (from descriptions), deduped by family, not tool names", () => {
+describe("connector index — names only", () => {
+  it("lists connector name + tool count, not capability essays or tool names", () => {
     const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
     const defs: [string, string][] = [
       ["firecrawl_scrape", "Scrape a webpage"],
@@ -124,35 +262,26 @@ describe("connector index — capability summary", () => {
       ["firecrawl_research_search_papers", "Search academic papers"],
       ["firecrawl_research_read_paper", "Read a paper's full text"],
     ];
-    // Pad so the block crosses the defer threshold; the gist takes the first clause.
     for (const [t, d] of defs) tools[`mcp__firecrawl__${t}`] = fakeTool(`${d}. ${"lorem ipsum ".repeat(20)}`);
     const plan = planToolSearch({ tools, effectiveLimit: 2000 });
     expect(plan.defer).toBe(true);
 
-    // Capability gists — the model sees WHAT the connector does, incl. the
-    // monitor and research domains that a truncated name list would have hidden.
-    expect(plan.indexText).toContain("Monitor a URL for changes");
-    expect(plan.indexText).toContain("Scrape a webpage");
-    expect(plan.indexText).toContain("paper"); // the research domain is represented
-    // Not a list of tool names.
+    expect(plan.indexText).toContain("**firecrawl** (6 tools)");
+    // Capability prose and raw tool names stay out of the always-on index.
+    expect(plan.indexText).not.toContain("Monitor a URL for changes");
+    expect(plan.indexText).not.toContain("Scrape a webpage");
     expect(plan.indexText).not.toContain("firecrawl_monitor_create");
-    // Deduped by family: the domain shows ONCE (one representative per family), so
-    // the seven-tool monitor family doesn't spam the line.
-    expect((plan.indexText.match(/Monitor a URL for changes/g) ?? []).length).toBe(1);
-    expect(plan.indexText).not.toContain("List existing change monitors");
   });
 
-  it("falls back to the de-prefixed tool name when a connector ships no descriptions", () => {
+  it("still indexes a connector that ships no descriptions", () => {
     const tools: Record<string, Tool> = { bash: fakeTool("run a command") };
-    // No descriptions → gist must degrade to the readable name, still crossing the
-    // threshold via schema bulk.
     const schema = { type: "object", properties: Object.fromEntries([...Array(30)].map((_, i) => [`p${i}`, { type: "string", description: "x".repeat(30) }])) };
     for (const t of ["acme_send_message", "acme_list_channels"]) {
       tools[`mcp__acme__${t}`] = { description: "", inputSchema: { jsonSchema: schema } } as unknown as Tool;
     }
     const plan = planToolSearch({ tools, effectiveLimit: 1500 });
     expect(plan.defer).toBe(true);
-    expect(plan.indexText).toContain("send message");
-    expect(plan.indexText).toContain("list channels");
+    expect(plan.indexText).toContain("**acme** (2 tools)");
+    expect(plan.indexText).not.toContain("send message");
   });
 });

@@ -2,19 +2,19 @@
  * Single source of truth for the supported locales.
  *
  * Capka runs without locale-based URL routing: there is no `/[locale]` segment
- * and no middleware. The active locale is resolved per request (see `locale.ts`)
- * and English is the default — message keys in the codebase are English.
+ * and no middleware. The active locale is resolved per request (see `locale.ts`).
+ * This China-team fork ships Simplified Chinese + English only.
  */
-export const locales = ["en", "uk"] as const;
+export const locales = ["zh-CN", "en"] as const;
 
 export type Locale = (typeof locales)[number];
 
-export const defaultLocale: Locale = "en";
+export const defaultLocale: Locale = "zh-CN";
 
 /** Human-readable names for the language switcher (in their own language). */
 export const localeNames: Record<Locale, string> = {
+  "zh-CN": "简体中文",
   en: "English",
-  uk: "Українська",
 };
 
 export function isLocale(value: unknown): value is Locale {
@@ -25,8 +25,9 @@ export function isLocale(value: unknown): value is Locale {
  * Pick the best supported locale from an `Accept-Language` header.
  * Returns `null` when nothing matches, so the caller can fall back.
  *
- * Two locales don't justify a parsing dependency: split on `,`, honour the
- * `;q=` weights, and match on the primary subtag (`uk-UA` → `uk`).
+ * Prefer an exact tag match (`zh-CN`), then map Chinese primary tags
+ * (`zh`, `zh-Hans`, `zh-TW` → Simplified for this fork) to `zh-CN`, then fall
+ * back to the primary subtag when it is a supported locale (`en-US` → `en`).
  */
 export function matchAcceptLanguage(header: string | null | undefined): Locale | null {
   if (!header) return null;
@@ -41,7 +42,9 @@ export function matchAcceptLanguage(header: string | null | undefined): Locale |
     .sort((a, b) => b.weight - a.weight);
 
   for (const { tag } of ranked) {
+    if (isLocale(tag)) return tag;
     const primary = tag.split("-")[0];
+    if (primary === "zh") return "zh-CN";
     if (isLocale(primary)) return primary;
   }
   return null;

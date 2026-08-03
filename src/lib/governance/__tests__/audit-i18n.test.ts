@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AUDIT_ACTIONS } from "../types";
 import en from "../../../../messages/en.json";
-import uk from "../../../../messages/uk.json";
+import zhCN from "../../../../messages/zh-CN.json";
 
 /**
  * Guardrail: the Activity page renders every audit action via
@@ -10,7 +10,7 @@ import uk from "../../../../messages/uk.json";
  * regression this suite prevents. AUDIT_ACTIONS itself is kept exhaustive by a
  * compile-time check in types.ts, so covering it here covers the whole union.
  */
-const locales = { en, uk } as const;
+const locales = { en, "zh-CN": zhCN } as const;
 
 // Actions are stored nested (e.g. actions.plugin.install) because next-intl
 // forbids "." inside a key — it's the path separator. Resolve a dotted action
