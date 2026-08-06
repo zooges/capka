@@ -73,6 +73,8 @@ npm run skills:seed-legal
 
 脚本读取 `DATABASE_URL`；未设置时使用本地 `docker:dev` 数据库地址。重复运行会更新同名的 `system` / `manual` 技能并保持启用，不会新增重复记录。
 
+沙盒镜像（`Dockerfile.sandbox`）预装 Tesseract `eng` + 简体/繁体中文（`chi_sim` / `chi_tra`）。OCR 示例：`tesseract page.png stdout -l chi_sim+eng`。改镜像后本地重建（`npm run sandbox:build`），**不要** `docker compose pull`。默认沙盒内存 `SANDBOX_MEMORY_MB=2048`。
+
 ## MCP 连接器（中国法律 / 微信）
 
 Capka 原生支持远程 MCP（Streamable HTTP + 遗留 SSE）与沙箱内 stdio。本分支补齐了 SSE 持久化与探测，并提供法律侧车与一键注册。

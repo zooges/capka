@@ -92,6 +92,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer libreoffice-calc libreoffice-impress libreoffice-draw \
     libreoffice-core libreoffice-common python3-uno \
     tesseract-ocr tesseract-ocr-eng \
+    tesseract-ocr-chi-sim tesseract-ocr-chi-tra \
     xvfb xauth xfonts-utils xfonts-scalable xfonts-cyrillic \
     texlive-base texlive-latex-base texlive-latex-recommended \
     texlive-fonts-recommended texlive-xetex latexmk \

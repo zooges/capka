@@ -88,7 +88,7 @@ function posFloatEnv(name, def) {
 const SANDBOX_IMAGE = process.env.SANDBOX_IMAGE || "capka-sandbox";
 const TMP_MB = posIntEnv("SANDBOX_TMP_MB", 64);
 const MCP_TMP_MB = posIntEnv("SANDBOX_MCP_TMP_MB", 256);
-const MEMORY_LIMIT = posIntEnv("SANDBOX_MEMORY_MB", 512) * 1024 * 1024;
+const MEMORY_LIMIT = posIntEnv("SANDBOX_MEMORY_MB", 2048) * 1024 * 1024;
 const PIDS_LIMIT = posIntEnv("SANDBOX_PIDS_LIMIT", 256);
 const CPU_LIMIT = posFloatEnv("SANDBOX_CPUS", 1.0) * 1e9;
 const EXEC_TIMEOUT = posIntEnv("SANDBOX_EXEC_TIMEOUT_MS", 30000);

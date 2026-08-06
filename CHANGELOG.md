@@ -9,6 +9,7 @@ All notable changes to Capka are documented here. Format follows
 ### Added
 
 - iOS Share Extension on BossYoung and BossYoung2: share files/images from WeChat (and the system share sheet) into a chosen or new chat as composer attachments. Capka-styled picker UI; opens the host app via `UIApplication.open` (iOS 18-safe). Requires App Group `group.com.bossyoung.capka` / `group.com.bossyoung.capka2` on the Apple Developer App IDs; new iOS build.
+- Sandbox image installs Tesseract Simplified/Traditional Chinese (`tesseract-ocr-chi-sim`, `tesseract-ocr-chi-tra`) alongside English. Rebuild the sandbox image locally (`npm run sandbox:build`); do not `docker compose pull`.
 - `docker-compose.mcp.yml` wechat sidecar: host mihomo proxy (`WECHAT_HTTPS_PROXY`, default `http://172.17.0.1:7890`), persistent cache volume, search/fetch rate limits and circuit-breaker env knobs. Capka on the same host should seed `MCP_WECHAT_URL=http://wechat-article-mcp:8809/mcp`; public `weixin.zooges7000.top` can remain a separate instance. See `docs/CHINA-FORK.md`.
 - Project / workspace Files: upload menu can import a whole folder (web one-shot or live connect when enabled; iOS recursive upload into `/workspace/<name>/`). Bulk `/api/folders/upload` no longer requires `pc_folder_access` (live folder *connect* still does). Recreate platform; new iOS build.
 - Public `/privacy` page (no login) for App Store privacy-policy URL; `src/proxy.ts` allows anonymous access. Recreate platform.
@@ -23,6 +24,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Changed
 
+- Default `SANDBOX_MEMORY_MB` is 2048 (was 1024 in compose / 512 in controller fallback) so scanned-PDF Chinese OCR has headroom after tmpfs. Existing hosts: set in `.env` or recreate sandbox-controller.
 - iOS model brand icons download once into Application Support (memory + disk); model list prefetch warms light/dark glyphs so the picker/chip no longer re-hit jsDelivr every paint. New iOS build.
 - iOS local-first cache: chat list + transcripts (recent chats prefetched), workspace listings, uploads ingested on the phone, generated/uploaded files warmed after tool writes, preview keys shared between chat chips and workspace, image thumbs prefer disk. New iOS build.
 - iOS chat: follow-scroll pins to a transcript-end anchor (no longer stuck on the previous turn while streaming); file previews always cache under Application Support (chat chips included); image attachment tiles show sandbox thumbnails like the web. New iOS build.
