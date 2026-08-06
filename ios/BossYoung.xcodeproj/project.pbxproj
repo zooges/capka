@@ -12,6 +12,7 @@
 		S1BF02 /* ShareChatIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR02 /* ShareChatIndex.swift */; };
 		S1BF03 /* ShareInboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR03 /* ShareInboxStore.swift */; };
 		S1BF04 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR04 /* ShareViewController.swift */; };
+		S1BF09 /* ShareBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR09 /* ShareBrand.swift */; };
 		S1BF05 /* ShareHostConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR01 /* ShareHostConfig.swift */; };
 		S1BF06 /* ShareChatIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR02 /* ShareChatIndex.swift */; };
 		S1BF07 /* ShareInboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR03 /* ShareInboxStore.swift */; };
@@ -120,6 +121,7 @@
 		S1FR02 /* ShareChatIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareChatIndex.swift; sourceTree = "<group>"; };
 		S1FR03 /* ShareInboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareInboxStore.swift; sourceTree = "<group>"; };
 		S1FR04 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		S1FR09 /* ShareBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareBrand.swift; sourceTree = "<group>"; };
 		S1FR05 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		S1FR06 /* BossYoungShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BossYoungShare.entitlements; sourceTree = "<group>"; };
 		S1PR01 /* BossYoungShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BossYoungShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -206,6 +208,7 @@
 				S1FR01 /* ShareHostConfig.swift */,
 				S1FR02 /* ShareChatIndex.swift */,
 				S1FR03 /* ShareInboxStore.swift */,
+				S1FR09 /* ShareBrand.swift */,
 				S1FR04 /* ShareViewController.swift */,
 			);
 			path = ShareSupport;
@@ -449,6 +452,7 @@
 				S1BF01 /* ShareHostConfig.swift in Sources */,
 				S1BF02 /* ShareChatIndex.swift in Sources */,
 				S1BF03 /* ShareInboxStore.swift in Sources */,
+				S1BF09 /* ShareBrand.swift in Sources */,
 				S1BF04 /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

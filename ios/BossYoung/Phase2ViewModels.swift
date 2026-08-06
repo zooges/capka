@@ -224,6 +224,17 @@ final class ProjectHubViewModel {
     }
   }
 
+  /// Tombstone + wipe workspace. Returns true when the server accepted the delete.
+  func deleteProject() async -> Bool {
+    do {
+      try await api.deleteProject(id: project.id)
+      return true
+    } catch {
+      self.error = error.localizedDescription
+      return false
+    }
+  }
+
   func upload(fileURL: URL) async {
     do {
       let accessing = fileURL.startAccessingSecurityScopedResource()

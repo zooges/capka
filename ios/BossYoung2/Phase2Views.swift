@@ -282,6 +282,7 @@ struct ProjectHubView: View {
 
   @State private var model: ProjectHubViewModel
   @State private var tab: Tab = .overview
+  @State private var confirmDelete = false
   @Environment(\.dismiss) private var dismiss
 
   init(project: ProjectSummary, onOpenChat: @escaping (String) -> Void) {
@@ -329,6 +330,16 @@ struct ProjectHubView: View {
       Button("好", role: .cancel) { model.error = nil }
     } message: {
       Text(model.error ?? "")
+    }
+    .alert("删除项目", isPresented: $confirmDelete) {
+      Button("删除", role: .destructive) {
+        Task {
+          if await model.deleteProject() { dismiss() }
+        }
+      }
+      Button("取消", role: .cancel) {}
+    } message: {
+      Text("工作区文件将被删除。聊天记录会保留。")
     }
   }
 
@@ -511,6 +522,28 @@ struct ProjectHubView: View {
             Text(banner).font(.system(size: 12)).foregroundStyle(Brand.muted)
           }
         }
+
+        VStack(alignment: .leading, spacing: 8) {
+          Text("删除项目")
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Brand.ink)
+          Text("工作区文件将被删除。聊天记录会保留。")
+            .font(.system(size: 12))
+            .foregroundStyle(Brand.muted)
+          Button("删除项目", role: .destructive) { confirmDelete = true }
+            .font(.system(size: 14, weight: .medium))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+            .background(Brand.dangerSurface)
+            .foregroundStyle(Brand.dangerText)
+            .clipShape(RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous))
+            .overlay(
+              RoundedRectangle(cornerRadius: Brand.Radius.md, style: .continuous)
+                .stroke(Brand.dangerBorder, lineWidth: 1)
+            )
+        }
+        .padding(14)
+        .capkaCard()
       }
       .padding(16)
     }

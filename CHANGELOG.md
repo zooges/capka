@@ -8,7 +8,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Added
 
-- iOS Share Extension on BossYoung and BossYoung2: share files/images from WeChat (and the system share sheet) into a chosen or new chat as composer attachments. Requires App Group `group.com.bossyoung.capka` / `group.com.bossyoung.capka2` on the Apple Developer App IDs; new iOS build.
+- iOS Share Extension on BossYoung and BossYoung2: share files/images from WeChat (and the system share sheet) into a chosen or new chat as composer attachments. Capka-styled picker UI; opens the host app via `UIApplication.open` (iOS 18-safe). Requires App Group `group.com.bossyoung.capka` / `group.com.bossyoung.capka2` on the Apple Developer App IDs; new iOS build.
 - `docker-compose.mcp.yml` wechat sidecar: host mihomo proxy (`WECHAT_HTTPS_PROXY`, default `http://172.17.0.1:7890`), persistent cache volume, search/fetch rate limits and circuit-breaker env knobs. Capka on the same host should seed `MCP_WECHAT_URL=http://wechat-article-mcp:8809/mcp`; public `weixin.zooges7000.top` can remain a separate instance. See `docs/CHINA-FORK.md`.
 - Project / workspace Files: upload menu can import a whole folder (web one-shot or live connect when enabled; iOS recursive upload into `/workspace/<name>/`). Bulk `/api/folders/upload` no longer requires `pc_folder_access` (live folder *connect* still does). Recreate platform; new iOS build.
 - Public `/privacy` page (no login) for App Store privacy-policy URL; `src/proxy.ts` allows anonymous access. Recreate platform.
@@ -42,6 +42,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Fixed
 
+- Project hub Settings shows Delete for every project owner (was incorrectly admin-only). Recreate platform; new iOS build for the settings delete control.
 - WeChat MCP sidecar: Sogou/WeChat egress goes through host mihomo (`WECHAT` select + allowlist rotate via `MIHOMO_*` / `WECHAT_ROTATE_EVERY`); `WECHAT_NO_PROXY` defaults to intranet only. Existing host deploys: update compose/`.env` and restart the MCP.
 - iOS: new-chat from the conversation top bar no longer resurrects the previous transcript (SSE chatId adoption + load race); ask cards survive rapid SSE bursts via an event queue; thinking rail no longer bounces while reasoning streams. New iOS build.
 - iOS: finished thinking no longer keeps pulsing while the answer streams; reopening a chat no longer replays entrance animations on every historical reasoning row. New iOS build.

@@ -429,20 +429,21 @@ function SettingsTab({
         </Button>
       </div>
 
-      {isAdmin && (
-        <section className="rounded-xl border border-destructive/30 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold">{th("dangerTitle")}</h2>
-              <p className="text-xs text-muted-foreground">{th("dangerHint")}</p>
-            </div>
-            <Button variant="outline" size="sm" className="shrink-0 text-destructive hover:text-destructive" onClick={onDelete}>
-              <Trash2 className="h-4 w-4" />
-              {th("delete")}
-            </Button>
+      {/* Own-project delete — not admin-gated. Projects are per-user; the API
+          already scopes DELETE to projects.userId. Admin-only here hid the
+          control from every regular member who owns the project. */}
+      <section className="rounded-xl border border-destructive/30 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">{th("dangerTitle")}</h2>
+            <p className="text-xs text-muted-foreground">{th("dangerHint")}</p>
           </div>
-        </section>
-      )}
+          <Button variant="outline" size="sm" className="shrink-0 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Trash2 className="h-4 w-4" />
+            {th("delete")}
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
