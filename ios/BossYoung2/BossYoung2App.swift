@@ -26,6 +26,10 @@ struct BossYoung2App: SwiftUI.App {
           if FeishuNativeSSO.handleOpenURL(url) {
             return
           }
+          if ShareInboxStore.isShareInboxURL(url) {
+            NotificationCenter.default.post(name: ShareInboxStore.didReceiveNotification, object: nil)
+            return
+          }
           if let callback = AppConfig.feishuCallbackURL(fromBridge: url) {
             NotificationCenter.default.post(name: AppConfig.openURLNotification, object: callback)
           }

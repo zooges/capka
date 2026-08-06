@@ -81,6 +81,8 @@ Capka 原生支持远程 MCP（Streamable HTTP + 遗留 SSE）与沙箱内 stdio
 
 默认从仓库旁的 `../chineselaw-mcp`、`../wechat-article-mcp` 构建。在 `.env` 中设置 `CHINESELAW_API_KEY`（元典开放 API），可选 `CHINESELAW_MCP_AUTH_TOKEN` / `WECHAT_MCP_AUTH_TOKEN`。
 
+**微信 MCP（内网 P0）**：同机部署时出站走宿主机 mihomo（默认 `HTTP(S)_PROXY=http://172.17.0.1:7890`），带搜索/正文缓存、出站限流与反扒熔断；端口仅绑 `127.0.0.1:8809`。公网 `weixin.zooges7000.top` 可继续保留为独立实例，Capka 主用内网 sidecar。
+
 ```bash
 # 与 docker:dev 一并拉起（或单独 up 两个 mcp 服务）
 docker compose -f docker-compose.yml -f docker-compose.build.yml \
@@ -111,6 +113,16 @@ MCP_WECHAT_URL=http://host.docker.internal:8809/mcp \
 npm run mcp:seed-china
 ```
 
+同机 Capka 指向内网微信 MCP（推荐）：
+
+```bash
+MCP_WECHAT_URL=http://wechat-article-mcp:8809/mcp \
+WECHAT_MCP_AUTH_TOKEN=... \
+MCP_SEED_ONLY=wechat-article \
+npm run mcp:seed-china
+```
+
+微信 sidecar 可选环境变量：`WECHAT_HTTPS_PROXY`（默认 docker0→mihomo `:7890`）、`WECHAT_NO_PROXY`（仅内网；搜狗/微信应走 mihomo `WECHAT` 选择组做多出口）、`MIHOMO_API_BASE` / `MIHOMO_API_SECRET` / `MIHOMO_WECHAT_GROUP` / `MIHOMO_WECHAT_ALLOWLIST`（遇反爬或 `WECHAT_ROTATE_EVERY` 时切节点）、`WECHAT_SEARCH_MIN_INTERVAL_MS`、`WECHAT_CIRCUIT_COOLDOWN_MS`。健康检查：`curl -s http://127.0.0.1:8809/health`（含 `proxyConfigured` / `circuitOpen` / `mihomo`）。
 有 Bearer 鉴权时，把对应 `*_MCP_AUTH_TOKEN` / `TAVILY_API_KEY` 一并传入种子脚本（会用 `CAPKA_MASTER_KEY` 或库内 `auth_secret` 加密写入）。缺少 `TAVILY_API_KEY` 时仍会写入 `tavily` 行但保持 **disabled**，便于之后在设置 → Connectors 粘贴 Token，或补上密钥后重跑：
 
 ```bash

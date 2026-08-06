@@ -186,11 +186,15 @@ struct MainShellView: View {
         await chat.send()
       }
       #endif
+      await consumeShareInbox(chat: chat)
     }
     .onReceive(NotificationCenter.default.publisher(for: PushRegistrar.openChatNotification)) { note in
       guard let id = note.object as? String else { return }
       showSidebar = false
       Task { await chat.openChat(id) }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: ShareInboxStore.didReceiveNotification)) { _ in
+      Task { await consumeShareInbox(chat: chat) }
     }
     // Agent wrote / user uploaded — pull the new bytes into the phone cache so
     // the next open or thumbnail is local. Trailing debounce: a long turn posts
@@ -302,7 +306,10 @@ struct MainShellView: View {
     }
     .onChange(of: scenePhase) { _, phase in
       guard phase == .active, session.isAuthenticated, !CapkaFixtures.isEnabled else { return }
-      Task { await chat.refreshModels() }
+      Task {
+        await chat.refreshModels()
+        await consumeShareInbox(chat: chat)
+      }
     }
     .sheet(isPresented: $showProjectPicker) {
       ProjectContextSheet(
@@ -436,6 +443,29 @@ struct MainShellView: View {
       Button("好", role: .cancel) { chat.error = nil; list.error = nil }
     } message: {
       Text(chat.error ?? list.error ?? "")
+    }
+  }
+
+  // MARK: - Share Extension inbox
+
+  /// Open the chat chosen in the Share Extension and stage shared files into the composer.
+  private func consumeShareInbox(chat: ChatViewModel) async {
+    guard session.isAuthenticated, !CapkaFixtures.isEnabled else { return }
+    let items = ShareInboxStore.pendingItems()
+    guard !items.isEmpty else { return }
+    showSidebar = false
+    for item in items {
+      switch item.target {
+      case .chat(let id):
+        await chat.openChat(id)
+      case .newChat:
+        chat.startNewChat()
+      }
+      for url in ShareInboxStore.fileURLs(for: item) {
+        await chat.attach(fileURL: url)
+      }
+      ShareInboxStore.remove(item)
+      await list.refreshQuietly()
     }
   }
 

@@ -26,6 +26,8 @@ services:
     expose:
       - "8809"
     ports:
+      # Loopback only — Capka on the same host reaches it via compose DNS or 127.0.0.1.
+      # Public weixin.zooges7000.top remains a separate deploy and is not replaced.
       - "127.0.0.1:8809:8809"
     environment:
       MCP_TRANSPORT: http
@@ -35,6 +37,28 @@ services:
       MCP_HTTP_AUTH_TOKEN: ${WECHAT_MCP_AUTH_TOKEN:-}
       MCP_PUBLIC_HOSTNAME: ${WECHAT_PUBLIC_HOSTNAME:-}
       MCP_ALLOWED_HOSTS: ${WECHAT_ALLOWED_HOSTS:-127.0.0.1,localhost,wechat-article-mcp,platform}
+      # Outbound via host mihomo (docker0 gateway). Override if your bridge IP differs.
+      HTTPS_PROXY: ${WECHAT_HTTPS_PROXY:-http://172.17.0.1:7890}
+      HTTP_PROXY: ${WECHAT_HTTP_PROXY:-http://172.17.0.1:7890}
+      # Intranet only — Sogou/WeChat must go through mihomo WECHAT select group (multi-exit).
+      NO_PROXY: ${WECHAT_NO_PROXY:-127.0.0.1,localhost,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,wechat-article-mcp,platform,chineselaw-mcp}
+      MIHOMO_API_BASE: ${MIHOMO_API_BASE:-http://172.17.0.1:9080}
+      MIHOMO_API_SECRET: ${MIHOMO_API_SECRET:-}
+      MIHOMO_WECHAT_GROUP: ${MIHOMO_WECHAT_GROUP:-WECHAT}
+      MIHOMO_WECHAT_ALLOWLIST: ${MIHOMO_WECHAT_ALLOWLIST:-中转2-2,中转4-3,中转4-4,中转3-3,中转3-4}
+      WECHAT_ROTATE_EVERY: ${WECHAT_ROTATE_EVERY:-1}
+      WECHAT_MCP_CACHE_DIR: /data/cache
+      WECHAT_SEARCH_CACHE_TTL_MS: ${WECHAT_SEARCH_CACHE_TTL_MS:-86400000}
+      WECHAT_ARTICLE_CACHE_TTL_MS: ${WECHAT_ARTICLE_CACHE_TTL_MS:-2592000000}
+      WECHAT_CIRCUIT_COOLDOWN_MS: ${WECHAT_CIRCUIT_COOLDOWN_MS:-900000}
+      # High fan-in: cache + queue absorb users; these cap live Sogou/WeChat egress.
+      WECHAT_SEARCH_MIN_INTERVAL_MS: ${WECHAT_SEARCH_MIN_INTERVAL_MS:-400}
+      WECHAT_SEARCH_CONCURRENCY: ${WECHAT_SEARCH_CONCURRENCY:-8}
+      WECHAT_FETCH_CONCURRENCY: ${WECHAT_FETCH_CONCURRENCY:-16}
+      WECHAT_FETCH_MIN_INTERVAL_MS: ${WECHAT_FETCH_MIN_INTERVAL_MS:-100}
+      WECHAT_QUEUE_TIMEOUT_MS: ${WECHAT_QUEUE_TIMEOUT_MS:-180000}
+    volumes:
+      - wechat_mcp_cache:/data/cache
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8809/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
@@ -66,3 +90,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  wechat_mcp_cache:

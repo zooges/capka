@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+
+		S1BF01 /* ShareHostConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR01 /* ShareHostConfig.swift */; };
+		S1BF02 /* ShareChatIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR02 /* ShareChatIndex.swift */; };
+		S1BF03 /* ShareInboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR03 /* ShareInboxStore.swift */; };
+		S1BF04 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR04 /* ShareViewController.swift */; };
+		S1BF05 /* ShareHostConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR01 /* ShareHostConfig.swift */; };
+		S1BF06 /* ShareChatIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR02 /* ShareChatIndex.swift */; };
+		S1BF07 /* ShareInboxStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = S1FR03 /* ShareInboxStore.swift */; };
+		S1BF08 /* BossYoungShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = S1PR01 /* BossYoungShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		00000000000000000000000B /* MacSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000A /* MacSnapshot.swift */; };
 		000000000000000000000009 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001C /* SidebarView.swift */; };
 		000000000000000000000008 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* LoginView.swift */; };
@@ -94,7 +103,26 @@
 		};
 /* End PBXCopyFilesBuildPhase section */
 
+
+/* Begin PBXContainerItemProxy section */
+		S1PX01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A60000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = S1TG01;
+			remoteInfo = BossYoungShare;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+
+		S1FR01 /* ShareHostConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareHostConfig.swift; sourceTree = "<group>"; };
+		S1FR02 /* ShareChatIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareChatIndex.swift; sourceTree = "<group>"; };
+		S1FR03 /* ShareInboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareInboxStore.swift; sourceTree = "<group>"; };
+		S1FR04 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		S1FR05 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		S1FR06 /* BossYoungShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BossYoungShare.entitlements; sourceTree = "<group>"; };
+		S1PR01 /* BossYoungShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BossYoungShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		00000000000000000000000A /* MacSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSnapshot.swift; sourceTree = "<group>"; };
 		000000000000000000000002 /* FeishuWebSSO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeishuWebSSO.swift; sourceTree = "<group>"; };
 		000000000000000000000001 /* HomeStarters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStarters.swift; sourceTree = "<group>"; };
@@ -145,6 +173,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+
+		S1FP01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A30000000000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -163,11 +199,34 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+
+		S1GR01 /* ShareSupport */ = {
+			isa = PBXGroup;
+			children = (
+				S1FR01 /* ShareHostConfig.swift */,
+				S1FR02 /* ShareChatIndex.swift */,
+				S1FR03 /* ShareInboxStore.swift */,
+				S1FR04 /* ShareViewController.swift */,
+			);
+			path = ShareSupport;
+			sourceTree = "<group>";
+		};
+		S1GR02 /* BossYoungShare */ = {
+			isa = PBXGroup;
+			children = (
+				S1FR05 /* Info.plist */,
+				S1FR06 /* BossYoungShare.entitlements */,
+			);
+			path = BossYoungShare;
+			sourceTree = "<group>";
+		};
 		A40000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
 				A40000000000000000000002 /* BossYoung */,
 				A40000000000000000000005 /* BossYoungMac */,
+				S1GR01 /* ShareSupport */,
+				S1GR02 /* BossYoungShare */,
 				A2000000000000000000000B /* LarkSSOSDK.xcframework */,
 				A2000000000000000000000D /* LarkSSO.bundle */,
 				A40000000000000000000003 /* Products */,
@@ -222,6 +281,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000007 /* BossYoung.app */,
+				S1PR01 /* BossYoungShare.appex */,
 				A20000000000000000000055 /* 邦信阳.app */,
 			);
 			name = Products;
@@ -251,10 +311,12 @@
 				A30000000000000000000001 /* Frameworks */,
 				A50000000000000000000003 /* Resources */,
 				A50000000000000000000004 /* Embed Frameworks */,
+				S1EP01 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				S1TD01 /* PBXTargetDependency */,
 			);
 			name = BossYoung;
 			productName = BossYoung;
@@ -278,6 +340,24 @@
 			productReference = A20000000000000000000055 /* 邦信阳.app */;
 			productType = "com.apple.product-type.application";
 		};
+
+		S1TG01 /* BossYoungShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = S1CL01 /* Build configuration list for PBXNativeTarget "BossYoungShare" */;
+			buildPhases = (
+				S1SP01 /* Sources */,
+				S1FP01 /* Frameworks */,
+				S1RP01 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BossYoungShare;
+			productName = BossYoungShare;
+			productReference = S1PR01 /* BossYoungShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -289,6 +369,9 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					S1TG01 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
@@ -309,11 +392,35 @@
 			targets = (
 				A50000000000000000000001 /* BossYoung */,
 				A50000000000000000000020 /* BossYoungMac */,
+				S1TG01 /* BossYoungShare */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+
+		S1EP01 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				S1BF08 /* BossYoungShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXResourcesBuildPhase section */
+
+		S1RP01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A50000000000000000000003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -334,6 +441,18 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+
+		S1SP01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				S1BF01 /* ShareHostConfig.swift in Sources */,
+				S1BF02 /* ShareChatIndex.swift in Sources */,
+				S1BF03 /* ShareInboxStore.swift in Sources */,
+				S1BF04 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A50000000000000000000002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -341,6 +460,9 @@
 				000000000000000000000005 /* HomeStarters.swift in Sources */,
 				000000000000000000000003 /* ModelPicker.swift in Sources */,
 				A10000000000000000000001 /* BossYoungApp.swift in Sources */,
+				S1BF05 /* ShareHostConfig.swift in Sources */,
+				S1BF06 /* ShareChatIndex.swift in Sources */,
+				S1BF07 /* ShareInboxStore.swift in Sources */,
 				A10000000000000000000002 /* RootView.swift in Sources */,
 				A10000000000000000000003 /* AppConfig.swift in Sources */,
 				A10000000000000000000010 /* BrandTheme.swift in Sources */,
@@ -415,6 +537,15 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+
+/* Begin PBXTargetDependency section */
+		S1TD01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = S1TG01 /* BossYoungShare */;
+			targetProxy = S1PX01 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A80000000000000000000001 /* Debug */ = {
@@ -557,6 +688,59 @@
 			};
 			name = Release;
 		};
+
+		S1CFG1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BossYoungShare/BossYoungShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 28;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoungShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		S1CFG2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BossYoungShare/BossYoungShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 28;
+				DEVELOPMENT_TEAM = 5FSTWGBV38;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BossYoungShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bossyoung.capka.share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -583,6 +767,16 @@
 			buildConfigurations = (
 				A80000000000000000000020 /* Debug */,
 				A80000000000000000000021 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+
+		S1CL01 /* Build configuration list for PBXNativeTarget "BossYoungShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				S1CFG1 /* Debug */,
+				S1CFG2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

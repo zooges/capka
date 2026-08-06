@@ -78,5 +78,20 @@ iOS **不允许** App 在划到桌面后无限期常驻。两工程都靠 `begin
 
 未使用静音音频保活，也不能指望 BGAppRefresh 接住流式回复。
 
+## Share Extension（微信等系统分享进对话）
+
+两工程各带一个 Share Extension：从微信 / 文件 / 相册分享文件后，选已有对话或「新对话」，文件进入输入框附件（不自动发送）。
+
+| 工程 | Extension Bundle ID | App Group | 回跳 |
+|------|---------------------|-----------|------|
+| BossYoung | `com.bossyoung.capka.share` | `group.com.bossyoung.capka` | `bossyoung://share-inbox` |
+| BossYoung2 | `com.bossyoung.capka2.share` | `group.com.bossyoung.capka2` | `bossyoung2://share-inbox` |
+
+共享代码在 `ios/ShareSupport/`；plist/entitlements 在 `ios/BossYoungShare/`、`ios/BossYoung2Share/`。主 App 打开后会把侧栏会话列表写入 App Group 的 `chat-index.json`，供扩展里选对话。
+
+**真机前**：在 Apple Developer 为 **主 App + Extension** 两个 App ID 都勾选同一 App Group，并重新拉 Provisioning Profile。模拟器可用 `CODE_SIGNING_ALLOWED=NO` 编译验证。
+
+设计说明：`docs/plans/2026-08-06-ios-share-extension-design.md`。
+
 Xcode 选 Team → 真机 / TestFlight。两个工程在 App Store Connect 各自建应用
 （`com.bossyoung.capka` / `com.bossyoung.capka2`），主屏幕显示名都是「邦信阳」。

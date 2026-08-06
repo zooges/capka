@@ -198,6 +198,10 @@ final class ChatDiskCache: @unchecked Sendable {
       if let data = try? JSONEncoder().encode(merged) {
         try? data.write(to: Self.listURL, options: .atomic)
       }
+      // Keep the Share Extension's chat picker in sync (App Group).
+      ShareChatIndex.saveChats(merged.map {
+        ($0.id, $0.title, $0.updatedAt, $0.projectName, $0.archived)
+      })
     }
   }
 
