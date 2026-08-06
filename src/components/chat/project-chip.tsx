@@ -62,13 +62,13 @@ export function ProjectChip({ projectId, projectName }: { projectId?: string; pr
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" className="max-h-72 w-56 overflow-y-auto">
-        <DropdownMenuItem onSelect={() => go(undefined)}>
+        <DropdownMenuItem onClick={() => go(undefined)}>
           <span className="flex-1">{t("noProject")}</span>
           {!projectId && <Check className="h-3.5 w-3.5" />}
         </DropdownMenuItem>
         {projects && projects.length > 0 && <DropdownMenuSeparator />}
         {projects?.map((p) => (
-          <DropdownMenuItem key={p.id} onSelect={() => go(p.id)}>
+          <DropdownMenuItem key={p.id} onClick={() => go(p.id)}>
             <span className="flex-1 truncate">{p.name}</span>
             {p.id === projectId && <Check className="h-3.5 w-3.5 shrink-0" />}
           </DropdownMenuItem>

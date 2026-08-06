@@ -44,6 +44,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Fixed
 
+- Composer "Select project" menu items now navigate (Base UI uses `onClick`, not Radix `onSelect`). Recreate platform.
 - Project hub Settings shows Delete for every project owner (was incorrectly admin-only). Recreate platform; new iOS build for the settings delete control.
 - WeChat MCP sidecar: Sogou/WeChat egress goes through host mihomo (`WECHAT` select + allowlist rotate via `MIHOMO_*` / `WECHAT_ROTATE_EVERY`); `WECHAT_NO_PROXY` defaults to intranet only. Existing host deploys: update compose/`.env` and restart the MCP.
 - iOS: new-chat from the conversation top bar no longer resurrects the previous transcript (SSE chatId adoption + load race); ask cards survive rapid SSE bursts via an event queue; thinking rail no longer bounces while reasoning streams. New iOS build.
