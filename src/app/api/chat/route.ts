@@ -59,7 +59,11 @@ export const POST = apiHandler(async (req: Request) => {
           .limit(1)
           .then((r) => r[0])
       : undefined,
-    projectId && !requestChatId
+    // Always resolve a body projectId when present. New chats often arrive with a
+    // pre-allocated `chatId` (client URL) before the row exists — gating on
+    // `!requestChatId` skipped the lookup and every first send returned
+    // "Project not found". Existing chats ignore body projectId below.
+    projectId
       ? db.select({ id: projects.id }).from(projects).where(and(eq(projects.id, projectId), eq(projects.userId, userId), projectNotDeleted)).limit(1).then((r) => r[0])
       : Promise.resolve(undefined),
   ]);

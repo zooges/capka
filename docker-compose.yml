@@ -255,6 +255,11 @@ services:
       - MCP_ALWAYS_LOAD=${MCP_ALWAYS_LOAD:-}
       # DeepSeek V4: low/medium map to high server-side; use off to disable thinking.
       - REASONING_EFFORT=${REASONING_EFFORT:-}
+      # Long agent turns (contract OCR, multi-tool review). Defaults raised for
+      # China fork workloads; override in .env if a host needs tighter caps.
+      - TASK_TIMEOUT_MINUTES=${TASK_TIMEOUT_MINUTES:-30}
+      - STREAM_IDLE_SECONDS=${STREAM_IDLE_SECONDS:-120}
+      - MAX_AGENT_STEPS=${MAX_AGENT_STEPS:-40}
       # China-team fork: CAPKA_REGION=cn = China network + domain MCP routing
       # (overseas URL fetch allowed when sandbox egress/proxy works; see docs/CHINA-FORK.md).
       # CAPKA_TAVILY_STEER defaults on for cn (Tavily-first open web); set 0 on intranet.

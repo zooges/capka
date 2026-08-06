@@ -54,7 +54,7 @@ import { useBackgroundChat } from "@/hooks/use-background-chat";
 import { ChatNav } from "@/components/chat/chat-nav";
 import { BrandHero } from "@/components/brand/brand-lockup";
 import { haptic } from "@/lib/haptics";
-import { chatTarget } from "@/lib/workspace-target";
+import { chatTarget, projectTarget } from "@/lib/workspace-target";
 
 interface ChatPanelProps {
   chatId: string;
@@ -82,6 +82,16 @@ interface ChatPanelProps {
 export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmin, readOnly, initialHasHistory, recentChats, shareImportEnabled }: ChatPanelProps) {
   const t = useTranslations("chat");
   const [model, setModel] = useState(defaultModel);
+  // Composer project chip: update label in place — never remount the page.
+  // Seeded from the server; empty chats can rebind until the first message locks
+  // the row's projectId on the server.
+  const [activeProject, setActiveProject] = useState<{ id?: string; name?: string }>({
+    id: projectId,
+    name: projectName,
+  });
+  useEffect(() => {
+    setActiveProject({ id: projectId, name: projectName });
+  }, [chatId, projectId, projectName]);
 
   // Whether the chat's selected model is still serveable. The model picker
   // resolves this against the live model list (provider disconnected, or the
@@ -133,8 +143,35 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
   const router = useRouter();
   const { messages, isLoading, error, historyLoaded, sendMessage, regenerate, editMessage, switchBranch, forkChat, stop, ensureChat, reload, awaitingInput, taskInfo } = useBackgroundChat({
     chatId,
-    projectId,
+    projectId: activeProject.id,
   });
+
+  // Empty chats can switch project in-place. Once there's history (or the server
+  // already bound a project), retargeting would fight the locked workspace — open
+  // a fresh chat instead only when the user picks a *different* project than the
+  // one this chat already belongs to.
+  const projectLocked = !!(projectId && (initialHasHistory || (historyLoaded && messages.length > 0)));
+  const handleProjectChange = useCallback(
+    async (p: { id: string; name: string } | null) => {
+      // Chat already bound to a project with history: switching means a fresh chat
+      // (same rule as before) — keep that path, but empty chats only update the chip.
+      if (projectLocked && p?.id !== projectId) {
+        router.push(p ? `/chat?projectId=${encodeURIComponent(p.id)}` : "/chat");
+        return;
+      }
+      setActiveProject({ id: p?.id, name: p?.name });
+      const next = p?.id
+        ? `/chat/${chatId}?projectId=${encodeURIComponent(p.id)}`
+        : `/chat/${chatId}`;
+      window.history.replaceState(null, "", next);
+      await fetch(`/api/chats/${chatId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: p?.id ?? null }),
+      }).catch(() => {});
+    },
+    [projectLocked, projectId, chatId, router],
+  );
   // Composer attachments upload eagerly on attach (so send is instant and a
   // retry never re-uploads) and persist their refs per chat — they survive a
   // reload just like the text draft.
@@ -159,7 +196,10 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
   // turn. A no-op when the chat has no connected folders, so it costs nothing on
   // the common path. The target is memoized so the sync effects don't re-run on
   // every render.
-  const folderTarget = useMemo(() => chatTarget(chatId), [chatId]);
+  const folderTarget = useMemo(
+    () => (activeProject.id ? projectTarget(activeProject.id) : chatTarget(chatId)),
+    [activeProject.id, chatId],
+  );
   const folderSync = useFolderSync({ target: folderTarget, ensureChat });
 
   // Fork the conversation from a message into a fresh chat, then jump to it.
@@ -742,7 +782,7 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push(projectId ? `/chat?projectId=${projectId}` : "/chat")}
+          onClick={() => router.push(activeProject.id ? `/chat?projectId=${activeProject.id}` : "/chat")}
         >
           {t("panel.modelGoneNew")}
         </Button>
@@ -764,8 +804,10 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
       blindModalities={blindModalities}
       contextUsage={contextUsage}
       folders={folderSync}
-      projectId={projectId}
-      projectName={projectName}
+      projectId={activeProject.id}
+      projectName={activeProject.name}
+      onProjectChange={handleProjectChange}
+      projectLocked={projectLocked}
       onFocus={showGreeting ? () => setHomeComposerFocused(true) : undefined}
       onBlur={
         showGreeting
@@ -965,14 +1007,14 @@ export function ChatPanel({ chatId, defaultModel, projectId, projectName, isAdmi
               <div className="pointer-events-auto inline-flex rounded-full border bg-card px-1 shadow-sm">
                 <ModelPicker variant="pill" value={model} onChange={setModel} onResolved={handleModelResolved} />
               </div>
-              {projectId && projectName && (
+              {activeProject.id && activeProject.name && (
                 <Link
-                  href={`/projects/${projectId}`}
+                  href={`/projects/${activeProject.id}`}
                   className="pointer-events-auto inline-flex max-w-[40vw] items-center gap-1 truncate rounded-full border bg-card px-2.5 py-1 text-xs text-muted-foreground shadow-sm transition-colors hover:text-foreground"
-                  title={projectName}
+                  title={activeProject.name}
                 >
                   <FolderOpen className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{projectName}</span>
+                  <span className="truncate">{activeProject.name}</span>
                 </Link>
               )}
             </div>

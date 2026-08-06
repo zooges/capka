@@ -24,6 +24,7 @@ All notable changes to Capka are documented here. Format follows
 
 ### Changed
 
+- Default turn limits for long reviews: `TASK_TIMEOUT_MINUTES=30`, `STREAM_IDLE_SECONDS=120`, `MAX_AGENT_STEPS=40` (was 10 / 60 / 25). Passed through compose; recreate platform.
 - Default `SANDBOX_MEMORY_MB` is 2048 (was 1024 in compose / 512 in controller fallback) so scanned-PDF Chinese OCR has headroom after tmpfs. Existing hosts: set in `.env` or recreate sandbox-controller.
 - iOS model brand icons download once into Application Support (memory + disk); model list prefetch warms light/dark glyphs so the picker/chip no longer re-hit jsDelivr every paint. New iOS build.
 - iOS local-first cache: chat list + transcripts (recent chats prefetched), workspace listings, uploads ingested on the phone, generated/uploaded files warmed after tool writes, preview keys shared between chat chips and workspace, image thumbs prefer disk. New iOS build.
@@ -44,6 +45,9 @@ All notable changes to Capka are documented here. Format follows
 
 ### Fixed
 
+- Composer project pick no longer full-page navigates; chip updates in place (history-bound chats still open a fresh chat when switching projects).
+- First message on a pre-allocated chat id with `projectId` no longer returns "Project not found" (lookup no longer skipped when `chatId` is present).
+- Project / workspace Files: "Import folder" is a visible toolbar + empty-state action (was easy to miss inside the upload menu). Recreate platform.
 - Composer "Select project" menu items now navigate (Base UI uses `onClick`, not Radix `onSelect`). Recreate platform.
 - Project hub Settings shows Delete for every project owner (was incorrectly admin-only). Recreate platform; new iOS build for the settings delete control.
 - WeChat MCP sidecar: Sogou/WeChat egress goes through host mihomo (`WECHAT` select + allowlist rotate via `MIHOMO_*` / `WECHAT_ROTATE_EVERY`); `WECHAT_NO_PROXY` defaults to intranet only. Existing host deploys: update compose/`.env` and restart the MCP.

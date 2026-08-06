@@ -433,28 +433,41 @@ export function WorkspaceBrowser({
             e.target.value = "";
           }}
         />
-        {/* Always expose file + folder import here. Live "connect folder" stays
-            in AttachFolderMenu when the org allows it — but one-shot import must
-            never be gated behind that, or project Files looks files-only. */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            title={t("upload")}
-            aria-label={t("upload")}
-            disabled={uploading}
-            className="outline-none disabled:opacity-60"
-          >
-            {uploadIcon}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-4 w-4" />
-              {t("upload")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void importFolderOnce()} disabled={uploading}>
-              <FolderUp className="h-4 w-4" />
-              {tf("importFolder")}
-            </DropdownMenuItem>
-            {folderSync?.canAttach && folderSync.supported && (
+        {/* Upload file + import folder as peer toolbar actions (folder import used
+            to hide only inside the + menu and looked "gone" from project Files). */}
+        <button
+          type="button"
+          title={t("upload")}
+          aria-label={t("upload")}
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="outline-none disabled:opacity-60"
+        >
+          {uploadIcon}
+        </button>
+        <button
+          type="button"
+          title={tf("importFolder")}
+          aria-label={tf("importFolder")}
+          disabled={uploading}
+          onClick={() => void importFolderOnce()}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none disabled:opacity-60"
+        >
+          <FolderUp className={`h-3.5 w-3.5 ${uploading ? "animate-pulse" : ""}`} />
+        </button>
+        {folderSync?.canAttach && folderSync.supported && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              title={tf("connect")}
+              aria-label={tf("connect")}
+              disabled={uploading}
+              className="outline-none disabled:opacity-60"
+            >
+              <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                <Folder className="h-3.5 w-3.5" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
                 disabled={uploading}
                 onClick={() => {
@@ -477,9 +490,9 @@ export function WorkspaceBrowser({
                 <Folder className="h-4 w-4" />
                 {tf("connect")}
               </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {canDownloadAll(folders.length, fileCount) && (
           <button onClick={downloadAll} title={t("downloadAll")} aria-label={t("downloadAll")} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
             <Download className="h-3.5 w-3.5" />
@@ -566,7 +579,29 @@ export function WorkspaceBrowser({
         )}
 
         {!error && isEmpty && !loading && (
-          <p className="px-4 py-3 text-xs text-muted-foreground">{t("empty")}</p>
+          <div className="flex flex-col items-start gap-3 px-4 py-4">
+            <p className="text-xs text-muted-foreground">{t("empty")}</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {t("upload")}
+              </button>
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => void importFolderOnce()}
+                className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+              >
+                <FolderUp className="h-3.5 w-3.5" />
+                {tf("importFolder")}
+              </button>
+            </div>
+          </div>
         )}
 
         {!isEmpty && (view === "grid" ? gridBody : listBody)}

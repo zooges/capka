@@ -86,6 +86,10 @@ interface ChatInputProps {
   /** The project this chat runs in — drives the composer's context chip. */
   projectId?: string;
   projectName?: string;
+  /** Local project pick (chip only — no page navigation). */
+  onProjectChange?: (project: { id: string; name: string } | null) => void;
+  /** Lock the chip once the chat already has a persisted project scope. */
+  projectLocked?: boolean;
   /** Home greeting uses these to enter “focus mode” (hide recent/history). */
   onFocus?: () => void;
   onBlur?: () => void;
@@ -108,6 +112,8 @@ export function ChatInput({
   folders,
   projectId,
   projectName,
+  onProjectChange,
+  projectLocked,
   onFocus,
   onBlur,
 }: ChatInputProps) {
@@ -330,7 +336,12 @@ export function ChatInput({
           <div className="flex items-center justify-between px-3 pb-2.5">
             {/* Left cluster: the working context, then what you add to it. */}
             <div className="flex items-center gap-1.5">
-              <ProjectChip projectId={projectId} projectName={projectName} />
+              <ProjectChip
+                projectId={projectId}
+                projectName={projectName}
+                onChange={onProjectChange}
+                disabled={projectLocked}
+              />
               <input
                 ref={fileInputRef}
                 type="file"

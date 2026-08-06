@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Folder, FolderPlus, Check } from "lucide-react";
 import {
@@ -24,13 +23,23 @@ type ProjectOption = { id: string; name: string };
  * and the model picker is what makes that legible — the working context, then
  * what you add to it, then who answers.
  *
- * Picking navigates to a fresh chat in that project rather than re-homing the
- * current one: an existing chat keeps the sandbox it was created in (moving one
- * is the project hub's job). This is the same rule the iOS client follows.
+ * Picking updates local state only (chip label) — no full-page navigation. The
+ * parent persists the choice onto an empty chat / first send. Chats that already
+ * have history keep their locked project (server rejects retarget); the parent
+ * may open a fresh chat when the user picks a different project then.
  */
-export function ProjectChip({ projectId, projectName }: { projectId?: string; projectName?: string }) {
+export function ProjectChip({
+  projectId,
+  projectName,
+  onChange,
+  disabled,
+}: {
+  projectId?: string;
+  projectName?: string;
+  onChange?: (project: ProjectOption | null) => void;
+  disabled?: boolean;
+}) {
   const t = useTranslations("chat.panel");
-  const router = useRouter();
   const [projects, setProjects] = useState<ProjectOption[] | null>(null);
 
   // Loaded on first open, not on mount: most chats never touch this control and
@@ -43,11 +52,14 @@ export function ProjectChip({ projectId, projectName }: { projectId?: string; pr
       .catch(() => setProjects([]));
   };
 
-  const go = (id?: string) => router.push(id ? `/chat?projectId=${encodeURIComponent(id)}` : "/chat");
+  const pick = (p: ProjectOption | null) => {
+    onChange?.(p);
+  };
 
   return (
     <DropdownMenu onOpenChange={(open) => open && load()}>
       <DropdownMenuTrigger
+        disabled={disabled}
         title={projectName ?? t("selectProject")}
         aria-label={projectName ? `${t("project")}: ${projectName}` : t("selectProject")}
         className={cn(
@@ -55,6 +67,7 @@ export function ProjectChip({ projectId, projectName }: { projectId?: string; pr
           projectName
             ? "bg-accent font-medium text-foreground"
             : "border text-muted-foreground hover:text-foreground",
+          disabled && "pointer-events-none opacity-50",
         )}
       >
         {projectName ? <Folder className="h-3.5 w-3.5 shrink-0" /> : <FolderPlus className="h-3.5 w-3.5 shrink-0" />}
@@ -62,13 +75,13 @@ export function ProjectChip({ projectId, projectName }: { projectId?: string; pr
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" className="max-h-72 w-56 overflow-y-auto">
-        <DropdownMenuItem onClick={() => go(undefined)}>
+        <DropdownMenuItem onClick={() => pick(null)}>
           <span className="flex-1">{t("noProject")}</span>
           {!projectId && <Check className="h-3.5 w-3.5" />}
         </DropdownMenuItem>
         {projects && projects.length > 0 && <DropdownMenuSeparator />}
         {projects?.map((p) => (
-          <DropdownMenuItem key={p.id} onClick={() => go(p.id)}>
+          <DropdownMenuItem key={p.id} onClick={() => pick(p)}>
             <span className="flex-1 truncate">{p.name}</span>
             {p.id === projectId && <Check className="h-3.5 w-3.5 shrink-0" />}
           </DropdownMenuItem>
